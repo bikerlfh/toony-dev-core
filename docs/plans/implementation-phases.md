@@ -17,7 +17,7 @@ Full design: [`docs/2026-03-01-toony-dev-core-design.md`](../2026-03-01-toony-de
 | 3 | Organizations, Memberships & RBAC | Organization CRUD, OrganizationMembership, RBAC permissions (5 roles), OrganizationSettings | ✅ | ✅ |
 | 4 | Frontend Foundation — Auth & Org Shell | Next.js auth pages, JWT handling, org selector, sidebar layout, member management UI | ✅ | ✅ |
 | 5 | Teams & Labels (Backend) | Team/TeamMembership CRUD, org-level Label CRUD | ✅ | ✅ |
-| 6 | Projects, Milestones & Cycles (Backend) | Project/ProjectMembership, ProjectSettings, Milestone, Cycle CRUD | | |
+| 6 | Projects, Milestones & Cycles (Backend) | Project/ProjectMembership, ProjectSettings, Milestone, Cycle CRUD | ✅ | ✅ |
 | 7 | Issues, Comments & Activity Log (Backend) | Issue with auto-identifier, IssueComment, IssueActivity audit log, Label M2M | | |
 | 8 | Frontend — Teams, Projects & Labels UI | Team/project pages, milestone/cycle UI, label management, sidebar navigation | | |
 | 9 | Frontend — Issue Tracker UI | Kanban board, list view, issue detail, comments, activity timeline, filtering | | |

@@ -1,4 +1,19 @@
+from projects.services.cycle_service import create_cycle, delete_cycle, update_cycle
 from projects.services.label_service import create_label, delete_label, update_label
+from projects.services.milestone_service import (
+    create_milestone,
+    delete_milestone,
+    update_milestone,
+)
+from projects.services.project_service import (
+    add_project_member,
+    create_project,
+    delete_project,
+    remove_project_member,
+    update_project,
+    update_project_member_role,
+    update_project_settings,
+)
 from projects.services.team_service import (
     add_team_member,
     create_team,
@@ -18,4 +33,17 @@ __all__ = [
     "create_label",
     "update_label",
     "delete_label",
+    "create_project",
+    "update_project",
+    "delete_project",
+    "add_project_member",
+    "update_project_member_role",
+    "remove_project_member",
+    "update_project_settings",
+    "create_milestone",
+    "update_milestone",
+    "delete_milestone",
+    "create_cycle",
+    "update_cycle",
+    "delete_cycle",
 ]

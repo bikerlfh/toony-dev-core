@@ -1,7 +1,7 @@
 from rest_framework.permissions import BasePermission
 
 from organizations.permissions import get_membership, ADMIN_ROLES, MANAGER_ROLES
-from projects.selectors import get_team_by_slug
+from projects.selectors import get_team_by_slug, get_project_by_slug
 
 
 class IsTeamAccessible(BasePermission):
@@ -24,4 +24,27 @@ class IsTeamAccessible(BasePermission):
         request.membership = membership
         request.organization = membership.organization
         request.team = team
+        return True
+
+
+class IsProjectAccessible(BasePermission):
+    """Require org membership and resolve project from URL."""
+
+    def has_permission(self, request, view):
+        org_slug = view.kwargs.get("org_slug")
+        project_slug = view.kwargs.get("project_slug")
+        if not org_slug or not project_slug:
+            return False
+
+        membership = get_membership(request.user, org_slug)
+        if membership is None:
+            return False
+
+        project = get_project_by_slug(membership.organization, project_slug)
+        if project is None:
+            return False
+
+        request.membership = membership
+        request.organization = membership.organization
+        request.project = project
         return True

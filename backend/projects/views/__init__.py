@@ -1,4 +1,13 @@
+from projects.views.cycle_views import CycleDetailView, CycleListCreateView
 from projects.views.label_views import LabelDetailView, LabelListCreateView
+from projects.views.milestone_views import MilestoneDetailView, MilestoneListCreateView
+from projects.views.project_views import (
+    ProjectDetailView,
+    ProjectListCreateView,
+    ProjectMemberDetailView,
+    ProjectMemberListCreateView,
+    ProjectSettingsView,
+)
 from projects.views.team_views import (
     TeamDetailView,
     TeamListCreateView,
@@ -13,4 +22,13 @@ __all__ = [
     "TeamMemberDetailView",
     "LabelListCreateView",
     "LabelDetailView",
+    "ProjectListCreateView",
+    "ProjectDetailView",
+    "ProjectMemberListCreateView",
+    "ProjectMemberDetailView",
+    "ProjectSettingsView",
+    "MilestoneListCreateView",
+    "MilestoneDetailView",
+    "CycleListCreateView",
+    "CycleDetailView",
 ]
