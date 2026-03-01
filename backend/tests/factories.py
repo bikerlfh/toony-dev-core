@@ -1,0 +1,153 @@
+import factory
+from django.utils import timezone
+
+from accounts.models import User
+from accounts.models.membership import MembershipRole, OrganizationMembership
+from organizations.models import Organization, OrganizationSettings
+from projects.models import (
+    Cycle,
+    Issue,
+    IssueComment,
+    Label,
+    Milestone,
+    Project,
+    ProjectMembership,
+    ProjectSettings,
+    Team,
+    TeamMembership,
+)
+
+
+class UserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = User
+
+    email = factory.Sequence(lambda n: f"user{n}@test.com")
+    username = factory.LazyAttribute(lambda obj: obj.email)
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    password = factory.PostGenerationMethodCall("set_password", "testpass123")
+
+
+class OrganizationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Organization
+
+    name = factory.Sequence(lambda n: f"Org {n}")
+    slug = factory.Sequence(lambda n: f"org-{n}")
+    description = "Test organization"
+
+
+class OrganizationSettingsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = OrganizationSettings
+
+    organization = factory.SubFactory(OrganizationFactory)
+
+
+class MembershipFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = OrganizationMembership
+
+    user = factory.SubFactory(UserFactory)
+    organization = factory.SubFactory(OrganizationFactory)
+    role = MembershipRole.MEMBER
+
+
+class TeamFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Team
+
+    organization = factory.SubFactory(OrganizationFactory)
+    name = factory.Sequence(lambda n: f"Team {n}")
+    slug = factory.Sequence(lambda n: f"team-{n}")
+    identifier = factory.Sequence(lambda n: f"T{n}")
+    description = "Test team"
+
+
+class TeamMembershipFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = TeamMembership
+
+    team = factory.SubFactory(TeamFactory)
+    user = factory.SubFactory(UserFactory)
+    role = "MEMBER"
+
+
+class LabelFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Label
+
+    organization = factory.SubFactory(OrganizationFactory)
+    name = factory.Sequence(lambda n: f"Label {n}")
+    color = "#6b7280"
+
+
+class ProjectFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Project
+
+    organization = factory.SubFactory(OrganizationFactory)
+    team = factory.SubFactory(TeamFactory)
+    name = factory.Sequence(lambda n: f"Project {n}")
+    slug = factory.Sequence(lambda n: f"project-{n}")
+    description = "Test project"
+    lead = factory.SubFactory(UserFactory)
+
+
+class ProjectSettingsFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectSettings
+
+    project = factory.SubFactory(ProjectFactory)
+
+
+class ProjectMembershipFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectMembership
+
+    project = factory.SubFactory(ProjectFactory)
+    user = factory.SubFactory(UserFactory)
+    role = "CONTRIBUTOR"
+
+
+class MilestoneFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Milestone
+
+    project = factory.SubFactory(ProjectFactory)
+    name = factory.Sequence(lambda n: f"Milestone {n}")
+    description = "Test milestone"
+
+
+class CycleFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Cycle
+
+    project = factory.SubFactory(ProjectFactory)
+    name = factory.Sequence(lambda n: f"Cycle {n}")
+    number = factory.Sequence(lambda n: n + 1)
+    start_date = factory.LazyFunction(lambda: timezone.now().date())
+    end_date = factory.LazyFunction(
+        lambda: (timezone.now() + timezone.timedelta(days=14)).date()
+    )
+
+
+class IssueFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Issue
+
+    project = factory.SubFactory(ProjectFactory)
+    reporter = factory.SubFactory(UserFactory)
+    title = factory.Sequence(lambda n: f"Issue {n}")
+    identifier = factory.Sequence(lambda n: f"TEST-{n}")
+    description = "Test issue"
+
+
+class IssueCommentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = IssueComment
+
+    issue = factory.SubFactory(IssueFactory)
+    author = factory.SubFactory(UserFactory)
+    body = "Test comment"

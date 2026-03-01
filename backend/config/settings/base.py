@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",
     "channels",
     # Local apps
     "common",
@@ -144,6 +145,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "common.pagination.CursorPaginator",
     "PAGE_SIZE": 50,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # Simple JWT
@@ -161,3 +163,10 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
 
 # Field Encryption
 FIELD_ENCRYPTION_KEY = os.environ.get("FIELD_ENCRYPTION_KEY", "")
+
+# API Documentation
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Toony Dev Core API",
+    "VERSION": APP_VERSION,
+    "COMPONENT_SPLIT_REQUEST": True,
+}
