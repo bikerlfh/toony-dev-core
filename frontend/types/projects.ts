@@ -225,3 +225,111 @@ export interface UpdateCyclePayload {
   end_date?: string;
   status?: CycleStatus;
 }
+
+// --- Issue ---
+
+export type IssueStatus =
+  | "BACKLOG"
+  | "TODO"
+  | "IN_PROGRESS"
+  | "IN_REVIEW"
+  | "DONE"
+  | "CANCELED";
+
+export type IssuePriority = "NONE" | "URGENT" | "HIGH" | "MEDIUM" | "LOW";
+
+export interface IssueList {
+  id: string;
+  identifier: string;
+  title: string;
+  status: IssueStatus;
+  priority: IssuePriority;
+  assignee: User | null;
+  labels: Label[];
+  estimate: number | null;
+  due_date: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface IssueDetail extends IssueList {
+  description: string;
+  reporter: User;
+  milestone: Milestone | null;
+  cycle: Cycle | null;
+  parent_identifier: string | null;
+  sub_issue_count: number;
+  external_tracker_name: string;
+  external_tracker_url: string;
+  external_tracker_id: string;
+  updated_at: string;
+}
+
+export interface CreateIssuePayload {
+  title: string;
+  description?: string;
+  status?: IssueStatus;
+  priority?: IssuePriority;
+  assignee_id?: string | null;
+  milestone_id?: string | null;
+  cycle_id?: string | null;
+  parent_identifier?: string;
+  label_ids?: string[];
+  estimate?: number | null;
+  due_date?: string | null;
+  sort_order?: number;
+}
+
+export interface UpdateIssuePayload {
+  title?: string;
+  description?: string;
+  status?: IssueStatus;
+  priority?: IssuePriority;
+  assignee_id?: string | null;
+  milestone_id?: string | null;
+  cycle_id?: string | null;
+  parent_identifier?: string | null;
+  label_ids?: string[];
+  estimate?: number | null;
+  due_date?: string | null;
+  sort_order?: number;
+  external_tracker_name?: string;
+  external_tracker_url?: string;
+  external_tracker_id?: string;
+}
+
+export interface IssueFilters {
+  status?: IssueStatus;
+  priority?: IssuePriority;
+  assignee_id?: string;
+  milestone_id?: string;
+  cycle_id?: string;
+  label_ids?: string[];
+}
+
+// --- Comment ---
+
+export interface IssueComment {
+  id: string;
+  author: User;
+  body: string;
+  edited_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateCommentPayload {
+  body: string;
+}
+
+// --- Activity ---
+
+export interface IssueActivity {
+  id: string;
+  user: User;
+  action: string;
+  field_changed: string;
+  old_value: string;
+  new_value: string;
+  created_at: string;
+}

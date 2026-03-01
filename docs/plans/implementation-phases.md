@@ -20,7 +20,7 @@ Full design: [`docs/2026-03-01-toony-dev-core-design.md`](../2026-03-01-toony-de
 | 6 | Projects, Milestones & Cycles (Backend) | Project/ProjectMembership, ProjectSettings, Milestone, Cycle CRUD | ✅ | ✅ |
 | 7 | Issues, Comments & Activity Log (Backend) | Issue with auto-identifier, IssueComment, IssueActivity audit log, Label M2M | ✅ | ✅ |
 | 8 | Frontend — Teams, Projects & Labels UI | Team/project pages, milestone/cycle UI, label management, sidebar navigation | ✅ | ✅ |
-| 9 | Frontend — Issue Tracker UI | Kanban board, list view, issue detail, comments, activity timeline, filtering | | |
+| 9 | Frontend — Issue Tracker UI | Kanban board, list view, issue detail, comments, activity timeline, filtering | ✅ | ✅ |
 | 10 | Credentials & Integration Config | RepositoryCredential (encrypted), IntegrationConfig, backend + frontend | | |
 | 11 | Agents & Skills Registry | Agent, Skill, SkillVersion, AgentSkill models, backend + frontend | | |
 | 12 | Import System — Plugin Architecture | ImportPlugin ABC, LinearPlugin, ImportJob, ImportMapping, import wizard UI | | |

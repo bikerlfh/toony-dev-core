@@ -52,3 +52,15 @@ export {
   updateLabel,
   deleteLabel,
 } from "./labels";
+export {
+  listIssues,
+  getIssue,
+  createIssue,
+  updateIssue,
+  deleteIssue,
+  listComments,
+  createComment,
+  updateComment,
+  deleteComment,
+  listActivities,
+} from "./issues";

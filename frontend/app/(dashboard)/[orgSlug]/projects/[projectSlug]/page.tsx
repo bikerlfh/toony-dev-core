@@ -26,10 +26,17 @@ import {
   updateCycle,
   deleteCycle,
 } from "@/lib/api/cycles";
+import { listLabels } from "@/lib/api/labels";
+import { listIssues, updateIssue } from "@/lib/api/issues";
 import { canCreateProject } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
+import { FilterBar } from "@/components/issues/filter-bar";
+import { KanbanBoard } from "@/components/issues/kanban-board";
+import { IssuesList } from "@/components/issues/issues-list";
+import { CreateIssueModal } from "@/components/issues/create-issue-modal";
+import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
 import type {
   ProjectDetail,
   ProjectMember,
@@ -42,12 +49,18 @@ import type {
   Cycle,
   CycleStatus,
   EstimationMethod,
+  IssueList,
+  IssueStatus,
+  IssuePriority,
+  IssueFilters,
+  Label,
 } from "@/types";
 
-type Tab = "overview" | "milestones" | "cycles" | "members" | "settings";
+type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "settings";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
+  { key: "issues", label: "Issues" },
   { key: "milestones", label: "Milestones" },
   { key: "cycles", label: "Cycles" },
   { key: "members", label: "Members" },
@@ -172,6 +185,9 @@ export default function ProjectDetailPage() {
             onUpdated={fetchProject}
             onDeleted={() => router.push(`/${orgSlug}/projects`)}
           />
+        )}
+        {activeTab === "issues" && (
+          <IssuesTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
         )}
         {activeTab === "milestones" && (
           <MilestonesTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
@@ -892,6 +908,154 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
           )}
         </div>
       </form>
+    </div>
+  );
+}
+
+// --- Issues Tab ---
+
+type IssueViewMode = "board" | "list";
+
+function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; projectSlug: string; canManage: boolean }) {
+  const [issues, setIssues] = useState<IssueList[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [labels, setLabels] = useState<Label[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<IssueViewMode>("board");
+  const [filters, setFilters] = useState<IssueFilters>({});
+  const [showCreate, setShowCreate] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+
+  const fetchIssues = useCallback(async () => {
+    try {
+      setIssues(await listIssues(orgSlug, projectSlug, filters));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgSlug, projectSlug, filters]);
+
+  const fetchMetadata = useCallback(async () => {
+    const [m, ms, cs, ls] = await Promise.all([
+      listProjectMembers(orgSlug, projectSlug),
+      listMilestones(orgSlug, projectSlug),
+      listCycles(orgSlug, projectSlug),
+      listLabels(orgSlug),
+    ]);
+    setMembers(m);
+    setMilestones(ms);
+    setCycles(cs);
+    setLabels(ls);
+  }, [orgSlug, projectSlug]);
+
+  useEffect(() => {
+    fetchMetadata();
+  }, [fetchMetadata]);
+
+  useEffect(() => {
+    fetchIssues();
+  }, [fetchIssues]);
+
+  async function handleStatusChange(issue: IssueList, status: IssueStatus) {
+    await updateIssue(orgSlug, projectSlug, issue.identifier, { status });
+    fetchIssues();
+  }
+
+  async function handlePriorityChange(issue: IssueList, priority: IssuePriority) {
+    await updateIssue(orgSlug, projectSlug, issue.identifier, { priority });
+    fetchIssues();
+  }
+
+  if (isLoading) return <p className="text-gray-500">Loading issues...</p>;
+
+  return (
+    <div>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex rounded border border-gray-300">
+            <button
+              onClick={() => setViewMode("board")}
+              className={`px-3 py-1.5 text-sm ${viewMode === "board" ? "bg-gray-100 font-medium text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              Board
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`border-l border-gray-300 px-3 py-1.5 text-sm ${viewMode === "list" ? "bg-gray-100 font-medium text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              List
+            </button>
+          </div>
+        </div>
+        {canManage && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+          >
+            Create issue
+          </button>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="mt-4">
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          members={members}
+          milestones={milestones}
+          cycles={cycles}
+          labels={labels}
+        />
+      </div>
+
+      {/* View */}
+      <div className="mt-4">
+        {viewMode === "board" ? (
+          <KanbanBoard
+            issues={issues}
+            onIssueClick={(issue) => setSelectedIssueId(issue.identifier)}
+          />
+        ) : (
+          <IssuesList
+            issues={issues}
+            onIssueClick={(issue) => setSelectedIssueId(issue.identifier)}
+            onStatusChange={canManage ? handleStatusChange : undefined}
+            onPriorityChange={canManage ? handlePriorityChange : undefined}
+          />
+        )}
+      </div>
+
+      {/* Create modal */}
+      {showCreate && (
+        <CreateIssueModal
+          orgSlug={orgSlug}
+          projectSlug={projectSlug}
+          members={members}
+          milestones={milestones}
+          cycles={cycles}
+          labels={labels}
+          onClose={() => setShowCreate(false)}
+          onCreated={fetchIssues}
+        />
+      )}
+
+      {/* Detail modal */}
+      {selectedIssueId && (
+        <IssueDetailModal
+          orgSlug={orgSlug}
+          projectSlug={projectSlug}
+          identifier={selectedIssueId}
+          members={members}
+          milestones={milestones}
+          cycles={cycles}
+          labels={labels}
+          onClose={() => setSelectedIssueId(null)}
+          onUpdated={fetchIssues}
+        />
+      )}
     </div>
   );
 }
