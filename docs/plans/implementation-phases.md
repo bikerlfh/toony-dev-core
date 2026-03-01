@@ -3,6 +3,13 @@
 Tracking document for the phased implementation of Toony Dev Core.
 Full design: [`docs/2026-03-01-toony-dev-core-design.md`](../2026-03-01-toony-dev-core-design.md)
 
+## Instructions
+
+- After generating the implementation plan for a phase, mark the **Plan Generated** column with `✅`.
+- After fully implementing a phase, mark the **Implemented** column with `✅`.
+- The generated plan for each phase must be saved as a file in `docs/plans/` (e.g., `docs/plans/phase-01-bootstrap.md`).
+- Update this file as part of the same commit that completes the plan or implementation.
+
 | # | Phase | Description | Plan Generated | Implemented |
 |---|-------|-------------|:--------------:|:-----------:|
 | 1 | Project Bootstrap & Infrastructure | Docker, Django project, Next.js init, PostgreSQL/Redis, settings, health check | | |
