@@ -8,6 +8,9 @@ import { OrgSwitcher } from "./org-switcher";
 
 const NAV_ITEMS = [
   { label: "Dashboard", path: "" },
+  { label: "Teams", path: "/teams" },
+  { label: "Projects", path: "/projects" },
+  { label: "Labels", path: "/labels" },
   { label: "Members", path: "/members" },
   { label: "Settings", path: "/settings" },
 ];

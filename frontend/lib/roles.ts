@@ -27,3 +27,15 @@ export function canEditOrg(role: MembershipRole | undefined | null): boolean {
 export function canDeleteOrg(role: MembershipRole | undefined | null): boolean {
   return hasMinRole(role, "OWNER");
 }
+
+export function canManageTeams(role: MembershipRole | undefined | null): boolean {
+  return hasMinRole(role, "ADMIN");
+}
+
+export function canCreateProject(role: MembershipRole | undefined | null): boolean {
+  return hasMinRole(role, "MANAGER");
+}
+
+export function canManageLabels(role: MembershipRole | undefined | null): boolean {
+  return hasMinRole(role, "ADMIN");
+}
