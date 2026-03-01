@@ -10,6 +10,7 @@ urlpatterns = [
     path("api/v1/organizations/", include("organizations.urls")),
     path("api/v1/organizations/<slug:org_slug>/", include("projects.urls")),
     path("api/v1/organizations/<slug:org_slug>/", include("agents.urls")),
+    path("api/v1/organizations/<slug:org_slug>/", include("importers.urls")),
 ]
 
 if settings.DEBUG:

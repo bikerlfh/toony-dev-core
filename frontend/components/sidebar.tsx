@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: "Labels", path: "/labels" },
   { label: "Members", path: "/members" },
   { label: "Agents", path: "/agents" },
+  { label: "Imports", path: "/imports" },
   { label: "Credentials", path: "/credentials" },
   { label: "Settings", path: "/settings" },
 ];
