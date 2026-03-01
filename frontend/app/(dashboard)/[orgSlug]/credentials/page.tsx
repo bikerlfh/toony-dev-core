@@ -63,7 +63,7 @@ export default function CredentialsPage() {
 
   const fetchCredentials = useCallback(async () => {
     try {
-      setCredentials(await listCredentials(orgSlug));
+      setCredentials((await listCredentials(orgSlug)).results);
     } finally {
       setCredLoading(false);
     }
@@ -71,7 +71,7 @@ export default function CredentialsPage() {
 
   const fetchIntegrations = useCallback(async () => {
     try {
-      setIntegrations(await listIntegrations(orgSlug));
+      setIntegrations((await listIntegrations(orgSlug)).results);
     } finally {
       setIntLoading(false);
     }

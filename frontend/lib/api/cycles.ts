@@ -1,14 +1,20 @@
 import api from "@/lib/api";
-import type { Cycle, CreateCyclePayload, UpdateCyclePayload } from "@/types";
+import type { Cycle, CreateCyclePayload, UpdateCyclePayload, PaginatedResponse } from "@/types";
 
 const base = (orgSlug: string, projectSlug: string) =>
   `/organizations/${orgSlug}/projects/${projectSlug}/cycles`;
 
 export async function listCycles(
   orgSlug: string,
-  projectSlug: string
-): Promise<Cycle[]> {
-  const { data } = await api.get<Cycle[]>(`${base(orgSlug, projectSlug)}/`);
+  projectSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<Cycle>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Cycle>>(
+    `${base(orgSlug, projectSlug)}/`,
+    { params }
+  );
   return data;
 }
 

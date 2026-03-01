@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from accounts.models import OrganizationMembership
 from accounts.selectors import get_user_by_email
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from organizations.selectors import list_organization_members
 from organizations.serializers.input import AddMemberSerializer, UpdateMemberRoleSerializer
@@ -13,7 +14,7 @@ from organizations.serializers.output import MembershipSerializer
 from organizations.services import add_member, remove_member, update_member_role
 
 
-class MemberListCreateView(APIView):
+class MemberListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationAdmin()]
@@ -21,8 +22,7 @@ class MemberListCreateView(APIView):
 
     def get(self, request, org_slug):
         members = list_organization_members(request.organization)
-        output = MembershipSerializer(members, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(members, MembershipSerializer, request)
 
     def post(self, request, org_slug):
         serializer = AddMemberSerializer(data=request.data)

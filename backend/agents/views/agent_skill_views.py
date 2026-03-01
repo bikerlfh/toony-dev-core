@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
 from agents.selectors import get_agent_by_slug, get_agent_skill_by_id, get_skill_by_id, list_agent_skills
 from agents.serializers.input import CreateAgentSkillSerializer, UpdateAgentSkillSerializer
@@ -10,7 +11,7 @@ from agents.serializers.output import AgentSkillSerializer
 from agents.services import assign_skill, remove_agent_skill, update_agent_skill
 
 
-class AgentSkillListCreateView(APIView):
+class AgentSkillListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def get_agent(self, request, agent_slug):
@@ -21,8 +22,7 @@ class AgentSkillListCreateView(APIView):
         if agent is None:
             return Response({"detail": "Agent not found."}, status=status.HTTP_404_NOT_FOUND)
         agent_skills = list_agent_skills(agent)
-        output = AgentSkillSerializer(agent_skills, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(agent_skills, AgentSkillSerializer, request)
 
     def post(self, request, org_slug, agent_slug):
         agent = self.get_agent(request, agent_slug)

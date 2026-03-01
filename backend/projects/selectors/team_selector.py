@@ -1,11 +1,20 @@
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+
 from projects.models import Team, TeamMembership
 
 
-def list_organization_teams(organization):
-    return Team.objects.filter(
+def list_organization_teams(organization, *, search=None):
+    qs = Team.objects.filter(
         organization=organization,
         is_active=True,
-    ).order_by("name")
+    )
+
+    if search:
+        vector = SearchVector("name", weight="A") + SearchVector("description", weight="B")
+        query = SearchQuery(search)
+        return qs.annotate(rank=SearchRank(vector, query)).filter(rank__gte=0.01).order_by("-rank")
+
+    return qs.order_by("name")
 
 
 def get_team_by_slug(organization, team_slug):

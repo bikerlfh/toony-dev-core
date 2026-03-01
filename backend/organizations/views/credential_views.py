@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
 from organizations.selectors import get_credential_by_id, list_organization_credentials
 from organizations.serializers.input import (
@@ -13,13 +14,12 @@ from organizations.serializers.output import CredentialSerializer
 from organizations.services import create_credential, delete_credential, update_credential
 
 
-class CredentialListCreateView(APIView):
+class CredentialListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def get(self, request, org_slug):
         credentials = list_organization_credentials(request.organization)
-        output = CredentialSerializer(credentials, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(credentials, CredentialSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateCredentialSerializer(data=request.data)

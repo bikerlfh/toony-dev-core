@@ -106,3 +106,4 @@ export {
   getImportMappings,
   listExternalProjects,
 } from "./imports";
+export { globalSearch } from "./search";

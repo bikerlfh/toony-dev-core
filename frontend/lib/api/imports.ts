@@ -6,13 +6,18 @@ import type {
   ExternalProject,
   ImportProvider,
   StartImportPayload,
+  PaginatedResponse,
 } from "@/types";
 
 export async function listImportJobs(
-  orgSlug: string
-): Promise<ImportJob[]> {
-  const { data } = await api.get<ImportJob[]>(
-    `/organizations/${orgSlug}/imports/`
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<ImportJob>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<ImportJob>>(
+    `/organizations/${orgSlug}/imports/`,
+    { params }
   );
   return data;
 }

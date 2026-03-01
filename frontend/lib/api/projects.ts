@@ -9,11 +9,18 @@ import type {
   AddProjectMemberPayload,
   UpdateProjectMemberRolePayload,
   UpdateProjectSettingsPayload,
+  PaginatedResponse,
 } from "@/types";
 
-export async function listProjects(orgSlug: string): Promise<ProjectList[]> {
-  const { data } = await api.get<ProjectList[]>(
-    `/organizations/${orgSlug}/projects/`
+export async function listProjects(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<ProjectList>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<ProjectList>>(
+    `/organizations/${orgSlug}/projects/`,
+    { params }
   );
   return data;
 }
@@ -60,10 +67,14 @@ export async function deleteProject(
 
 export async function listProjectMembers(
   orgSlug: string,
-  projectSlug: string
-): Promise<ProjectMember[]> {
-  const { data } = await api.get<ProjectMember[]>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/members/`
+  projectSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<ProjectMember>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<ProjectMember>>(
+    `/organizations/${orgSlug}/projects/${projectSlug}/members/`,
+    { params }
   );
   return data;
 }

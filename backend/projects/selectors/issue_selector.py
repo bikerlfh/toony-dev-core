@@ -1,3 +1,4 @@
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db.models import Max
 
 from projects.models import Issue, IssueActivity, IssueComment
@@ -18,12 +19,18 @@ def get_next_identifier(project):
     return f"{prefix}-{count + 1}"
 
 
-def list_project_issues(project, *, filters=None):
+def list_project_issues(project, *, filters=None, search=None):
     qs = Issue.objects.filter(
         project=project,
     ).select_related(
         "assignee", "reporter", "milestone", "cycle", "parent",
     ).prefetch_related("labels")
+
+    if search:
+        vector = SearchVector("title", weight="A") + SearchVector("description", weight="B")
+        query = SearchQuery(search)
+        qs = qs.annotate(rank=SearchRank(vector, query)).filter(rank__gte=0.01).order_by("-rank")
+        return qs
 
     if filters:
         if "status" in filters:

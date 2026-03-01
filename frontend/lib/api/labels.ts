@@ -1,9 +1,15 @@
 import api from "@/lib/api";
-import type { Label, CreateLabelPayload, UpdateLabelPayload } from "@/types";
+import type { Label, CreateLabelPayload, UpdateLabelPayload, PaginatedResponse } from "@/types";
 
-export async function listLabels(orgSlug: string): Promise<Label[]> {
-  const { data } = await api.get<Label[]>(
-    `/organizations/${orgSlug}/labels/`
+export async function listLabels(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<Label>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Label>>(
+    `/organizations/${orgSlug}/labels/`,
+    { params }
   );
   return data;
 }

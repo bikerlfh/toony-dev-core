@@ -3,13 +3,18 @@ import type {
   IntegrationConfig,
   CreateIntegrationPayload,
   UpdateIntegrationPayload,
+  PaginatedResponse,
 } from "@/types";
 
 export async function listIntegrations(
-  orgSlug: string
-): Promise<IntegrationConfig[]> {
-  const { data } = await api.get<IntegrationConfig[]>(
-    `/organizations/${orgSlug}/integrations/`
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<IntegrationConfig>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<IntegrationConfig>>(
+    `/organizations/${orgSlug}/integrations/`,
+    { params }
   );
   return data;
 }

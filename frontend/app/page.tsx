@@ -19,10 +19,10 @@ export default function Home() {
     if (!isLoading && isAuthenticated) {
       setOrgsLoading(true);
       listOrganizations()
-        .then((data) => {
-          setOrgs(data);
-          if (data.length > 0) {
-            router.replace(`/${data[0].slug}/`);
+        .then((res) => {
+          setOrgs(res.results);
+          if (res.results.length > 0) {
+            router.replace(`/${res.results[0].slug}/`);
           }
         })
         .finally(() => setOrgsLoading(false));

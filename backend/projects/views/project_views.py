@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.selectors import get_user_by_email
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationManager, IsOrganizationMember
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
@@ -38,16 +39,16 @@ from projects.services import (
 )
 
 
-class ProjectListCreateView(APIView):
+class ProjectListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationManager()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
     def get(self, request, org_slug):
-        projects = list_organization_projects(request.organization)
-        output = ProjectListSerializer(projects, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        search = request.query_params.get("q")
+        projects = list_organization_projects(request.organization, search=search)
+        return self.paginate(projects, ProjectListSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateProjectSerializer(data=request.data)
@@ -94,14 +95,13 @@ class ProjectDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ProjectMemberListCreateView(APIView):
+class ProjectMemberListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         return [IsAuthenticated(), IsProjectAccessible()]
 
     def get(self, request, org_slug, project_slug):
         members = list_project_members(request.project)
-        output = ProjectMembershipSerializer(members, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(members, ProjectMembershipSerializer, request)
 
     def post(self, request, org_slug, project_slug):
         serializer = AddProjectMemberSerializer(data=request.data)

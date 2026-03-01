@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
+from common.mixins import PaginatedViewMixin
 from projects.models import Milestone, Cycle
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
@@ -35,10 +36,11 @@ from projects.services import (
 )
 
 
-class IssueListCreateView(APIView):
+class IssueListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
     def get(self, request, org_slug, project_slug):
+        search = request.query_params.get("q")
         filters = {}
         for key in ("status", "priority", "assignee_id", "milestone_id", "cycle_id"):
             val = request.query_params.get(key)
@@ -53,9 +55,8 @@ class IssueListCreateView(APIView):
         if parent_id:
             filters["parent_id"] = parent_id
 
-        issues = list_project_issues(request.project, filters=filters or None)
-        output = IssueListSerializer(issues, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        issues = list_project_issues(request.project, filters=filters or None, search=search)
+        return self.paginate(issues, IssueListSerializer, request)
 
     def post(self, request, org_slug, project_slug):
         serializer = CreateIssueSerializer(data=request.data)
@@ -204,7 +205,7 @@ class IssueDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IssueCommentListCreateView(APIView):
+class IssueCommentListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
     def _get_issue(self, project, identifier):
@@ -216,8 +217,7 @@ class IssueCommentListCreateView(APIView):
     def get(self, request, org_slug, project_slug, identifier):
         issue = self._get_issue(request.project, identifier)
         comments = list_issue_comments(issue)
-        output = IssueCommentSerializer(comments, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(comments, IssueCommentSerializer, request)
 
     def post(self, request, org_slug, project_slug, identifier):
         issue = self._get_issue(request.project, identifier)
@@ -264,7 +264,7 @@ class IssueCommentDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class IssueActivityListView(APIView):
+class IssueActivityListView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
     def get(self, request, org_slug, project_slug, identifier):
@@ -273,5 +273,4 @@ class IssueActivityListView(APIView):
             raise NotFound("Issue not found.")
 
         activities = list_issue_activities(issue)
-        output = IssueActivitySerializer(activities, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(activities, IssueActivitySerializer, request)

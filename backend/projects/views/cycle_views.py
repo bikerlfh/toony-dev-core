@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from projects.permissions import IsProjectAccessible
 from projects.selectors import get_cycle_by_id, list_project_cycles
 from projects.serializers.input import CreateCycleSerializer, UpdateCycleSerializer
@@ -11,13 +12,12 @@ from projects.serializers.output import CycleSerializer
 from projects.services import create_cycle, delete_cycle, update_cycle
 
 
-class CycleListCreateView(APIView):
+class CycleListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
     def get(self, request, org_slug, project_slug):
         cycles = list_project_cycles(request.project)
-        output = CycleSerializer(cycles, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(cycles, CycleSerializer, request)
 
     def post(self, request, org_slug, project_slug):
         serializer = CreateCycleSerializer(data=request.data)

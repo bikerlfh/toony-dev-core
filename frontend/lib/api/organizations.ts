@@ -4,10 +4,18 @@ import type {
   OrganizationDetail,
   CreateOrganizationPayload,
   UpdateOrganizationPayload,
+  PaginatedResponse,
 } from "@/types";
 
-export async function listOrganizations(): Promise<Organization[]> {
-  const { data } = await api.get<Organization[]>("/organizations/");
+export async function listOrganizations(
+  cursor?: string
+): Promise<PaginatedResponse<Organization>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Organization>>(
+    "/organizations/",
+    { params }
+  );
   return data;
 }
 

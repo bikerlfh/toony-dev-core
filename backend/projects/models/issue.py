@@ -88,6 +88,11 @@ class Issue(BaseModel):
     class Meta:
         db_table = "issues"
         ordering = ["sort_order", "-created_at"]
+        indexes = [
+            models.Index(fields=["project", "status"]),
+            models.Index(fields=["project", "created_at"]),
+            models.Index(fields=["project", "sort_order", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"{self.identifier}: {self.title}"

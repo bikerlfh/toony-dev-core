@@ -1,3 +1,5 @@
+import type { IssueList, ProjectList, Team, Label } from "./projects";
+
 export type {
   User,
   AuthTokens,
@@ -105,3 +107,18 @@ export type {
   ExternalProject,
   StartImportPayload,
 } from "./imports";
+
+// --- Pagination & Search ---
+
+export interface PaginatedResponse<T> {
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface GlobalSearchResult {
+  issues: IssueList[];
+  projects: ProjectList[];
+  teams: Team[];
+  labels: Label[];
+}

@@ -34,8 +34,8 @@ export default function MembersPage() {
 
   const fetchMembers = useCallback(async () => {
     try {
-      const data = await listMembers(orgSlug);
-      setMembers(data);
+      const res = await listMembers(orgSlug);
+      setMembers(res.results);
     } finally {
       setIsLoading(false);
     }

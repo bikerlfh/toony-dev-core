@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
 from organizations.selectors import get_integration_by_id, list_organization_integrations
 from organizations.serializers.input import (
@@ -17,13 +18,12 @@ from organizations.services import (
 )
 
 
-class IntegrationListCreateView(APIView):
+class IntegrationListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def get(self, request, org_slug):
         integrations = list_organization_integrations(request.organization)
-        output = IntegrationConfigSerializer(integrations, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(integrations, IntegrationConfigSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateIntegrationSerializer(data=request.data)

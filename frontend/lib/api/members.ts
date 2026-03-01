@@ -1,8 +1,16 @@
 import api from "@/lib/api";
-import type { Member, AddMemberPayload, UpdateMemberRolePayload } from "@/types";
+import type { Member, AddMemberPayload, UpdateMemberRolePayload, PaginatedResponse } from "@/types";
 
-export async function listMembers(orgSlug: string): Promise<Member[]> {
-  const { data } = await api.get<Member[]>(`/organizations/${orgSlug}/members/`);
+export async function listMembers(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<Member>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Member>>(
+    `/organizations/${orgSlug}/members/`,
+    { params }
+  );
   return data;
 }
 

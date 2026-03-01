@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from agents.selectors import get_agent_by_slug, list_organization_agents
 from agents.serializers.input import CreateAgentSerializer, UpdateAgentSerializer
@@ -10,7 +11,7 @@ from agents.serializers.output import AgentDetailSerializer, AgentListSerializer
 from agents.services import create_agent, delete_agent, update_agent
 
 
-class AgentListCreateView(APIView):
+class AgentListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationAdmin()]
@@ -18,8 +19,7 @@ class AgentListCreateView(APIView):
 
     def get(self, request, org_slug):
         agents = list_organization_agents(request.organization)
-        output = AgentListSerializer(agents, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(agents, AgentListSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateAgentSerializer(data=request.data)

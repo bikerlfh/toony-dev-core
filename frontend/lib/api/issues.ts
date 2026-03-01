@@ -8,6 +8,7 @@ import type {
   CreateIssuePayload,
   UpdateIssuePayload,
   CreateCommentPayload,
+  PaginatedResponse,
 } from "@/types";
 
 const base = (orgSlug: string, projectSlug: string) =>
@@ -16,9 +17,11 @@ const base = (orgSlug: string, projectSlug: string) =>
 export async function listIssues(
   orgSlug: string,
   projectSlug: string,
-  filters?: IssueFilters
-): Promise<IssueList[]> {
+  filters?: IssueFilters,
+  cursor?: string
+): Promise<PaginatedResponse<IssueList>> {
   const params = new URLSearchParams();
+  if (cursor) params.append("cursor", cursor);
   if (filters?.status) params.append("status", filters.status);
   if (filters?.priority) params.append("priority", filters.priority);
   if (filters?.assignee_id) params.append("assignee_id", filters.assignee_id);
@@ -28,7 +31,7 @@ export async function listIssues(
     filters.label_ids.forEach((id) => params.append("label_ids", id));
   }
   const qs = params.toString();
-  const { data } = await api.get<IssueList[]>(
+  const { data } = await api.get<PaginatedResponse<IssueList>>(
     `${base(orgSlug, projectSlug)}/${qs ? `?${qs}` : ""}`
   );
   return data;
@@ -81,10 +84,14 @@ export async function deleteIssue(
 export async function listComments(
   orgSlug: string,
   projectSlug: string,
-  identifier: string
-): Promise<IssueComment[]> {
-  const { data } = await api.get<IssueComment[]>(
-    `${base(orgSlug, projectSlug)}/${identifier}/comments/`
+  identifier: string,
+  cursor?: string
+): Promise<PaginatedResponse<IssueComment>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<IssueComment>>(
+    `${base(orgSlug, projectSlug)}/${identifier}/comments/`,
+    { params }
   );
   return data;
 }
@@ -130,10 +137,14 @@ export async function deleteComment(
 export async function listActivities(
   orgSlug: string,
   projectSlug: string,
-  identifier: string
-): Promise<IssueActivity[]> {
-  const { data } = await api.get<IssueActivity[]>(
-    `${base(orgSlug, projectSlug)}/${identifier}/activities/`
+  identifier: string,
+  cursor?: string
+): Promise<PaginatedResponse<IssueActivity>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<IssueActivity>>(
+    `${base(orgSlug, projectSlug)}/${identifier}/activities/`,
+    { params }
   );
   return data;
 }

@@ -392,7 +392,7 @@ function MilestonesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; p
 
   const fetchMilestones = useCallback(async () => {
     try {
-      setMilestones(await listMilestones(orgSlug, projectSlug));
+      setMilestones((await listMilestones(orgSlug, projectSlug)).results);
     } finally {
       setIsLoading(false);
     }
@@ -524,7 +524,7 @@ function CyclesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
 
   const fetchCycles = useCallback(async () => {
     try {
-      setCycles(await listCycles(orgSlug, projectSlug));
+      setCycles((await listCycles(orgSlug, projectSlug)).results);
     } finally { setIsLoading(false); }
   }, [orgSlug, projectSlug]);
 
@@ -658,7 +658,7 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
 
   const fetchMembers = useCallback(async () => {
     try {
-      setMembers(await listProjectMembers(orgSlug, projectSlug));
+      setMembers((await listProjectMembers(orgSlug, projectSlug)).results);
     } finally { setIsLoading(false); }
   }, [orgSlug, projectSlug]);
 
@@ -930,7 +930,7 @@ function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
 
   const fetchIssues = useCallback(async () => {
     try {
-      setIssues(await listIssues(orgSlug, projectSlug, filters));
+      setIssues((await listIssues(orgSlug, projectSlug, filters)).results);
     } finally {
       setIsLoading(false);
     }
@@ -943,10 +943,10 @@ function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
       listCycles(orgSlug, projectSlug),
       listLabels(orgSlug),
     ]);
-    setMembers(m);
-    setMilestones(ms);
-    setCycles(cs);
-    setLabels(ls);
+    setMembers(m.results);
+    setMilestones(ms.results);
+    setCycles(cs.results);
+    setLabels(ls.results);
   }, [orgSlug, projectSlug]);
 
   useEffect(() => {

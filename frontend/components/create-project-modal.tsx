@@ -46,9 +46,9 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchTeams = useCallback(async () => {
-    const data = await listTeams(orgSlug);
-    setTeams(data);
-    if (data.length > 0) setTeamSlug(data[0].slug);
+    const res = await listTeams(orgSlug);
+    setTeams(res.results);
+    if (res.results.length > 0) setTeamSlug(res.results[0].slug);
   }, [orgSlug]);
 
   useEffect(() => {

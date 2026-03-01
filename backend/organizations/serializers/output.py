@@ -8,6 +8,12 @@ from organizations.models import (
     OrganizationSettings,
     RepositoryCredential,
 )
+from projects.serializers.output import (
+    IssueListSerializer,
+    LabelSerializer,
+    ProjectListSerializer,
+    TeamListSerializer,
+)
 
 
 class OrganizationListSerializer(serializers.ModelSerializer):
@@ -100,3 +106,10 @@ class IntegrationConfigSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+
+class GlobalSearchResultSerializer(serializers.Serializer):
+    issues = IssueListSerializer(many=True, read_only=True)
+    projects = ProjectListSerializer(many=True, read_only=True)
+    teams = TeamListSerializer(many=True, read_only=True)
+    labels = LabelSerializer(many=True, read_only=True)

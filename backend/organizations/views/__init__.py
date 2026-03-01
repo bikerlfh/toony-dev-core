@@ -11,6 +11,7 @@ from organizations.views.organization_views import (
     OrganizationDetailView,
     OrganizationListCreateView,
 )
+from organizations.views.search_views import GlobalSearchView
 from organizations.views.settings_views import OrganizationSettingsView
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "CredentialDetailView",
     "IntegrationListCreateView",
     "IntegrationDetailView",
+    "GlobalSearchView",
 ]

@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from agents.selectors import (
     get_skill_by_slug,
@@ -18,7 +19,7 @@ from agents.serializers.output import (
 from agents.services import create_skill, delete_skill, update_skill
 
 
-class SkillListCreateView(APIView):
+class SkillListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationAdmin()]
@@ -26,8 +27,7 @@ class SkillListCreateView(APIView):
 
     def get(self, request, org_slug):
         skills = list_organization_skills(request.organization)
-        output = SkillListSerializer(skills, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(skills, SkillListSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateSkillSerializer(data=request.data)
@@ -82,7 +82,7 @@ class SkillDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SkillVersionListView(APIView):
+class SkillVersionListView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationMember]
 
     def get(self, request, org_slug, skill_slug):
@@ -90,5 +90,4 @@ class SkillVersionListView(APIView):
         if skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         versions = list_skill_versions(skill)
-        output = SkillVersionSerializer(versions, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(versions, SkillVersionSerializer, request)

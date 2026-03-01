@@ -408,7 +408,7 @@ function CommentsSection({
 
   const fetchComments = useCallback(async () => {
     try {
-      setComments(await listComments(orgSlug, projectSlug, identifier));
+      setComments((await listComments(orgSlug, projectSlug, identifier)).results);
     } finally {
       setIsLoading(false);
     }
@@ -580,7 +580,7 @@ function ActivitySection({
   useEffect(() => {
     (async () => {
       try {
-        setActivities(await listActivities(orgSlug, projectSlug, identifier));
+        setActivities((await listActivities(orgSlug, projectSlug, identifier)).results);
       } finally {
         setIsLoading(false);
       }

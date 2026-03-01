@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useOrg } from "@/contexts/org-context";
 import { OrgSwitcher } from "./org-switcher";
+import { SearchCommandPalette } from "./search-command-palette";
 
 const NAV_ITEMS = [
   { label: "Dashboard", path: "" },
@@ -33,6 +34,38 @@ export function Sidebar() {
       <div className="border-b border-gray-700 p-4">
         <OrgSwitcher />
       </div>
+
+      {/* Search */}
+      <div className="px-4 pt-4">
+        <button
+          onClick={() =>
+            document.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "k", metaKey: true })
+            )
+          }
+          className="flex w-full items-center gap-2 rounded border border-gray-700 px-3 py-1.5 text-sm text-gray-400 hover:border-gray-500 hover:text-gray-300"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <span className="flex-1 text-left">Search...</span>
+          <kbd className="rounded border border-gray-600 px-1 text-xs">
+            &#8984;K
+          </kbd>
+        </button>
+      </div>
+
+      <SearchCommandPalette />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-4">

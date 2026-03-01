@@ -43,10 +43,10 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 
   const refreshOrganizations = useCallback(async () => {
     try {
-      const orgs = await orgApi.listOrganizations();
+      const res = await orgApi.listOrganizations();
       setState((prev) => ({
         ...prev,
-        organizations: orgs,
+        organizations: res.results,
         isLoading: false,
       }));
     } catch {
@@ -57,8 +57,8 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   const refreshCurrentMembership = useCallback(async () => {
     if (!orgSlug || !user) return;
     try {
-      const members = await membersApi.listMembers(orgSlug);
-      const myMembership = members.find((m) => m.user.id === user.id) ?? null;
+      const res = await membersApi.listMembers(orgSlug);
+      const myMembership = res.results.find((m) => m.user.id === user.id) ?? null;
       setState((prev) => ({ ...prev, currentMembership: myMembership }));
     } catch {
       setState((prev) => ({ ...prev, currentMembership: null }));

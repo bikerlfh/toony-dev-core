@@ -24,6 +24,6 @@ Full design: [`docs/2026-03-01-toony-dev-core-design.md`](../2026-03-01-toony-de
 | 10 | Credentials & Integration Config | RepositoryCredential (encrypted), IntegrationConfig, backend + frontend | ✅ | ✅ |
 | 11 | Agents & Skills Registry | Agent, Skill, SkillVersion, AgentSkill models, backend + frontend | ✅ | ✅ |
 | 12 | Import System — Plugin Architecture | ImportPlugin ABC, LinearPlugin, ImportJob, ImportMapping, import wizard UI | ✅ | ✅ |
-| 13 | Multi-Tenancy Hardening, Pagination & Search | Org-scoped query isolation, cursor pagination, full-text search, global search UI | | |
+| 13 | Multi-Tenancy Hardening, Pagination & Search | Org-scoped query isolation, cursor pagination, full-text search, global search UI | ✅ | ✅ |
 | 14 | WebSocket Infrastructure & Real-Time | Django Channels, project board live updates, agent communication WebSocket | | |
 | 15 | Polish, Testing Suite & Deployment | CI/CD pipeline, API docs (Swagger), production Docker, comprehensive tests, seed data | | |

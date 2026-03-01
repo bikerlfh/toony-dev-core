@@ -37,7 +37,7 @@ export default function ImportsPage() {
 
   const fetchJobs = useCallback(async () => {
     try {
-      setJobs(await listImportJobs(orgSlug));
+      setJobs((await listImportJobs(orgSlug)).results);
     } finally {
       setIsLoading(false);
     }

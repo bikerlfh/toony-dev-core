@@ -34,7 +34,7 @@ export function StartImportWizard({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    listProjects(orgSlug).then(setProjects).catch(() => {});
+    listProjects(orgSlug).then((res) => setProjects(res.results)).catch(() => {});
   }, [orgSlug]);
 
   async function handleLoadProjects() {

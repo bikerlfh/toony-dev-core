@@ -4,11 +4,18 @@ import type {
   AgentDetail,
   CreateAgentPayload,
   UpdateAgentPayload,
+  PaginatedResponse,
 } from "@/types";
 
-export async function listAgents(orgSlug: string): Promise<AgentList[]> {
-  const { data } = await api.get<AgentList[]>(
-    `/organizations/${orgSlug}/agents/`
+export async function listAgents(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<AgentList>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<AgentList>>(
+    `/organizations/${orgSlug}/agents/`,
+    { params }
   );
   return data;
 }

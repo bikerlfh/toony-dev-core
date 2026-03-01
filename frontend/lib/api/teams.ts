@@ -7,10 +7,19 @@ import type {
   UpdateTeamPayload,
   AddTeamMemberPayload,
   UpdateTeamMemberRolePayload,
+  PaginatedResponse,
 } from "@/types";
 
-export async function listTeams(orgSlug: string): Promise<Team[]> {
-  const { data } = await api.get<Team[]>(`/organizations/${orgSlug}/teams/`);
+export async function listTeams(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<Team>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Team>>(
+    `/organizations/${orgSlug}/teams/`,
+    { params }
+  );
   return data;
 }
 
@@ -56,10 +65,14 @@ export async function deleteTeam(
 
 export async function listTeamMembers(
   orgSlug: string,
-  teamSlug: string
-): Promise<TeamMember[]> {
-  const { data } = await api.get<TeamMember[]>(
-    `/organizations/${orgSlug}/teams/${teamSlug}/members/`
+  teamSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<TeamMember>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<TeamMember>>(
+    `/organizations/${orgSlug}/teams/${teamSlug}/members/`,
+    { params }
   );
   return data;
 }

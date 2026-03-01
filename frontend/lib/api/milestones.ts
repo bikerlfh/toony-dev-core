@@ -3,6 +3,7 @@ import type {
   Milestone,
   CreateMilestonePayload,
   UpdateMilestonePayload,
+  PaginatedResponse,
 } from "@/types";
 
 const base = (orgSlug: string, projectSlug: string) =>
@@ -10,9 +11,15 @@ const base = (orgSlug: string, projectSlug: string) =>
 
 export async function listMilestones(
   orgSlug: string,
-  projectSlug: string
-): Promise<Milestone[]> {
-  const { data } = await api.get<Milestone[]>(`${base(orgSlug, projectSlug)}/`);
+  projectSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<Milestone>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<Milestone>>(
+    `${base(orgSlug, projectSlug)}/`,
+    { params }
+  );
   return data;
 }
 

@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from projects.permissions import IsProjectAccessible
 from projects.selectors import get_milestone_by_id, list_project_milestones
 from projects.serializers.input import CreateMilestoneSerializer, UpdateMilestoneSerializer
@@ -11,13 +12,12 @@ from projects.serializers.output import MilestoneSerializer
 from projects.services import create_milestone, delete_milestone, update_milestone
 
 
-class MilestoneListCreateView(APIView):
+class MilestoneListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
     def get(self, request, org_slug, project_slug):
         milestones = list_project_milestones(request.project)
-        output = MilestoneSerializer(milestones, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(milestones, MilestoneSerializer, request)
 
     def post(self, request, org_slug, project_slug):
         serializer = CreateMilestoneSerializer(data=request.data)

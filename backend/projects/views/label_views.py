@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from projects.selectors import get_label_by_id, list_organization_labels
 from projects.serializers.input import CreateLabelSerializer, UpdateLabelSerializer
@@ -11,16 +12,16 @@ from projects.serializers.output import LabelSerializer
 from projects.services import create_label, delete_label, update_label
 
 
-class LabelListCreateView(APIView):
+class LabelListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
     def get(self, request, org_slug):
-        labels = list_organization_labels(request.organization)
-        output = LabelSerializer(labels, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        search = request.query_params.get("q")
+        labels = list_organization_labels(request.organization, search=search)
+        return self.paginate(labels, LabelSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateLabelSerializer(data=request.data)

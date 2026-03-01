@@ -5,11 +5,18 @@ import type {
   CreateSkillPayload,
   UpdateSkillPayload,
   SkillVersion,
+  PaginatedResponse,
 } from "@/types";
 
-export async function listSkills(orgSlug: string): Promise<SkillList[]> {
-  const { data } = await api.get<SkillList[]>(
-    `/organizations/${orgSlug}/skills/`
+export async function listSkills(
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<SkillList>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<SkillList>>(
+    `/organizations/${orgSlug}/skills/`,
+    { params }
   );
   return data;
 }
@@ -56,10 +63,14 @@ export async function deleteSkill(
 
 export async function listSkillVersions(
   orgSlug: string,
-  skillSlug: string
-): Promise<SkillVersion[]> {
-  const { data } = await api.get<SkillVersion[]>(
-    `/organizations/${orgSlug}/skills/${skillSlug}/versions/`
+  skillSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<SkillVersion>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<SkillVersion>>(
+    `/organizations/${orgSlug}/skills/${skillSlug}/versions/`,
+    { params }
   );
   return data;
 }

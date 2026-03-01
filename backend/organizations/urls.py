@@ -3,6 +3,7 @@ from django.urls import path
 from organizations.views import (
     CredentialDetailView,
     CredentialListCreateView,
+    GlobalSearchView,
     IntegrationDetailView,
     IntegrationListCreateView,
     MemberDetailView,
@@ -24,4 +25,5 @@ urlpatterns = [
     path("<slug:org_slug>/credentials/<uuid:credential_id>/", CredentialDetailView.as_view(), name="credential-detail"),
     path("<slug:org_slug>/integrations/", IntegrationListCreateView.as_view(), name="integrations-list-create"),
     path("<slug:org_slug>/integrations/<uuid:integration_id>/", IntegrationDetailView.as_view(), name="integration-detail"),
+    path("<slug:org_slug>/search/", GlobalSearchView.as_view(), name="global-search"),
 ]

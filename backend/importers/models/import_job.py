@@ -59,6 +59,9 @@ class ImportJob(BaseModel):
     class Meta:
         db_table = "import_jobs"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["organization", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"Import {self.provider} - {self.status} ({self.progress}%)"

@@ -16,6 +16,7 @@ from organizations.selectors.organization_selector import (
     get_organization_by_slug,
     list_user_organizations,
 )
+from organizations.selectors.search_selector import global_search
 from organizations.selectors.settings_selector import get_organization_settings
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "get_credential_by_id",
     "list_organization_integrations",
     "get_integration_by_id",
+    "global_search",
 ]

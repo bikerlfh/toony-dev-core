@@ -27,8 +27,8 @@ export default function ProjectsPage() {
 
   const fetchProjects = useCallback(async () => {
     try {
-      const data = await listProjects(orgSlug);
-      setProjects(data);
+      const res = await listProjects(orgSlug);
+      setProjects(res.results);
     } finally {
       setIsLoading(false);
     }

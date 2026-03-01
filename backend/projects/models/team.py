@@ -34,6 +34,9 @@ class Team(BaseModel):
                 name="unique_org_team_identifier",
             ),
         ]
+        indexes = [
+            models.Index(fields=["organization", "name"]),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.identifier})"

@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
 from projects.selectors.project_selector import get_project_by_slug
 from importers.selectors import (
@@ -20,13 +21,12 @@ from importers.serializers.output import (
 from importers.services import list_external_projects, start_import
 
 
-class ImportJobListCreateView(APIView):
+class ImportJobListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def get(self, request, org_slug):
         jobs = list_organization_import_jobs(request.organization)
-        output = ImportJobListSerializer(jobs, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(jobs, ImportJobListSerializer, request)
 
     def post(self, request, org_slug):
         serializer = StartImportSerializer(data=request.data)
@@ -63,7 +63,7 @@ class ImportJobDetailView(APIView):
         return Response(output, status=status.HTTP_200_OK)
 
 
-class ImportJobMappingsView(APIView):
+class ImportJobMappingsView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def get(self, request, org_slug, job_id):
@@ -71,8 +71,7 @@ class ImportJobMappingsView(APIView):
         if job is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         mappings = list_import_mappings(job)
-        output = ImportMappingSerializer(mappings, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(mappings, ImportMappingSerializer, request)
 
 
 class ExternalProjectsView(APIView):

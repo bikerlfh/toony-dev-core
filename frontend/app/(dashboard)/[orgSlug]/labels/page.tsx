@@ -29,7 +29,7 @@ export default function LabelsPage() {
 
   const fetchLabels = useCallback(async () => {
     try {
-      setLabels(await listLabels(orgSlug));
+      setLabels((await listLabels(orgSlug)).results);
     } finally {
       setIsLoading(false);
     }

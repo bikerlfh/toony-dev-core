@@ -62,7 +62,7 @@ export default function TeamDetailPage() {
         listTeamMembers(orgSlug, teamSlug),
       ]);
       setTeam(teamData);
-      setMembers(memberData);
+      setMembers(memberData.results);
       setEditName(teamData.name);
       setEditDescription(teamData.description);
     } finally {

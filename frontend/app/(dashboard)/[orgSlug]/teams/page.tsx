@@ -25,8 +25,8 @@ export default function TeamsPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const data = await listTeams(orgSlug);
-      setTeams(data);
+      const res = await listTeams(orgSlug);
+      setTeams(res.results);
     } finally {
       setIsLoading(false);
     }

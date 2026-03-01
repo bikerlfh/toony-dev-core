@@ -3,13 +3,18 @@ import type {
   RepositoryCredential,
   CreateCredentialPayload,
   UpdateCredentialPayload,
+  PaginatedResponse,
 } from "@/types";
 
 export async function listCredentials(
-  orgSlug: string
-): Promise<RepositoryCredential[]> {
-  const { data } = await api.get<RepositoryCredential[]>(
-    `/organizations/${orgSlug}/credentials/`
+  orgSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<RepositoryCredential>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<RepositoryCredential>>(
+    `/organizations/${orgSlug}/credentials/`,
+    { params }
   );
   return data;
 }

@@ -65,7 +65,7 @@ export default function AgentsPage() {
 
   const fetchAgents = useCallback(async () => {
     try {
-      setAgents(await listAgents(orgSlug));
+      setAgents((await listAgents(orgSlug)).results);
     } finally {
       setAgentsLoading(false);
     }
@@ -73,7 +73,7 @@ export default function AgentsPage() {
 
   const fetchSkills = useCallback(async () => {
     try {
-      setSkills(await listSkills(orgSlug));
+      setSkills((await listSkills(orgSlug)).results);
     } finally {
       setSkillsLoading(false);
     }

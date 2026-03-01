@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationOwner
 from organizations.selectors import get_organization_by_slug, list_user_organizations
 from organizations.serializers.input import (
@@ -20,13 +21,12 @@ from organizations.services import (
 )
 
 
-class OrganizationListCreateView(APIView):
+class OrganizationListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         organizations = list_user_organizations(request.user)
-        output = OrganizationListSerializer(organizations, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(organizations, OrganizationListSerializer, request)
 
     def post(self, request):
         serializer = CreateOrganizationSerializer(data=request.data)

@@ -3,14 +3,19 @@ import type {
   AgentSkill,
   CreateAgentSkillPayload,
   UpdateAgentSkillPayload,
+  PaginatedResponse,
 } from "@/types";
 
 export async function listAgentSkills(
   orgSlug: string,
-  agentSlug: string
-): Promise<AgentSkill[]> {
-  const { data } = await api.get<AgentSkill[]>(
-    `/organizations/${orgSlug}/agents/${agentSlug}/skills/`
+  agentSlug: string,
+  cursor?: string
+): Promise<PaginatedResponse<AgentSkill>> {
+  const params: Record<string, string> = {};
+  if (cursor) params.cursor = cursor;
+  const { data } = await api.get<PaginatedResponse<AgentSkill>>(
+    `/organizations/${orgSlug}/agents/${agentSlug}/skills/`,
+    { params }
   );
   return data;
 }

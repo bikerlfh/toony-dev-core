@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.selectors import get_user_by_email
+from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from projects.permissions import IsTeamAccessible
 from projects.selectors import list_organization_teams, list_team_members, get_team_membership
@@ -29,16 +30,16 @@ from projects.services import (
 )
 
 
-class TeamListCreateView(APIView):
+class TeamListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
     def get(self, request, org_slug):
-        teams = list_organization_teams(request.organization)
-        output = TeamListSerializer(teams, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        search = request.query_params.get("q")
+        teams = list_organization_teams(request.organization, search=search)
+        return self.paginate(teams, TeamListSerializer, request)
 
     def post(self, request, org_slug):
         serializer = CreateTeamSerializer(data=request.data)
@@ -78,7 +79,7 @@ class TeamDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TeamMemberListCreateView(APIView):
+class TeamMemberListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsAuthenticated(), IsTeamAccessible()]
@@ -86,8 +87,7 @@ class TeamMemberListCreateView(APIView):
 
     def get(self, request, org_slug, team_slug):
         members = list_team_members(request.team)
-        output = TeamMembershipSerializer(members, many=True).data
-        return Response(output, status=status.HTTP_200_OK)
+        return self.paginate(members, TeamMembershipSerializer, request)
 
     def post(self, request, org_slug, team_slug):
         serializer = AddTeamMemberSerializer(data=request.data)
