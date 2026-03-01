@@ -1,8 +1,10 @@
 from django.db import transaction
 from django.utils import timezone
 
+from common.broadcast import broadcast
 from projects.models import Issue, IssueActivity, IssueComment
 from projects.selectors.issue_selector import get_next_identifier
+from projects.serializers.output import IssueCommentSerializer, IssueListSerializer
 
 
 def create_issue(project, reporter, title, **kwargs):
@@ -25,6 +27,12 @@ def create_issue(project, reporter, title, **kwargs):
             user=reporter,
             action="created",
         )
+
+    broadcast(
+        f"project_{project.id}",
+        "issue_created",
+        IssueListSerializer(issue).data,
+    )
 
     return issue
 
@@ -84,11 +92,26 @@ def update_issue(issue, user, **kwargs):
         if activities:
             IssueActivity.objects.bulk_create(activities)
 
+    issue.refresh_from_db()
+    broadcast(
+        f"project_{issue.project_id}",
+        "issue_updated",
+        IssueListSerializer(issue).data,
+    )
+
     return issue
 
 
 def delete_issue(issue):
+    project_id = issue.project_id
+    issue_id = str(issue.id)
     issue.delete()
+
+    broadcast(
+        f"project_{project_id}",
+        "issue_deleted",
+        {"id": issue_id},
+    )
 
 
 def create_comment(issue, author, body):
@@ -103,6 +126,16 @@ def create_comment(issue, author, body):
             user=author,
             action="commented",
         )
+
+    broadcast(
+        f"project_{issue.project_id}",
+        "comment_created",
+        {
+            "issue_id": str(issue.id),
+            "comment": IssueCommentSerializer(comment).data,
+        },
+    )
+
     return comment
 
 
@@ -110,8 +143,27 @@ def update_comment(comment, body):
     comment.body = body
     comment.edited_at = timezone.now()
     comment.save()
+
+    broadcast(
+        f"project_{comment.issue.project_id}",
+        "comment_updated",
+        {
+            "issue_id": str(comment.issue_id),
+            "comment": IssueCommentSerializer(comment).data,
+        },
+    )
+
     return comment
 
 
 def delete_comment(comment):
+    project_id = comment.issue.project_id
+    issue_id = str(comment.issue_id)
+    comment_id = str(comment.id)
     comment.delete()
+
+    broadcast(
+        f"project_{project_id}",
+        "comment_deleted",
+        {"issue_id": issue_id, "comment_id": comment_id},
+    )

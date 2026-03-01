@@ -54,7 +54,9 @@ import type {
   IssuePriority,
   IssueFilters,
   Label,
+  ProjectWsEvent,
 } from "@/types";
+import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 
 type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "settings";
 
@@ -187,7 +189,7 @@ export default function ProjectDetailPage() {
           />
         )}
         {activeTab === "issues" && (
-          <IssuesTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
+          <IssuesTab orgSlug={orgSlug} projectSlug={projectSlug} projectId={project.id} canManage={canManage} />
         )}
         {activeTab === "milestones" && (
           <MilestonesTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
@@ -916,7 +918,7 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
 
 type IssueViewMode = "board" | "list";
 
-function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; projectSlug: string; canManage: boolean }) {
+function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: string; projectSlug: string; projectId: string; canManage: boolean }) {
   const [issues, setIssues] = useState<IssueList[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -927,6 +929,33 @@ function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
   const [filters, setFilters] = useState<IssueFilters>({});
   const [showCreate, setShowCreate] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [latestWsEvent, setLatestWsEvent] = useState<ProjectWsEvent | null>(null);
+
+  const handleWsEvent = useCallback((event: ProjectWsEvent) => {
+    switch (event.type) {
+      case "issue.created":
+        setIssues((prev) => {
+          if (prev.some((i) => i.id === event.data.id)) return prev;
+          return [event.data, ...prev];
+        });
+        break;
+      case "issue.updated":
+        setIssues((prev) =>
+          prev.map((i) => (i.id === event.data.id ? event.data : i)),
+        );
+        break;
+      case "issue.deleted":
+        setIssues((prev) => prev.filter((i) => i.id !== event.data.id));
+        break;
+      case "comment.created":
+      case "comment.updated":
+      case "comment.deleted":
+        setLatestWsEvent(event);
+        break;
+    }
+  }, []);
+
+  useProjectWebSocket({ projectId, onEvent: handleWsEvent });
 
   const fetchIssues = useCallback(async () => {
     try {
@@ -1054,6 +1083,7 @@ function IssuesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
           labels={labels}
           onClose={() => setSelectedIssueId(null)}
           onUpdated={fetchIssues}
+          wsEvent={latestWsEvent}
         />
       )}
     </div>

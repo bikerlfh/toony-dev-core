@@ -108,6 +108,20 @@ export type {
   StartImportPayload,
 } from "./imports";
 
+export type {
+  ProjectWsEvent,
+  IssueCreatedEvent,
+  IssueUpdatedEvent,
+  IssueDeletedEvent,
+  CommentCreatedEvent,
+  CommentUpdatedEvent,
+  CommentDeletedEvent,
+  AgentWsEvent,
+  TaskAssignEvent,
+  HeartbeatAckEvent,
+  WsReadyState,
+} from "./websocket";
+
 // --- Pagination & Search ---
 
 export interface PaginatedResponse<T> {

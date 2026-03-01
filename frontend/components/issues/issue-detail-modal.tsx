@@ -23,6 +23,7 @@ import type {
   Cycle,
   Label,
   ProjectMember,
+  ProjectWsEvent,
 } from "@/types";
 
 const STATUS_OPTIONS: { value: IssueStatus; label: string }[] = [
@@ -70,6 +71,7 @@ interface IssueDetailModalProps {
   labels: Label[];
   onClose: () => void;
   onUpdated: () => void;
+  wsEvent?: ProjectWsEvent | null;
 }
 
 type DetailTab = "comments" | "activity";
@@ -84,6 +86,7 @@ export function IssueDetailModal({
   labels,
   onClose,
   onUpdated,
+  wsEvent,
 }: IssueDetailModalProps) {
   const [issue, setIssue] = useState<IssueDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,6 +181,8 @@ export function IssueDetailModal({
                     orgSlug={orgSlug}
                     projectSlug={projectSlug}
                     identifier={identifier}
+                    issueId={issue.id}
+                    wsEvent={wsEvent}
                   />
                 )}
                 {activeTab === "activity" && (
@@ -392,10 +397,14 @@ function CommentsSection({
   orgSlug,
   projectSlug,
   identifier,
+  issueId,
+  wsEvent,
 }: {
   orgSlug: string;
   projectSlug: string;
   identifier: string;
+  issueId: string;
+  wsEvent?: ProjectWsEvent | null;
 }) {
   const [comments, setComments] = useState<IssueComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -417,6 +426,23 @@ function CommentsSection({
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  // Handle real-time comment events from WebSocket
+  useEffect(() => {
+    if (!wsEvent) return;
+    if (wsEvent.type === "comment.created" && wsEvent.data.issue_id === issueId) {
+      setComments((prev) => {
+        if (prev.some((c) => c.id === wsEvent.data.comment.id)) return prev;
+        return [...prev, wsEvent.data.comment];
+      });
+    } else if (wsEvent.type === "comment.updated" && wsEvent.data.issue_id === issueId) {
+      setComments((prev) =>
+        prev.map((c) => (c.id === wsEvent.data.comment.id ? wsEvent.data.comment : c)),
+      );
+    } else if (wsEvent.type === "comment.deleted" && wsEvent.data.issue_id === issueId) {
+      setComments((prev) => prev.filter((c) => c.id !== wsEvent.data.comment_id));
+    }
+  }, [wsEvent, issueId]);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
