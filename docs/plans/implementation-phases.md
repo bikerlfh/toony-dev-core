@@ -13,7 +13,7 @@ Full design: [`docs/2026-03-01-toony-dev-core-design.md`](../2026-03-01-toony-de
 | # | Phase | Description | Plan Generated | Implemented |
 |---|-------|-------------|:--------------:|:-----------:|
 | 1 | Project Bootstrap & Infrastructure | Docker, Django project, Next.js init, PostgreSQL/Redis, settings, health check | ✅ | ✅ |
-| 2 | Custom User Model & JWT Auth | Custom User (AbstractUser), JWT endpoints (register, login, refresh, me) | | |
+| 2 | Custom User Model & JWT Auth | Custom User (AbstractUser), JWT endpoints (register, login, refresh, me) | ✅ | ✅ |
 | 3 | Organizations, Memberships & RBAC | Organization CRUD, OrganizationMembership, RBAC permissions (5 roles), OrganizationSettings | | |
 | 4 | Frontend Foundation — Auth & Org Shell | Next.js auth pages, JWT handling, org selector, sidebar layout, member management UI | | |
 | 5 | Teams & Labels (Backend) | Team/TeamMembership CRUD, org-level Label CRUD | | |
