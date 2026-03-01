@@ -78,3 +78,24 @@ export {
   deleteComment,
   listActivities,
 } from "./issues";
+export {
+  listAgents,
+  createAgent,
+  getAgent,
+  updateAgent,
+  deleteAgent,
+} from "./agents";
+export {
+  listSkills,
+  createSkill,
+  getSkill,
+  updateSkill,
+  deleteSkill,
+  listSkillVersions,
+} from "./skills";
+export {
+  listAgentSkills,
+  assignSkill,
+  updateAgentSkill,
+  removeAgentSkill,
+} from "./agent-skills";
