@@ -1,3 +1,11 @@
+from organizations.selectors.credential_selector import (
+    get_credential_by_id,
+    list_organization_credentials,
+)
+from organizations.selectors.integration_selector import (
+    get_integration_by_id,
+    list_organization_integrations,
+)
 from organizations.selectors.membership_selector import (
     get_membership,
     get_user_role,
@@ -18,4 +26,8 @@ __all__ = [
     "list_organization_members",
     "get_user_role",
     "get_organization_settings",
+    "list_organization_credentials",
+    "get_credential_by_id",
+    "list_organization_integrations",
+    "get_integration_by_id",
 ]

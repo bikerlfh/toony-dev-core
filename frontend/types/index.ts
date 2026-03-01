@@ -64,3 +64,15 @@ export type {
   CreateCommentPayload,
   IssueActivity,
 } from "./projects";
+
+export type {
+  CredentialProvider,
+  CredentialType,
+  IntegrationProvider,
+  RepositoryCredential,
+  CreateCredentialPayload,
+  UpdateCredentialPayload,
+  IntegrationConfig,
+  CreateIntegrationPayload,
+  UpdateIntegrationPayload,
+} from "./credentials";

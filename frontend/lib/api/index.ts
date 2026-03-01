@@ -53,6 +53,20 @@ export {
   deleteLabel,
 } from "./labels";
 export {
+  listCredentials,
+  createCredential,
+  getCredential,
+  updateCredential,
+  deleteCredential,
+} from "./credentials";
+export {
+  listIntegrations,
+  createIntegration,
+  getIntegration,
+  updateIntegration,
+  deleteIntegration,
+} from "./integrations";
+export {
   listIssues,
   getIssue,
   createIssue,

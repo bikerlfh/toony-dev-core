@@ -146,11 +146,16 @@ class ProjectMembershipSerializer(serializers.ModelSerializer):
 
 
 class ProjectSettingsSerializer(serializers.ModelSerializer):
+    repository_credential = serializers.UUIDField(
+        source="repository_credential_id", read_only=True
+    )
+
     class Meta:
         model = ProjectSettings
         fields = [
             "id",
             "repository_url",
+            "repository_credential",
             "default_branch",
             "branch_naming_convention",
             "required_reviewers_count",

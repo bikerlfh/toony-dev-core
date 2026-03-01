@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { label: "Projects", path: "/projects" },
   { label: "Labels", path: "/labels" },
   { label: "Members", path: "/members" },
+  { label: "Credentials", path: "/credentials" },
   { label: "Settings", path: "/settings" },
 ];
 

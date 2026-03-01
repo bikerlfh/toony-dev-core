@@ -124,6 +124,13 @@ class ProjectSettings(BaseModel):
         related_name="settings",
     )
     repository_url = models.URLField(blank=True, default="")
+    repository_credential = models.ForeignKey(
+        "organizations.RepositoryCredential",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="project_settings",
+    )
     default_branch = models.CharField(max_length=255, default="main")
     branch_naming_convention = models.CharField(
         max_length=255, blank=True, default=""

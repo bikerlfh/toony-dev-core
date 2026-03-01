@@ -2,7 +2,12 @@ from rest_framework import serializers
 
 from accounts.models import OrganizationMembership
 from accounts.serializers.output import UserDetailSerializer
-from organizations.models import Organization, OrganizationSettings
+from organizations.models import (
+    IntegrationConfig,
+    Organization,
+    OrganizationSettings,
+    RepositoryCredential,
+)
 
 
 class OrganizationListSerializer(serializers.ModelSerializer):
@@ -62,6 +67,36 @@ class OrganizationSettingsSerializer(serializers.ModelSerializer):
             "notification_preferences",
             "allowed_ip_ranges",
             "audit_log_retention_days",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class CredentialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RepositoryCredential
+        fields = [
+            "id",
+            "name",
+            "provider",
+            "credential_type",
+            "url_pattern",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class IntegrationConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IntegrationConfig
+        fields = [
+            "id",
+            "provider",
+            "webhook_url",
+            "is_active",
+            "created_at",
             "updated_at",
         ]
         read_only_fields = fields
