@@ -3,6 +3,8 @@ from rest_framework import serializers
 from projects.models import (
     CycleStatus,
     EstimationMethod,
+    IssuePriority,
+    IssueStatus,
     MilestoneStatus,
     ProjectMemberRole,
     ProjectPriority,
@@ -148,3 +150,64 @@ class UpdateCycleSerializer(serializers.Serializer):
     status = serializers.ChoiceField(
         choices=CycleStatus.choices, required=False,
     )
+
+
+# --- Issue ---
+
+class CreateIssueSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=500)
+    description = serializers.CharField(required=False, default="")
+    status = serializers.ChoiceField(
+        choices=IssueStatus.choices, required=False,
+    )
+    priority = serializers.ChoiceField(
+        choices=IssuePriority.choices, required=False,
+    )
+    assignee_id = serializers.UUIDField(required=False, allow_null=True)
+    milestone_id = serializers.UUIDField(required=False, allow_null=True)
+    cycle_id = serializers.UUIDField(required=False, allow_null=True)
+    parent_identifier = serializers.CharField(max_length=30, required=False)
+    label_ids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, default=list,
+    )
+    estimate = serializers.IntegerField(required=False, allow_null=True)
+    due_date = serializers.DateField(required=False, allow_null=True)
+    sort_order = serializers.IntegerField(required=False, default=0)
+
+
+class UpdateIssueSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=500, required=False)
+    description = serializers.CharField(required=False)
+    status = serializers.ChoiceField(
+        choices=IssueStatus.choices, required=False,
+    )
+    priority = serializers.ChoiceField(
+        choices=IssuePriority.choices, required=False,
+    )
+    assignee_id = serializers.UUIDField(required=False, allow_null=True)
+    milestone_id = serializers.UUIDField(required=False, allow_null=True)
+    cycle_id = serializers.UUIDField(required=False, allow_null=True)
+    parent_identifier = serializers.CharField(max_length=30, required=False, allow_null=True)
+    label_ids = serializers.ListField(
+        child=serializers.UUIDField(), required=False,
+    )
+    estimate = serializers.IntegerField(required=False, allow_null=True)
+    due_date = serializers.DateField(required=False, allow_null=True)
+    sort_order = serializers.IntegerField(required=False)
+    external_tracker_name = serializers.CharField(
+        max_length=100, required=False, allow_blank=True,
+    )
+    external_tracker_url = serializers.URLField(required=False, allow_blank=True)
+    external_tracker_id = serializers.CharField(
+        max_length=255, required=False, allow_blank=True,
+    )
+
+
+# --- Comment ---
+
+class CreateCommentSerializer(serializers.Serializer):
+    body = serializers.CharField()
+
+
+class UpdateCommentSerializer(serializers.Serializer):
+    body = serializers.CharField()

@@ -1,4 +1,12 @@
 from projects.services.cycle_service import create_cycle, delete_cycle, update_cycle
+from projects.services.issue_service import (
+    create_comment,
+    create_issue,
+    delete_comment,
+    delete_issue,
+    update_comment,
+    update_issue,
+)
 from projects.services.label_service import create_label, delete_label, update_label
 from projects.services.milestone_service import (
     create_milestone,
@@ -46,4 +54,10 @@ __all__ = [
     "create_cycle",
     "update_cycle",
     "delete_cycle",
+    "create_issue",
+    "update_issue",
+    "delete_issue",
+    "create_comment",
+    "update_comment",
+    "delete_comment",
 ]

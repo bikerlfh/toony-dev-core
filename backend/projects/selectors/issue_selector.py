@@ -1,0 +1,64 @@
+from django.db.models import Max
+
+from projects.models import Issue, IssueActivity, IssueComment
+
+
+def get_next_identifier(project):
+    """Generate the next issue identifier for a project, e.g. ENG-42."""
+    prefix = project.team.identifier
+    last_number = (
+        Issue.objects.filter(project=project)
+        .aggregate(max_num=Max("sort_order"))
+        .get("max_num")
+    )
+    # Count existing issues to determine sequence number
+    count = Issue.objects.filter(
+        identifier__startswith=f"{prefix}-",
+    ).count()
+    return f"{prefix}-{count + 1}"
+
+
+def list_project_issues(project, *, filters=None):
+    qs = Issue.objects.filter(
+        project=project,
+    ).select_related(
+        "assignee", "reporter", "milestone", "cycle", "parent",
+    ).prefetch_related("labels")
+
+    if filters:
+        if "status" in filters:
+            qs = qs.filter(status=filters["status"])
+        if "priority" in filters:
+            qs = qs.filter(priority=filters["priority"])
+        if "assignee_id" in filters:
+            qs = qs.filter(assignee_id=filters["assignee_id"])
+        if "milestone_id" in filters:
+            qs = qs.filter(milestone_id=filters["milestone_id"])
+        if "cycle_id" in filters:
+            qs = qs.filter(cycle_id=filters["cycle_id"])
+        if "label_ids" in filters:
+            qs = qs.filter(labels__id__in=filters["label_ids"]).distinct()
+        if "parent_id" in filters:
+            qs = qs.filter(parent_id=filters["parent_id"])
+
+    return qs.order_by("sort_order", "-created_at")
+
+
+def get_issue_by_identifier(identifier):
+    return Issue.objects.filter(
+        identifier=identifier,
+    ).select_related(
+        "project", "assignee", "reporter", "milestone", "cycle", "parent",
+    ).prefetch_related("labels").first()
+
+
+def list_issue_comments(issue):
+    return IssueComment.objects.filter(
+        issue=issue,
+    ).select_related("author").order_by("created_at")
+
+
+def list_issue_activities(issue):
+    return IssueActivity.objects.filter(
+        issue=issue,
+    ).select_related("user").order_by("-created_at")

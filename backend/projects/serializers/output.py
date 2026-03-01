@@ -3,6 +3,9 @@ from rest_framework import serializers
 from accounts.serializers.output import UserDetailSerializer
 from projects.models import (
     Cycle,
+    Issue,
+    IssueActivity,
+    IssueComment,
     Label,
     Milestone,
     Project,
@@ -191,5 +194,108 @@ class CycleSerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "updated_at",
+        ]
+        read_only_fields = fields
+
+
+# --- Issue ---
+
+class IssueListSerializer(serializers.ModelSerializer):
+    assignee = UserDetailSerializer(read_only=True)
+    labels = LabelSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Issue
+        fields = [
+            "id",
+            "identifier",
+            "title",
+            "status",
+            "priority",
+            "assignee",
+            "labels",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class IssueDetailSerializer(serializers.ModelSerializer):
+    assignee = UserDetailSerializer(read_only=True)
+    reporter = UserDetailSerializer(read_only=True)
+    labels = LabelSerializer(many=True, read_only=True)
+    milestone = MilestoneSerializer(read_only=True)
+    cycle = CycleSerializer(read_only=True)
+    parent_identifier = serializers.CharField(
+        source="parent.identifier", read_only=True, default=None,
+    )
+    sub_issue_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Issue
+        fields = [
+            "id",
+            "identifier",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reporter",
+            "labels",
+            "milestone",
+            "cycle",
+            "parent_identifier",
+            "sub_issue_count",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "external_tracker_name",
+            "external_tracker_url",
+            "external_tracker_id",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_sub_issue_count(self, obj):
+        return obj.sub_issues.count()
+
+
+# --- Comment ---
+
+class IssueCommentSerializer(serializers.ModelSerializer):
+    author = UserDetailSerializer(read_only=True)
+
+    class Meta:
+        model = IssueComment
+        fields = [
+            "id",
+            "author",
+            "body",
+            "edited_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+# --- Activity ---
+
+class IssueActivitySerializer(serializers.ModelSerializer):
+    user = UserDetailSerializer(read_only=True)
+
+    class Meta:
+        model = IssueActivity
+        fields = [
+            "id",
+            "user",
+            "action",
+            "field_changed",
+            "old_value",
+            "new_value",
+            "created_at",
         ]
         read_only_fields = fields

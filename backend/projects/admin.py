@@ -2,6 +2,9 @@ from django.contrib import admin
 
 from projects.models import (
     Cycle,
+    Issue,
+    IssueActivity,
+    IssueComment,
     Label,
     Milestone,
     Project,
@@ -74,3 +77,26 @@ class CycleAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("name", "project__name")
     ordering = ("-number",)
+
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    list_display = ("identifier", "title", "project", "status", "priority", "assignee", "created_at")
+    list_filter = ("status", "priority")
+    search_fields = ("identifier", "title")
+    ordering = ("-created_at",)
+
+
+@admin.register(IssueComment)
+class IssueCommentAdmin(admin.ModelAdmin):
+    list_display = ("issue", "author", "created_at", "edited_at")
+    search_fields = ("issue__identifier", "author__email")
+    ordering = ("-created_at",)
+
+
+@admin.register(IssueActivity)
+class IssueActivityAdmin(admin.ModelAdmin):
+    list_display = ("issue", "user", "action", "field_changed", "created_at")
+    list_filter = ("action",)
+    search_fields = ("issue__identifier", "user__email")
+    ordering = ("-created_at",)

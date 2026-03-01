@@ -3,6 +3,13 @@ from projects.selectors.cycle_selector import (
     get_next_cycle_number,
     list_project_cycles,
 )
+from projects.selectors.issue_selector import (
+    get_issue_by_identifier,
+    get_next_identifier,
+    list_issue_activities,
+    list_issue_comments,
+    list_project_issues,
+)
 from projects.selectors.label_selector import (
     get_label_by_id,
     list_organization_labels,
@@ -42,4 +49,9 @@ __all__ = [
     "list_project_cycles",
     "get_cycle_by_id",
     "get_next_cycle_number",
+    "get_next_identifier",
+    "list_project_issues",
+    "get_issue_by_identifier",
+    "list_issue_comments",
+    "list_issue_activities",
 ]

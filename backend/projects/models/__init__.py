@@ -1,4 +1,7 @@
+from projects.models.activity import IssueActivity
+from projects.models.comment import IssueComment
 from projects.models.cycle import Cycle, CycleStatus
+from projects.models.issue import Issue, IssuePriority, IssueStatus
 from projects.models.label import Label
 from projects.models.milestone import Milestone, MilestoneStatus
 from projects.models.project import (
@@ -28,4 +31,9 @@ __all__ = [
     "MilestoneStatus",
     "Cycle",
     "CycleStatus",
+    "Issue",
+    "IssueStatus",
+    "IssuePriority",
+    "IssueComment",
+    "IssueActivity",
 ]

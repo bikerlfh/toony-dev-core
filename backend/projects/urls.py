@@ -3,6 +3,11 @@ from django.urls import path
 from projects.views import (
     CycleDetailView,
     CycleListCreateView,
+    IssueActivityListView,
+    IssueCommentDetailView,
+    IssueCommentListCreateView,
+    IssueDetailView,
+    IssueListCreateView,
     LabelDetailView,
     LabelListCreateView,
     MilestoneDetailView,
@@ -41,4 +46,10 @@ urlpatterns = [
     # Cycles
     path("projects/<slug:project_slug>/cycles/", CycleListCreateView.as_view(), name="cycle-list-create"),
     path("projects/<slug:project_slug>/cycles/<uuid:cycle_id>/", CycleDetailView.as_view(), name="cycle-detail"),
+    # Issues
+    path("projects/<slug:project_slug>/issues/", IssueListCreateView.as_view(), name="issue-list-create"),
+    path("projects/<slug:project_slug>/issues/<str:identifier>/", IssueDetailView.as_view(), name="issue-detail"),
+    path("projects/<slug:project_slug>/issues/<str:identifier>/comments/", IssueCommentListCreateView.as_view(), name="issue-comment-list-create"),
+    path("projects/<slug:project_slug>/issues/<str:identifier>/comments/<uuid:comment_id>/", IssueCommentDetailView.as_view(), name="issue-comment-detail"),
+    path("projects/<slug:project_slug>/issues/<str:identifier>/activities/", IssueActivityListView.as_view(), name="issue-activity-list"),
 ]
