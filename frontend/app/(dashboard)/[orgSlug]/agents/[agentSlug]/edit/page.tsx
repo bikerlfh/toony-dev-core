@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAgent, updateAgent } from "@/lib/api/agents";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
 import type { AgentDetail, AgentStatus, AgentType } from "@/types";
 
@@ -36,7 +37,6 @@ export default function EditAgentPage() {
   const [version, setVersion] = useState("");
   const [description, setDescription] = useState("");
   const [markdown, setMarkdown] = useState("");
-  const [encryptedConfiguration, setEncryptedConfiguration] = useState("");
   const [tags, setTags] = useState("");
   const [isExternal, setIsExternal] = useState(false);
   const [externalCommand, setExternalCommand] = useState("");
@@ -45,7 +45,7 @@ export default function EditAgentPage() {
 
   const fetchAgent = useCallback(async () => {
     try {
-      const data = await getAgent(orgSlug, agentSlug);
+      const data = await getAgent(agentSlug);
       setAgent(data);
       setName(data.name);
       setAgentType(data.agent_type);
@@ -59,7 +59,7 @@ export default function EditAgentPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug, agentSlug]);
+  }, [agentSlug]);
 
   useEffect(() => {
     fetchAgent();
@@ -71,7 +71,7 @@ export default function EditAgentPage() {
     setIsSubmitting(true);
 
     try {
-      const payload: Record<string, unknown> = {
+      await updateAgent(agentSlug, {
         name,
         agent_type: agentType,
         status: statusVal,
@@ -86,11 +86,7 @@ export default function EditAgentPage() {
               .map((t) => t.trim())
               .filter(Boolean)
           : [],
-      };
-      if (encryptedConfiguration) {
-        payload.encrypted_configuration = encryptedConfiguration;
-      }
-      await updateAgent(orgSlug, agentSlug, payload);
+      });
       router.push(`/${orgSlug}/agents`);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })
@@ -134,7 +130,7 @@ export default function EditAgentPage() {
           </svg>
         </button>
         <div>
-          <h1 className="text-2xl font-medium tracking-tight text-white">Edit agent</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-white">{agent.name}</h1>
           <p className="font-mono text-sm text-slate-500">{agent.slug}</p>
         </div>
       </div>
@@ -150,18 +146,13 @@ export default function EditAgentPage() {
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Left — Markdown editor */}
           <div className="flex-1 lg:min-w-0">
-            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                Markdown
-              </label>
-              <textarea
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                rows={28}
-                className="block w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                placeholder="# Agent instructions..."
-              />
-            </div>
+            <MarkdownEditor
+              label="Markdown"
+              value={markdown}
+              onChange={setMarkdown}
+              placeholder="# Agent instructions..."
+              rows={28}
+            />
           </div>
 
           {/* Right — Properties */}
@@ -219,23 +210,11 @@ export default function EditAgentPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={250}
+                    required
                     rows={2}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                   <p className="mt-1 text-xs text-slate-600">{description.length}/250</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-400">
-                    Configuration (JSON) <span className="text-slate-600">(encrypted)</span>
-                  </label>
-                  <textarea
-                    value={encryptedConfiguration}
-                    onChange={(e) => setEncryptedConfiguration(e.target.value)}
-                    rows={2}
-                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                    placeholder="Enter new configuration to update"
-                  />
                 </div>
 
                 <div>

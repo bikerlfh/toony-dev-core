@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createSkill } from "@/lib/api/skills";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
 import type { SkillCategory } from "@/types";
 
@@ -25,10 +26,11 @@ export default function NewSkillPage() {
   const [category, setCategory] = useState<SkillCategory>("CUSTOM");
   const [version, setVersion] = useState("0.1.0");
   const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
+  const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState("");
   const [isExternal, setIsExternal] = useState(false);
   const [externalCommand, setExternalCommand] = useState("");
+  const [isGlobal, setIsGlobal] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,13 +51,14 @@ export default function NewSkillPage() {
     setIsSubmitting(true);
 
     try {
-      await createSkill(orgSlug, {
+      await createSkill({
         name,
         slug,
+        organization: isGlobal ? null : orgSlug,
         category,
         version,
         description: description || undefined,
-        content: content || undefined,
+        markdown: markdown || undefined,
         is_external: isExternal,
         external_command: isExternal ? externalCommand : undefined,
         tags: tags
@@ -102,20 +105,15 @@ export default function NewSkillPage() {
 
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Left — Content editor */}
+          {/* Left — Markdown editor */}
           <div className="flex-1 lg:min-w-0">
-            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                Content
-              </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={28}
-                className="block w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                placeholder="# Skill instructions&#10;&#10;Define the skill's behavior, input expectations, and output format..."
-              />
-            </div>
+            <MarkdownEditor
+              label="Markdown"
+              value={markdown}
+              onChange={setMarkdown}
+              placeholder={"# Skill instructions\n\nDefine the skill's behavior, input expectations, and output format..."}
+              rows={28}
+            />
           </div>
 
           {/* Right — Properties */}
@@ -133,17 +131,6 @@ export default function NewSkillPage() {
                     onChange={(e) => handleNameChange(e.target.value)}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                     placeholder="Django Migration Expert"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-400">Slug</label>
-                  <input
-                    type="text"
-                    required
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -168,12 +155,11 @@ export default function NewSkillPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-400">
-                    Description <span className="text-slate-600">(optional)</span>
-                  </label>
+                  <label className="block text-sm font-medium text-slate-400">Description</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    required
                     rows={2}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
@@ -192,6 +178,20 @@ export default function NewSkillPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Scope section */}
+            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
+              <h3 className="mb-4 text-xs font-medium uppercase tracking-wider text-slate-500">Scope</h3>
+              <label className="flex items-center gap-2.5 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={isGlobal}
+                  onChange={(e) => setIsGlobal(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                />
+                Global (not tied to any organization)
+              </label>
             </div>
 
             {/* External section */}

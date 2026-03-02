@@ -58,19 +58,19 @@ export default function AgentsPage() {
 
   const fetchAgents = useCallback(async () => {
     try {
-      setAgents((await listAgents(orgSlug)).results);
+      setAgents((await listAgents()).results);
     } finally {
       setAgentsLoading(false);
     }
-  }, [orgSlug]);
+  }, []);
 
   const fetchSkills = useCallback(async () => {
     try {
-      setSkills((await listSkills(orgSlug)).results);
+      setSkills((await listSkills()).results);
     } finally {
       setSkillsLoading(false);
     }
-  }, [orgSlug]);
+  }, []);
 
   useEffect(() => {
     fetchAgents();
@@ -81,7 +81,7 @@ export default function AgentsPage() {
     if (!deleteAgentTarget) return;
     setIsDeletingAgent(true);
     try {
-      await deleteAgent(orgSlug, deleteAgentTarget.slug);
+      await deleteAgent(deleteAgentTarget.slug);
       setDeleteAgentTarget(null);
       fetchAgents();
     } finally {
@@ -93,7 +93,7 @@ export default function AgentsPage() {
     if (!deleteSkillTarget) return;
     setIsDeletingSkill(true);
     try {
-      await deleteSkill(orgSlug, deleteSkillTarget.slug);
+      await deleteSkill(deleteSkillTarget.slug);
       setDeleteSkillTarget(null);
       fetchSkills();
     } finally {
@@ -173,6 +173,11 @@ export default function AgentsPage() {
                               External
                             </span>
                           )}
+                          {!agent.organization && (
+                            <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
+                              Global
+                            </span>
+                          )}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
@@ -250,6 +255,11 @@ export default function AgentsPage() {
                           {skill.is_external && (
                             <span className="inline-flex rounded-full bg-purple-900/50 px-2 py-0.5 text-xs font-medium text-purple-400">
                               External
+                            </span>
+                          )}
+                          {!skill.organization && (
+                            <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
+                              Global
                             </span>
                           )}
                         </span>

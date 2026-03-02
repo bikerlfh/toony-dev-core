@@ -7,12 +7,15 @@ from agents.models import Agent, AgentSkill, Skill, SkillVersion
 # --- Agent ---
 
 class AgentListSerializer(serializers.ModelSerializer):
+    organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+
     class Meta:
         model = Agent
         fields = [
             "id",
             "name",
             "slug",
+            "organization",
             "status",
             "agent_type",
             "version",
@@ -24,6 +27,7 @@ class AgentListSerializer(serializers.ModelSerializer):
 
 class AgentDetailSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)
+    organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
 
     class Meta:
         model = Agent
@@ -31,6 +35,7 @@ class AgentDetailSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
+            "organization",
             "description",
             "markdown",
             "version",
@@ -50,12 +55,15 @@ class AgentDetailSerializer(serializers.ModelSerializer):
 # --- Skill ---
 
 class SkillListSerializer(serializers.ModelSerializer):
+    organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+
     class Meta:
         model = Skill
         fields = [
             "id",
             "name",
             "slug",
+            "organization",
             "status",
             "category",
             "version",
@@ -67,6 +75,7 @@ class SkillListSerializer(serializers.ModelSerializer):
 
 class SkillDetailSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)
+    organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
 
     class Meta:
         model = Skill
@@ -74,10 +83,11 @@ class SkillDetailSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "slug",
+            "organization",
             "description",
             "version",
             "status",
-            "content",
+            "markdown",
             "category",
             "input_schema",
             "output_schema",

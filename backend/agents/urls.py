@@ -17,7 +17,11 @@ urlpatterns = [
     path("agents/", AgentListCreateView.as_view(), name="agent-list-create"),
     path("agents/<slug:agent_slug>/", AgentDetailView.as_view(), name="agent-detail"),
     path("agents/<slug:agent_slug>/skills/", AgentSkillListCreateView.as_view(), name="agent-skill-list-create"),
-    path("agents/<slug:agent_slug>/skills/<uuid:agent_skill_id>/", AgentSkillDetailView.as_view(), name="agent-skill-detail"),
+    path(
+        "agents/<slug:agent_slug>/skills/<uuid:agent_skill_id>/",
+        AgentSkillDetailView.as_view(),
+        name="agent-skill-detail",
+    ),
     # Skills
     path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
     path("skills/<slug:skill_slug>/", SkillDetailView.as_view(), name="skill-detail"),

@@ -1,16 +1,27 @@
+from django.db.models import Q
+
 from agents.models import Skill, SkillVersion
+from accounts.models import OrganizationMembership
 
 
-def list_organization_skills(organization):
-    return Skill.objects.filter(organization=organization).order_by("name")
+def list_skills_for_user(user):
+    user_org_ids = OrganizationMembership.objects.filter(
+        user=user, is_active=True,
+    ).values_list("organization_id", flat=True)
+
+    return Skill.objects.filter(
+        Q(organization_id__in=user_org_ids) | Q(organization__isnull=True)
+    ).order_by("name")
 
 
-def get_skill_by_slug(organization, slug):
-    return Skill.objects.filter(organization=organization, slug=slug).first()
+def get_skill_by_slug(slug, organization=None):
+    if organization is not None:
+        return Skill.objects.filter(organization=organization, slug=slug).first()
+    return Skill.objects.filter(slug=slug).first()
 
 
-def get_skill_by_id(organization, skill_id):
-    return Skill.objects.filter(organization=organization, id=skill_id).first()
+def get_skill_by_id(skill_id):
+    return Skill.objects.filter(id=skill_id).first()
 
 
 def list_skill_versions(skill):

@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createAgent } from "@/lib/api/agents";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
 import type { AgentType } from "@/types";
 
@@ -25,10 +26,10 @@ export default function NewAgentPage() {
   const [version, setVersion] = useState("0.1.0");
   const [description, setDescription] = useState("");
   const [markdown, setMarkdown] = useState("");
-  const [encryptedConfiguration, setEncryptedConfiguration] = useState("");
   const [tags, setTags] = useState("");
   const [isExternal, setIsExternal] = useState(false);
   const [externalCommand, setExternalCommand] = useState("");
+  const [isGlobal, setIsGlobal] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,14 +50,14 @@ export default function NewAgentPage() {
     setIsSubmitting(true);
 
     try {
-      await createAgent(orgSlug, {
+      await createAgent({
         name,
         slug,
+        organization: isGlobal ? null : orgSlug,
         agent_type: agentType,
         version,
         description: description || undefined,
         markdown: markdown || undefined,
-        encrypted_configuration: encryptedConfiguration || undefined,
         is_external: isExternal,
         external_command: isExternal ? externalCommand : undefined,
         tags: tags
@@ -105,18 +106,13 @@ export default function NewAgentPage() {
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Left — Markdown editor */}
           <div className="flex-1 lg:min-w-0">
-            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                Markdown
-              </label>
-              <textarea
-                value={markdown}
-                onChange={(e) => setMarkdown(e.target.value)}
-                rows={28}
-                className="block w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                placeholder="# Agent instructions&#10;&#10;Describe what this agent does, its capabilities, and how it should behave..."
-              />
-            </div>
+            <MarkdownEditor
+              label="Markdown"
+              value={markdown}
+              onChange={setMarkdown}
+              placeholder={"# Agent instructions\n\nDescribe what this agent does, its capabilities, and how it should behave..."}
+              rows={28}
+            />
           </div>
 
           {/* Right — Properties */}
@@ -134,17 +130,6 @@ export default function NewAgentPage() {
                     onChange={(e) => handleNameChange(e.target.value)}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                     placeholder="Backend Builder"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-400">Slug</label>
-                  <input
-                    type="text"
-                    required
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -176,23 +161,11 @@ export default function NewAgentPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={250}
+                    required
                     rows={2}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                   <p className="mt-1 text-xs text-slate-600">{description.length}/250</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-400">
-                    Configuration (JSON) <span className="text-slate-600">(encrypted)</span>
-                  </label>
-                  <textarea
-                    value={encryptedConfiguration}
-                    onChange={(e) => setEncryptedConfiguration(e.target.value)}
-                    rows={2}
-                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                    placeholder='{"model": "claude-sonnet-4-6"}'
-                  />
                 </div>
 
                 <div>
@@ -208,6 +181,20 @@ export default function NewAgentPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Scope section */}
+            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
+              <h3 className="mb-4 text-xs font-medium uppercase tracking-wider text-slate-500">Scope</h3>
+              <label className="flex items-center gap-2.5 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={isGlobal}
+                  onChange={(e) => setIsGlobal(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                />
+                Global (not tied to any organization)
+              </label>
             </div>
 
             {/* External section */}

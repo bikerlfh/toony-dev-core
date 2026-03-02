@@ -6,7 +6,7 @@ from agents.selectors import get_agent_by_slug
 
 
 def create_agent(organization, created_by, name, slug, **kwargs):
-    if get_agent_by_slug(organization, slug):
+    if get_agent_by_slug(slug, organization=organization):
         raise ConflictError("An agent with this slug already exists in this organization.")
 
     encrypted_configuration = kwargs.pop("encrypted_configuration", "")

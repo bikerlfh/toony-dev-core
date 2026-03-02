@@ -38,7 +38,7 @@ class Skill(BaseModel):
         choices=SkillStatus.choices,
         default=SkillStatus.DRAFT,
     )
-    content = models.TextField(blank=True, default="")
+    markdown = models.TextField(blank=True, default="")
     category = models.CharField(
         max_length=20,
         choices=SkillCategory.choices,

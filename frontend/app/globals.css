@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Highlight required fields on submit attempt */
 form.submitted input:invalid,

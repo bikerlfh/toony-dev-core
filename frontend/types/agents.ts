@@ -13,6 +13,7 @@ export interface AgentList {
   id: string;
   name: string;
   slug: string;
+  organization: string | null;
   status: AgentStatus;
   agent_type: AgentType;
   version: string;
@@ -24,6 +25,7 @@ export interface AgentDetail {
   id: string;
   name: string;
   slug: string;
+  organization: string | null;
   description: string;
   markdown: string;
   version: string;
@@ -41,13 +43,13 @@ export interface AgentDetail {
 export interface CreateAgentPayload {
   name: string;
   slug: string;
+  organization?: string | null;
   description?: string;
   markdown?: string;
   version?: string;
   status?: AgentStatus;
   agent_type?: AgentType;
   capabilities?: string[];
-  encrypted_configuration?: string;
   is_external?: boolean;
   external_command?: string;
   tags?: string[];
@@ -61,7 +63,6 @@ export interface UpdateAgentPayload {
   status?: AgentStatus;
   agent_type?: AgentType;
   capabilities?: string[];
-  encrypted_configuration?: string;
   is_external?: boolean;
   external_command?: string;
   tags?: string[];
@@ -72,6 +73,7 @@ export interface SkillList {
   id: string;
   name: string;
   slug: string;
+  organization: string | null;
   status: SkillStatus;
   category: SkillCategory;
   version: string;
@@ -83,10 +85,11 @@ export interface SkillDetail {
   id: string;
   name: string;
   slug: string;
+  organization: string | null;
   description: string;
   version: string;
   status: SkillStatus;
-  content: string;
+  markdown: string;
   category: SkillCategory;
   input_schema: Record<string, unknown> | null;
   output_schema: Record<string, unknown> | null;
@@ -102,10 +105,11 @@ export interface SkillDetail {
 export interface CreateSkillPayload {
   name: string;
   slug: string;
+  organization?: string | null;
   description?: string;
   version?: string;
   status?: SkillStatus;
-  content?: string;
+  markdown?: string;
   category?: SkillCategory;
   input_schema?: Record<string, unknown> | null;
   output_schema?: Record<string, unknown> | null;
@@ -120,7 +124,7 @@ export interface UpdateSkillPayload {
   description?: string;
   version?: string;
   status?: SkillStatus;
-  content?: string;
+  markdown?: string;
   category?: SkillCategory;
   input_schema?: Record<string, unknown> | null;
   output_schema?: Record<string, unknown> | null;

@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getSkill, updateSkill } from "@/lib/api/skills";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
 import type { SkillDetail, SkillCategory, SkillStatus } from "@/types";
 
@@ -36,7 +37,7 @@ export default function EditSkillPage() {
   const [statusVal, setStatusVal] = useState<SkillStatus>("DRAFT");
   const [version, setVersion] = useState("");
   const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
+  const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState("");
   const [changelog, setChangelog] = useState("");
   const [isExternal, setIsExternal] = useState(false);
@@ -46,21 +47,21 @@ export default function EditSkillPage() {
 
   const fetchSkill = useCallback(async () => {
     try {
-      const data = await getSkill(orgSlug, skillSlug);
+      const data = await getSkill(skillSlug);
       setSkill(data);
       setName(data.name);
       setCategory(data.category);
       setStatusVal(data.status);
       setVersion(data.version);
       setDescription(data.description);
-      setContent(data.content);
+      setMarkdown(data.markdown);
       setTags(data.tags?.join(", ") || "");
       setIsExternal(data.is_external);
       setExternalCommand(data.external_command);
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug, skillSlug]);
+  }, [skillSlug]);
 
   useEffect(() => {
     fetchSkill();
@@ -72,13 +73,13 @@ export default function EditSkillPage() {
     setIsSubmitting(true);
 
     try {
-      await updateSkill(orgSlug, skillSlug, {
+      await updateSkill(skillSlug, {
         name,
         category,
         status: statusVal,
         version,
         description,
-        content,
+        markdown,
         is_external: isExternal,
         external_command: isExternal ? externalCommand : "",
         tags: tags
@@ -132,7 +133,7 @@ export default function EditSkillPage() {
           </svg>
         </button>
         <div>
-          <h1 className="text-2xl font-medium tracking-tight text-white">Edit skill</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-white">{skill.name}</h1>
           <p className="font-mono text-sm text-slate-500">{skill.slug}</p>
         </div>
       </div>
@@ -146,20 +147,15 @@ export default function EditSkillPage() {
 
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Left — Content editor */}
+          {/* Left — Markdown editor */}
           <div className="flex-1 lg:min-w-0">
-            <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-slate-500">
-                Content
-              </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={28}
-                className="block w-full resize-y rounded-md border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                placeholder="# Skill instructions..."
-              />
-            </div>
+            <MarkdownEditor
+              label="Markdown"
+              value={markdown}
+              onChange={setMarkdown}
+              placeholder="# Skill instructions..."
+              rows={28}
+            />
           </div>
 
           {/* Right — Properties */}
@@ -214,6 +210,7 @@ export default function EditSkillPage() {
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
+                    required
                     rows={2}
                     className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
