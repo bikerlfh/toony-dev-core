@@ -77,14 +77,14 @@ export function SearchCommandPalette() {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50" onClick={close} />
+      <div className="fixed inset-0 bg-black/60" onClick={close} />
 
       {/* Palette */}
-      <div className="relative w-full max-w-lg rounded-lg bg-white shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-xl border border-slate-800/60 bg-slate-900">
         {/* Search input */}
-        <div className="flex items-center border-b border-gray-200 px-4">
+        <div className="flex items-center border-b border-slate-800/60 px-4">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-slate-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -101,9 +101,9 @@ export function SearchCommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search issues, projects, teams, labels..."
-            className="w-full border-0 px-3 py-4 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+            className="w-full border-0 bg-transparent px-3 py-4 text-sm text-slate-200 placeholder-slate-500 focus:outline-none"
           />
-          <kbd className="rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-400">
+          <kbd className="rounded border border-slate-700 px-1.5 py-0.5 text-xs text-slate-500">
             ESC
           </kbd>
         </div>
@@ -111,13 +111,13 @@ export function SearchCommandPalette() {
         {/* Results */}
         <div className="max-h-80 overflow-y-auto">
           {isLoading && (
-            <div className="px-4 py-6 text-center text-sm text-gray-500">
+            <div className="px-4 py-6 text-center text-sm text-slate-500">
               Searching...
             </div>
           )}
 
           {!isLoading && query && !hasResults && (
-            <div className="px-4 py-6 text-center text-sm text-gray-500">
+            <div className="px-4 py-6 text-center text-sm text-slate-500">
               No results found.
             </div>
           )}
@@ -127,7 +127,7 @@ export function SearchCommandPalette() {
               {/* Issues */}
               {results.issues.length > 0 && (
                 <div>
-                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-gray-400">
+                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-slate-600">
                     Issues
                   </div>
                   {results.issues.map((issue) => (
@@ -138,12 +138,12 @@ export function SearchCommandPalette() {
                           `${basePath}/projects/${issue.identifier.split("-")[0].toLowerCase()}/${issue.identifier}`
                         )
                       }
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
-                      <span className="font-mono text-xs text-gray-400">
+                      <span className="font-mono text-xs text-slate-500">
                         {issue.identifier}
                       </span>
-                      <span className="truncate text-gray-900">
+                      <span className="truncate text-slate-200">
                         {issue.title}
                       </span>
                     </button>
@@ -154,7 +154,7 @@ export function SearchCommandPalette() {
               {/* Projects */}
               {results.projects.length > 0 && (
                 <div>
-                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-gray-400">
+                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-slate-600">
                     Projects
                   </div>
                   {results.projects.map((project) => (
@@ -163,12 +163,12 @@ export function SearchCommandPalette() {
                       onClick={() =>
                         navigate(`${basePath}/projects/${project.slug}`)
                       }
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
-                      <span className="truncate text-gray-900">
+                      <span className="truncate text-slate-200">
                         {project.name}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-500">
                         {project.status.replace(/_/g, " ")}
                       </span>
                     </button>
@@ -179,7 +179,7 @@ export function SearchCommandPalette() {
               {/* Teams */}
               {results.teams.length > 0 && (
                 <div>
-                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-gray-400">
+                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-slate-600">
                     Teams
                   </div>
                   {results.teams.map((team) => (
@@ -188,12 +188,12 @@ export function SearchCommandPalette() {
                       onClick={() =>
                         navigate(`${basePath}/teams/${team.slug}`)
                       }
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
-                      <span className="truncate text-gray-900">
+                      <span className="truncate text-slate-200">
                         {team.name}
                       </span>
-                      <span className="font-mono text-xs text-gray-400">
+                      <span className="font-mono text-xs text-slate-500">
                         {team.identifier}
                       </span>
                     </button>
@@ -204,20 +204,20 @@ export function SearchCommandPalette() {
               {/* Labels */}
               {results.labels.length > 0 && (
                 <div>
-                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-gray-400">
+                  <div className="px-4 py-1.5 text-xs font-semibold uppercase text-slate-600">
                     Labels
                   </div>
                   {results.labels.map((label) => (
                     <button
                       key={label.id}
                       onClick={() => navigate(`${basePath}/labels`)}
-                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100"
+                      className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
                       <span
                         className="h-3 w-3 rounded-full"
                         style={{ backgroundColor: label.color }}
                       />
-                      <span className="truncate text-gray-900">
+                      <span className="truncate text-slate-200">
                         {label.name}
                       </span>
                     </button>

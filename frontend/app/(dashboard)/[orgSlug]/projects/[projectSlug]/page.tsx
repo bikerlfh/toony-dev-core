@@ -89,9 +89,9 @@ const PROJECT_PRIORITY_OPTIONS: { value: ProjectPriority; label: string }[] = [
 const PROJECT_MEMBER_ROLES: ProjectMemberRole[] = ["LEAD", "CONTRIBUTOR", "REVIEWER"];
 
 const MEMBER_ROLE_COLORS: Record<ProjectMemberRole, string> = {
-  LEAD: "bg-purple-100 text-purple-800",
-  CONTRIBUTOR: "bg-blue-100 text-blue-800",
-  REVIEWER: "bg-green-100 text-green-800",
+  LEAD: "bg-purple-500/15 text-purple-400",
+  CONTRIBUTOR: "bg-blue-500/15 text-blue-400",
+  REVIEWER: "bg-emerald-500/15 text-emerald-400",
 };
 
 const MILESTONE_STATUS_OPTIONS: { value: MilestoneStatus; label: string }[] = [
@@ -138,19 +138,19 @@ export default function ProjectDetailPage() {
     fetchProject();
   }, [fetchProject]);
 
-  if (isLoading) return <p className="text-gray-500">Loading project...</p>;
-  if (!project) return <p className="text-red-500">Project not found.</p>;
+  if (isLoading) return <p className="text-slate-500">Loading project...</p>;
+  if (!project) return <p className="text-red-400">Project not found.</p>;
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-white">{project.name}</h1>
           <div className="mt-1 flex items-center gap-2">
             <StatusBadge status={project.status} />
             <PriorityBadge priority={project.priority} />
-            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
+            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
               {project.team.identifier}
             </span>
           </div>
@@ -158,7 +158,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-6 border-b border-gray-200">
+      <div className="mt-6 border-b border-slate-800/60">
         <nav className="-mb-px flex gap-6">
           {TABS.map((tab) => (
             <button
@@ -166,8 +166,8 @@ export default function ProjectDetailPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-indigo-500 text-indigo-400"
+                  : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
               }`}
             >
               {tab.label}
@@ -268,52 +268,52 @@ function OverviewTab({
   if (isEditing) {
     return (
       <form onSubmit={handleSave} className="max-w-2xl space-y-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-4">
+        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-slate-400">Name</label>
             <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-slate-400">Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-slate-400">Status</label>
               <select value={status} onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                 {PROJECT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Priority</label>
+              <label className="block text-sm font-medium text-slate-400">Priority</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value as ProjectPriority)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                 {PROJECT_PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Start date</label>
+              <label className="block text-sm font-medium text-slate-400">Start date</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Target date</label>
+              <label className="block text-sm font-medium text-slate-400">Target date</label>
               <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
             </div>
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={isSaving}
-              className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
               {isSaving ? "Saving..." : "Save"}
             </button>
             <button type="button" onClick={() => setIsEditing(false)}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
           </div>
         </div>
       </form>
@@ -322,50 +322,50 @@ function OverviewTab({
 
   return (
     <div className="max-w-2xl">
-      <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
         <div className="flex items-start justify-between">
           <div>
             {project.description && (
-              <p className="text-sm text-gray-600">{project.description}</p>
+              <p className="text-sm text-slate-400">{project.description}</p>
             )}
             <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <dt className="text-gray-500">Lead</dt>
-                <dd className="mt-1 font-medium text-gray-900">
-                  {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "—"}
+                <dt className="text-slate-500">Lead</dt>
+                <dd className="mt-1 font-medium text-slate-200">
+                  {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "\u2014"}
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">Team</dt>
-                <dd className="mt-1 font-medium text-gray-900">{project.team.name}</dd>
+                <dt className="text-slate-500">Team</dt>
+                <dd className="mt-1 font-medium text-slate-200">{project.team.name}</dd>
               </div>
               <div>
-                <dt className="text-gray-500">Start date</dt>
-                <dd className="mt-1 font-medium text-gray-900">
-                  {project.start_date ? new Date(project.start_date).toLocaleDateString() : "—"}
+                <dt className="text-slate-500">Start date</dt>
+                <dd className="mt-1 font-medium text-slate-200">
+                  {project.start_date ? new Date(project.start_date).toLocaleDateString() : "\u2014"}
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">Target date</dt>
-                <dd className="mt-1 font-medium text-gray-900">
-                  {project.target_date ? new Date(project.target_date).toLocaleDateString() : "—"}
+                <dt className="text-slate-500">Target date</dt>
+                <dd className="mt-1 font-medium text-slate-200">
+                  {project.target_date ? new Date(project.target_date).toLocaleDateString() : "\u2014"}
                 </dd>
               </div>
             </dl>
           </div>
           {canManage && (
             <button onClick={() => setIsEditing(true)}
-              className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">Edit</button>
+              className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Edit</button>
           )}
         </div>
       </div>
 
       {canManage && (
-        <div className="mt-8 rounded-lg border border-red-200 bg-white p-6">
-          <h2 className="text-lg font-medium text-red-900">Danger zone</h2>
-          <p className="mt-1 text-sm text-gray-600">Permanently delete this project and all its data.</p>
+        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
+          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
+          <p className="mt-1 text-sm text-slate-400">Permanently delete this project and all its data.</p>
           <button type="button" onClick={() => setShowDeleteConfirm(true)}
-            className="mt-4 rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700">Delete project</button>
+            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500">Delete project</button>
         </div>
       )}
 
@@ -430,40 +430,40 @@ function MilestonesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; p
     } finally { setIsDeleting(false); }
   }
 
-  if (isLoading) return <p className="text-gray-500">Loading milestones...</p>;
+  if (isLoading) return <p className="text-slate-500">Loading milestones...</p>;
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Milestones</h2>
+        <h2 className="text-base font-medium text-white">Milestones</h2>
         {canManage && (
           <button onClick={() => setShowCreate(true)}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">Add milestone</button>
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500">Add milestone</button>
         )}
       </div>
 
       {milestones.length === 0 ? (
-        <p className="mt-4 text-gray-500">No milestones yet.</p>
+        <p className="mt-4 text-slate-500">No milestones yet.</p>
       ) : (
         <div className="mt-4 space-y-3">
           {milestones.map((m) => (
-            <div key={m.id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
+            <div key={m.id} className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900 p-4">
               <div>
-                <p className="font-medium text-gray-900">{m.name}</p>
+                <p className="font-medium text-slate-200">{m.name}</p>
                 <div className="mt-1 flex items-center gap-2">
                   {canManage ? (
                     <select value={m.status} onChange={(e) => handleStatusChange(m, e.target.value as MilestoneStatus)}
-                      className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                       {MILESTONE_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   ) : (
                     <StatusBadge status={m.status} type="milestone" />
                   )}
-                  {m.target_date && <span className="text-xs text-gray-500">Target: {new Date(m.target_date).toLocaleDateString()}</span>}
+                  {m.target_date && <span className="text-xs text-slate-500">Target: {new Date(m.target_date).toLocaleDateString()}</span>}
                 </div>
               </div>
               {canManage && (
-                <button onClick={() => setDeleteTarget(m)} className="text-sm text-red-600 hover:underline">Delete</button>
+                <button onClick={() => setDeleteTarget(m)} className="text-sm text-red-400 transition-colors hover:text-red-300">Delete</button>
               )}
             </div>
           ))}
@@ -471,30 +471,30 @@ function MilestonesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; p
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Add milestone</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="mb-4 text-base font-medium tracking-tight text-white">Add milestone</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-slate-400">Name</label>
                 <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-slate-400">Description</label>
                 <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={2}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Target date</label>
+                <label className="block text-sm font-medium text-slate-400">Target date</label>
                 <input type="date" value={newTargetDate} onChange={(e) => setNewTargetDate(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
                 <button type="submit" disabled={isCreating}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
                   {isCreating ? "Adding..." : "Add milestone"}</button>
               </div>
             </form>
@@ -558,44 +558,44 @@ function CyclesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
     } finally { setIsDeleting(false); }
   }
 
-  if (isLoading) return <p className="text-gray-500">Loading cycles...</p>;
+  if (isLoading) return <p className="text-slate-500">Loading cycles...</p>;
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Cycles</h2>
+        <h2 className="text-base font-medium text-white">Cycles</h2>
         {canManage && (
           <button onClick={() => setShowCreate(true)}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">Add cycle</button>
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500">Add cycle</button>
         )}
       </div>
 
       {cycles.length === 0 ? (
-        <p className="mt-4 text-gray-500">No cycles yet.</p>
+        <p className="mt-4 text-slate-500">No cycles yet.</p>
       ) : (
         <div className="mt-4 space-y-3">
           {cycles.map((c) => (
-            <div key={c.id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
+            <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900 p-4">
               <div>
-                <p className="font-medium text-gray-900">
-                  <span className="mr-2 text-gray-400">#{c.number}</span>{c.name}
+                <p className="font-medium text-slate-200">
+                  <span className="mr-2 text-slate-500">#{c.number}</span>{c.name}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   {canManage ? (
                     <select value={c.status} onChange={(e) => handleStatusChange(c, e.target.value as CycleStatus)}
-                      className="rounded border border-gray-300 px-2 py-0.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                       {CYCLE_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   ) : (
                     <StatusBadge status={c.status} type="cycle" />
                   )}
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500">
                     {new Date(c.start_date).toLocaleDateString()} — {new Date(c.end_date).toLocaleDateString()}
                   </span>
                 </div>
               </div>
               {canManage && (
-                <button onClick={() => setDeleteTarget(c)} className="text-sm text-red-600 hover:underline">Delete</button>
+                <button onClick={() => setDeleteTarget(c)} className="text-sm text-red-400 transition-colors hover:text-red-300">Delete</button>
               )}
             </div>
           ))}
@@ -603,32 +603,32 @@ function CyclesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Add cycle</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="mb-4 text-base font-medium tracking-tight text-white">Add cycle</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <label className="block text-sm font-medium text-slate-400">Name</label>
                 <input type="text" required value={newName} onChange={(e) => setNewName(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Start date</label>
+                  <label className="block text-sm font-medium text-slate-400">Start date</label>
                   <input type="date" required value={newStart} onChange={(e) => setNewStart(e.target.value)}
-                    className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">End date</label>
+                  <label className="block text-sm font-medium text-slate-400">End date</label>
                   <input type="date" required value={newEnd} onChange={(e) => setNewEnd(e.target.value)}
-                    className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                    className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
                 <button type="submit" disabled={isCreating}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
                   {isCreating ? "Adding..." : "Add cycle"}</button>
               </div>
             </form>
@@ -695,56 +695,56 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
     } finally { setIsRemoving(false); }
   }
 
-  if (isLoading) return <p className="text-gray-500">Loading members...</p>;
+  if (isLoading) return <p className="text-slate-500">Loading members...</p>;
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Members</h2>
+        <h2 className="text-base font-medium text-white">Members</h2>
         {canManage && (
           <button onClick={() => setShowAdd(true)}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">Add member</button>
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500">Add member</button>
         )}
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60 bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-800/60">
+          <thead className="bg-slate-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Member</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Joined</th>
-              {canManage && <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>}
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Member</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Joined</th>
+              {canManage && <th className="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-800/60">
             {members.map((m) => (
-              <tr key={m.id}>
+              <tr key={m.id} className="hover:bg-slate-900/60">
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-medium text-slate-400">
                       {m.user.first_name?.[0]}{m.user.last_name?.[0]}
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">{m.user.first_name} {m.user.last_name}</p>
-                      <p className="text-sm text-gray-500">{m.user.email}</p>
+                      <p className="text-sm font-medium text-slate-200">{m.user.first_name} {m.user.last_name}</p>
+                      <p className="text-sm text-slate-500">{m.user.email}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   {canManage ? (
                     <select value={m.role} onChange={(e) => handleRoleChange(m, e.target.value as ProjectMemberRole)}
-                      className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                       {PROJECT_MEMBER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
                   ) : (
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${MEMBER_ROLE_COLORS[m.role]}`}>{m.role}</span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{new Date(m.joined_at).toLocaleDateString()}</td>
+                <td className="px-6 py-4 text-sm text-slate-500">{new Date(m.joined_at).toLocaleDateString()}</td>
                 {canManage && (
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => setRemoveTarget(m)} className="text-sm text-red-600 hover:underline">Remove</button>
+                    <button onClick={() => setRemoveTarget(m)} className="text-sm text-red-400 transition-colors hover:text-red-300">Remove</button>
                   </td>
                 )}
               </tr>
@@ -754,28 +754,28 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
       </div>
 
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Add project member</h2>
-            {addError && <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{addError}</div>}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="mb-4 text-base font-medium tracking-tight text-white">Add project member</h2>
+            {addError && <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400"><svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6.25" /><path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" /></svg><span>{addError}</span></div>}
             <form onSubmit={handleAdd} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-slate-400">Email</label>
                 <input type="email" required value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <label className="block text-sm font-medium text-slate-400">Role</label>
                 <select value={newRole} onChange={(e) => setNewRole(e.target.value as ProjectMemberRole)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                   {PROJECT_MEMBER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => { setShowAdd(false); setAddError(""); }}
-                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
                 <button type="submit" disabled={isAdding}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
                   {isAdding ? "Adding..." : "Add member"}</button>
               </div>
             </form>
@@ -846,65 +846,65 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
     } finally { setIsSaving(false); }
   }
 
-  if (isLoading) return <p className="text-gray-500">Loading settings...</p>;
-  if (!settings) return <p className="text-red-500">Failed to load settings.</p>;
+  if (isLoading) return <p className="text-slate-500">Loading settings...</p>;
+  if (!settings) return <p className="text-red-400">Failed to load settings.</p>;
 
   return (
     <div className="max-w-2xl">
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-medium text-gray-900">Project Settings</h2>
+        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+          <h2 className="text-base font-medium text-white">Project Settings</h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Repository URL</label>
+              <label className="block text-sm font-medium text-slate-400">Repository URL</label>
               <input type="url" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} disabled={!canManage}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100" />
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Default branch</label>
+                <label className="block text-sm font-medium text-slate-400">Default branch</label>
                 <input type="text" value={defaultBranch} onChange={(e) => setDefaultBranch(e.target.value)} disabled={!canManage}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch convention</label>
+                <label className="block text-sm font-medium text-slate-400">Branch convention</label>
                 <input type="text" value={branchConvention} onChange={(e) => setBranchConvention(e.target.value)} disabled={!canManage}
-                  placeholder="{type}/{identifier}" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100" />
+                  placeholder="{type}/{identifier}" className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Required reviewers</label>
+                <label className="block text-sm font-medium text-slate-400">Required reviewers</label>
                 <input type="number" min={0} value={reviewers} onChange={(e) => setReviewers(parseInt(e.target.value) || 0)} disabled={!canManage}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Issue prefix override</label>
+                <label className="block text-sm font-medium text-slate-400">Issue prefix override</label>
                 <input type="text" maxLength={10} value={prefixOverride} onChange={(e) => setPrefixOverride(e.target.value)} disabled={!canManage}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100" />
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Estimation method</label>
+              <label className="block text-sm font-medium text-slate-400">Estimation method</label>
               <select value={estimation} onChange={(e) => setEstimation(e.target.value as EstimationMethod)} disabled={!canManage}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-100">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900">
                 {ESTIMATION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="autoClose" checked={autoClose} onChange={(e) => setAutoClose(e.target.checked)} disabled={!canManage}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-              <label htmlFor="autoClose" className="text-sm text-gray-700">Auto-close completed issues</label>
+                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500" />
+              <label htmlFor="autoClose" className="text-sm text-slate-300">Auto-close completed issues</label>
             </div>
           </div>
 
           {canManage && (
             <div className="mt-6">
               {saveMessage && (
-                <p className={`mb-3 text-sm ${saveMessage.includes("Failed") ? "text-red-600" : "text-green-600"}`}>{saveMessage}</p>
+                <p className={`mb-3 text-sm ${saveMessage.includes("Failed") ? "text-red-400" : "text-emerald-400"}`}>{saveMessage}</p>
               )}
               <button type="submit" disabled={isSaving}
-                className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
                 {isSaving ? "Saving..." : "Save settings"}</button>
             </div>
           )}
@@ -996,23 +996,23 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
     fetchIssues();
   }
 
-  if (isLoading) return <p className="text-gray-500">Loading issues...</p>;
+  if (isLoading) return <p className="text-slate-500">Loading issues...</p>;
 
   return (
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex rounded border border-gray-300">
+          <div className="flex rounded-lg border border-slate-800/60">
             <button
               onClick={() => setViewMode("board")}
-              className={`px-3 py-1.5 text-sm ${viewMode === "board" ? "bg-gray-100 font-medium text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              className={`px-3 py-1.5 text-sm ${viewMode === "board" ? "bg-slate-800 font-medium text-white" : "text-slate-500 hover:text-slate-300"}`}
             >
               Board
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`border-l border-gray-300 px-3 py-1.5 text-sm ${viewMode === "list" ? "bg-gray-100 font-medium text-gray-900" : "text-gray-500 hover:text-gray-700"}`}
+              className={`border-l border-slate-800/60 px-3 py-1.5 text-sm ${viewMode === "list" ? "bg-slate-800 font-medium text-white" : "text-slate-500 hover:text-slate-300"}`}
             >
               List
             </button>
@@ -1021,7 +1021,7 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
         {canManage && (
           <button
             onClick={() => setShowCreate(true)}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
             Create issue
           </button>

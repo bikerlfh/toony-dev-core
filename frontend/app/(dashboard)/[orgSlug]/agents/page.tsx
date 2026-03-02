@@ -14,10 +14,10 @@ import { EditSkillModal } from "@/components/edit-skill-modal";
 import type { AgentList, AgentDetail, SkillList, SkillDetail } from "@/types";
 
 const STATUS_COLORS: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-600",
-  ACTIVE: "bg-green-100 text-green-700",
-  INACTIVE: "bg-yellow-100 text-yellow-700",
-  DEPRECATED: "bg-red-100 text-red-700",
+  DRAFT: "bg-slate-800 text-slate-400",
+  ACTIVE: "bg-green-900/50 text-green-400",
+  INACTIVE: "bg-yellow-900/50 text-yellow-400",
+  DEPRECATED: "bg-red-900/50 text-red-400",
 };
 
 const AGENT_TYPE_LABELS: Record<string, string> = {
@@ -120,16 +120,16 @@ export default function AgentsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Agents & Skills</h1>
+      <h1 className="text-2xl font-medium tracking-tight text-white">Agents & Skills</h1>
 
       {/* Tabs */}
-      <div className="mt-4 flex border-b border-gray-200">
+      <div className="mt-4 flex border-b border-slate-800/60">
         <button
           onClick={() => setActiveTab("agents")}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "agents"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-indigo-500 text-indigo-400"
+              : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
           }`}
         >
           Agents
@@ -138,8 +138,8 @@ export default function AgentsPage() {
           onClick={() => setActiveTab("skills")}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "skills"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-indigo-500 text-indigo-400"
+              : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
           }`}
         >
           Skills
@@ -150,11 +150,11 @@ export default function AgentsPage() {
       {activeTab === "agents" && (
         <div className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Agents</h2>
+            <h2 className="text-lg font-semibold text-slate-200">Agents</h2>
             {canManage && (
               <button
                 onClick={() => setShowCreateAgent(true)}
-                className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add agent
               </button>
@@ -162,30 +162,30 @@ export default function AgentsPage() {
           </div>
 
           {agentsLoading ? (
-            <p className="mt-4 text-gray-500">Loading agents...</p>
+            <p className="mt-4 text-slate-500">Loading agents...</p>
           ) : agents.length === 0 ? (
-            <p className="mt-4 text-gray-500">No agents configured.</p>
+            <p className="mt-4 text-slate-500">No agents configured.</p>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
+              <table className="min-w-full divide-y divide-slate-800/60">
+                <thead className="bg-slate-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Version</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Version</th>
                     {canManage && (
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-800/60">
                   {agents.map((agent) => (
-                    <tr key={agent.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={agent.id} className="hover:bg-slate-900/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
                         {agent.name}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {AGENT_TYPE_LABELS[agent.agent_type] || agent.agent_type}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -193,15 +193,15 @@ export default function AgentsPage() {
                           {agent.status}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {agent.version}
                       </td>
                       {canManage && (
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                          <button onClick={() => handleEditAgent(agent)} className="text-indigo-600 hover:underline">
+                          <button onClick={() => handleEditAgent(agent)} className="text-indigo-400 transition-colors hover:text-indigo-300">
                             Edit
                           </button>
-                          <button onClick={() => setDeleteAgentTarget(agent)} className="ml-3 text-red-600 hover:underline">
+                          <button onClick={() => setDeleteAgentTarget(agent)} className="ml-3 text-red-400 transition-colors hover:text-red-300">
                             Delete
                           </button>
                         </td>
@@ -219,11 +219,11 @@ export default function AgentsPage() {
       {activeTab === "skills" && (
         <div className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Skills</h2>
+            <h2 className="text-lg font-semibold text-slate-200">Skills</h2>
             {canManage && (
               <button
                 onClick={() => setShowCreateSkill(true)}
-                className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add skill
               </button>
@@ -231,30 +231,30 @@ export default function AgentsPage() {
           </div>
 
           {skillsLoading ? (
-            <p className="mt-4 text-gray-500">Loading skills...</p>
+            <p className="mt-4 text-slate-500">Loading skills...</p>
           ) : skills.length === 0 ? (
-            <p className="mt-4 text-gray-500">No skills configured.</p>
+            <p className="mt-4 text-slate-500">No skills configured.</p>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
+              <table className="min-w-full divide-y divide-slate-800/60">
+                <thead className="bg-slate-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Category</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Version</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Category</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Version</th>
                     {canManage && (
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-800/60">
                   {skills.map((skill) => (
-                    <tr key={skill.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={skill.id} className="hover:bg-slate-900/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
                         {skill.name}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {CATEGORY_LABELS[skill.category] || skill.category}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -262,15 +262,15 @@ export default function AgentsPage() {
                           {skill.status}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {skill.version}
                       </td>
                       {canManage && (
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                          <button onClick={() => handleEditSkill(skill)} className="text-indigo-600 hover:underline">
+                          <button onClick={() => handleEditSkill(skill)} className="text-indigo-400 transition-colors hover:text-indigo-300">
                             Edit
                           </button>
-                          <button onClick={() => setDeleteSkillTarget(skill)} className="ml-3 text-red-600 hover:underline">
+                          <button onClick={() => setDeleteSkillTarget(skill)} className="ml-3 text-red-400 transition-colors hover:text-red-300">
                             Delete
                           </button>
                         </td>

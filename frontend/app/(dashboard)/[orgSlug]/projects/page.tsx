@@ -51,17 +51,17 @@ export default function ProjectsPage() {
   }
 
   if (isLoading) {
-    return <p className="text-gray-500">Loading projects...</p>;
+    return <p className="text-slate-500">Loading projects...</p>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-white">Projects</h1>
         {canCreate && (
           <button
             onClick={() => setShowCreate(true)}
-            className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
             Create project
           </button>
@@ -69,35 +69,35 @@ export default function ProjectsPage() {
       </div>
 
       {projects.length === 0 ? (
-        <p className="mt-6 text-gray-500">No projects yet.</p>
+        <p className="mt-6 text-slate-500">No projects yet.</p>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-800/60">
+          <table className="min-w-full divide-y divide-slate-800/60">
+            <thead className="bg-slate-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Project</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Team</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Lead</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Target</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Project</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Team</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Lead</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Target</th>
                 {canCreate && (
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-800/60">
               {projects.map((project) => (
                 <tr
                   key={project.id}
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer transition-colors hover:bg-slate-900/60"
                   onClick={() => router.push(`/${orgSlug}/projects/${project.slug}`)}
                 >
                   <td className="px-6 py-4">
-                    <p className="text-sm font-medium text-gray-900">{project.name}</p>
+                    <p className="text-sm font-medium text-slate-200">{project.name}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
+                    <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
                       {project.team.identifier}
                     </span>
                   </td>
@@ -107,12 +107,12 @@ export default function ProjectsPage() {
                   <td className="px-6 py-4">
                     <PriorityBadge priority={project.priority} />
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-500">
                     {project.lead
                       ? `${project.lead.first_name} ${project.lead.last_name}`
                       : "—"}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-500">
                     {project.target_date
                       ? new Date(project.target_date).toLocaleDateString()
                       : "—"}
@@ -124,7 +124,7 @@ export default function ProjectsPage() {
                           e.stopPropagation();
                           setDeleteTarget(project);
                         }}
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-400 transition-colors hover:text-red-300"
                       >
                         Delete
                       </button>

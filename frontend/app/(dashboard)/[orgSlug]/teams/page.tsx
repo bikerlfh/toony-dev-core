@@ -49,17 +49,17 @@ export default function TeamsPage() {
   }
 
   if (isLoading) {
-    return <p className="text-gray-500">Loading teams...</p>;
+    return <p className="text-slate-500">Loading teams...</p>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Teams</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-white">Teams</h1>
         {canManage && (
           <button
             onClick={() => setShowCreate(true)}
-            className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
             Create team
           </button>
@@ -67,19 +67,19 @@ export default function TeamsPage() {
       </div>
 
       {teams.length === 0 ? (
-        <p className="mt-6 text-gray-500">No teams yet.</p>
+        <p className="mt-6 text-slate-500">No teams yet.</p>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => (
             <div
               key={team.id}
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md"
+              className="cursor-pointer rounded-xl border border-slate-800/60 bg-slate-900 p-5 transition-colors hover:bg-slate-900/80"
               onClick={() => router.push(`/${orgSlug}/teams/${team.slug}`)}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-900">{team.name}</h3>
-                  <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
+                  <h3 className="font-medium text-white">{team.name}</h3>
+                  <span className="mt-1 inline-block rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
                     {team.identifier}
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export default function TeamsPage() {
                       e.stopPropagation();
                       setDeleteTarget(team);
                     }}
-                    className="text-sm text-red-500 hover:text-red-700"
+                    className="text-sm text-red-400 transition-colors hover:text-red-300"
                   >
                     Delete
                   </button>

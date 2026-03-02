@@ -30,7 +30,7 @@ Dev-tool aesthetic. Confident, precise, opinionated. Inspired by Linear and term
 | `--status-live` | `emerald-500` | Status dots, active indicators |
 | `--semantic-error` | Existing red system | Errors (unchanged from current app) |
 
-**Note:** The dashboard interior (post-login) keeps the existing light `bg-gray-50` content area + dark `bg-gray-900` sidebar. The dark palette above applies to full-page screens outside the dashboard shell (landing, loading, auth, empty states).
+**Note:** The entire app is dark. Dashboard content areas use `slate-950` as canvas, sidebar uses `slate-950` with a right border for separation. Modals use `slate-900` as elevated surface. All pages, components, and auth screens follow this palette consistently.
 
 ## Depth Strategy
 

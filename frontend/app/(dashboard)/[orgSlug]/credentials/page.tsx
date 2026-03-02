@@ -108,16 +108,16 @@ export default function CredentialsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Credentials</h1>
+      <h1 className="text-2xl font-medium tracking-tight text-white">Credentials</h1>
 
       {/* Tabs */}
-      <div className="mt-4 flex border-b border-gray-200">
+      <div className="mt-4 flex border-b border-slate-800/60">
         <button
           onClick={() => setActiveTab("credentials")}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "credentials"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-indigo-500 text-indigo-400"
+              : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
           }`}
         >
           Repository Credentials
@@ -126,8 +126,8 @@ export default function CredentialsPage() {
           onClick={() => setActiveTab("integrations")}
           className={`px-4 py-2 text-sm font-medium ${
             activeTab === "integrations"
-              ? "border-b-2 border-indigo-600 text-indigo-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-indigo-500 text-indigo-400"
+              : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
           }`}
         >
           Integrations
@@ -138,13 +138,13 @@ export default function CredentialsPage() {
       {activeTab === "credentials" && (
         <div className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-slate-200">
               Repository Credentials
             </h2>
             {canManage && (
               <button
                 onClick={() => setShowCreateCred(true)}
-                className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add credential
               </button>
@@ -152,43 +152,43 @@ export default function CredentialsPage() {
           </div>
 
           {credLoading ? (
-            <p className="mt-4 text-gray-500">Loading credentials...</p>
+            <p className="mt-4 text-slate-500">Loading credentials...</p>
           ) : credentials.length === 0 ? (
-            <p className="mt-4 text-gray-500">No credentials configured.</p>
+            <p className="mt-4 text-slate-500">No credentials configured.</p>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
+              <table className="min-w-full divide-y divide-slate-800/60">
+                <thead className="bg-slate-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Name
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Provider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Type
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Status
                     </th>
                     {canManage && (
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">
                         Actions
                       </th>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-800/60">
                   {credentials.map((cred) => (
-                    <tr key={cred.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={cred.id} className="hover:bg-slate-900/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
                         {cred.name}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {PROVIDER_LABELS[cred.provider] || cred.provider}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {CREDENTIAL_TYPE_LABELS[cred.credential_type] ||
                           cred.credential_type}
                       </td>
@@ -196,8 +196,8 @@ export default function CredentialsPage() {
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                             cred.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : "bg-slate-800 text-slate-400"
                           }`}
                         >
                           {cred.is_active ? "Active" : "Inactive"}
@@ -207,13 +207,13 @@ export default function CredentialsPage() {
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
                           <button
                             onClick={() => setEditCred(cred)}
-                            className="text-indigo-600 hover:underline"
+                            className="text-indigo-400 transition-colors hover:text-indigo-300"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => setDeleteCred(cred)}
-                            className="ml-3 text-red-600 hover:underline"
+                            className="ml-3 text-red-400 transition-colors hover:text-red-300"
                           >
                             Delete
                           </button>
@@ -232,13 +232,13 @@ export default function CredentialsPage() {
       {activeTab === "integrations" && (
         <div className="mt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-slate-200">
               Integrations
             </h2>
             {canManage && (
               <button
                 onClick={() => setShowCreateInt(true)}
-                className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add integration
               </button>
@@ -246,45 +246,45 @@ export default function CredentialsPage() {
           </div>
 
           {intLoading ? (
-            <p className="mt-4 text-gray-500">Loading integrations...</p>
+            <p className="mt-4 text-slate-500">Loading integrations...</p>
           ) : integrations.length === 0 ? (
-            <p className="mt-4 text-gray-500">No integrations configured.</p>
+            <p className="mt-4 text-slate-500">No integrations configured.</p>
           ) : (
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
+              <table className="min-w-full divide-y divide-slate-800/60">
+                <thead className="bg-slate-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Provider
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Webhook URL
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Status
                     </th>
                     {canManage && (
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">
                         Actions
                       </th>
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y divide-slate-800/60">
                   {integrations.map((int_) => (
-                    <tr key={int_.id}>
-                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <tr key={int_.id} className="hover:bg-slate-900/60">
+                      <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
                         {PROVIDER_LABELS[int_.provider] || int_.provider}
                       </td>
-                      <td className="max-w-xs truncate px-4 py-3 text-sm text-gray-600">
+                      <td className="max-w-xs truncate px-4 py-3 text-sm text-slate-400">
                         {int_.webhook_url || "-"}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm">
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                             int_.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : "bg-slate-800 text-slate-400"
                           }`}
                         >
                           {int_.is_active ? "Active" : "Inactive"}
@@ -294,13 +294,13 @@ export default function CredentialsPage() {
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
                           <button
                             onClick={() => setEditInt(int_)}
-                            className="text-indigo-600 hover:underline"
+                            className="text-indigo-400 transition-colors hover:text-indigo-300"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => setDeleteInt(int_)}
-                            className="ml-3 text-red-600 hover:underline"
+                            className="ml-3 text-red-400 transition-colors hover:text-red-300"
                           >
                             Delete
                           </button>

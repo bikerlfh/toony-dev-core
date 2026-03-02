@@ -21,20 +21,20 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const buttonClass =
     confirmVariant === "danger"
-      ? "bg-red-600 hover:bg-red-700"
-      : "bg-indigo-600 hover:bg-indigo-700";
+      ? "bg-red-600 hover:bg-red-500"
+      : "bg-indigo-600 hover:bg-indigo-500";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-        <p className="mt-2 text-sm text-gray-600">{message}</p>
-        <div className="mt-4 flex justify-end gap-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+        <h2 className="text-base font-medium tracking-tight text-white">{title}</h2>
+        <p className="mt-2 text-sm text-slate-400">{message}</p>
+        <div className="mt-5 flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white disabled:opacity-50"
           >
             Cancel
           </button>
@@ -42,7 +42,7 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`rounded px-4 py-2 text-sm text-white disabled:opacity-50 ${buttonClass}`}
+            className={`rounded-lg px-5 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${buttonClass}`}
           >
             {isLoading ? "..." : confirmLabel}
           </button>

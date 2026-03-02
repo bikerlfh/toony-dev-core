@@ -32,6 +32,9 @@ interface CreateProjectModalProps {
   onCreated: (project: ProjectDetail) => void;
 }
 
+const INPUT_CLASS =
+  "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
+
 export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjectModalProps) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamSlug, setTeamSlug] = useState("");
@@ -98,22 +101,25 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Create project</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg rounded-xl border border-slate-800/60 bg-slate-900 p-6 max-h-[90vh] overflow-y-auto">
+        <h2 className="mb-4 text-base font-medium tracking-tight text-white">Create project</h2>
 
         {error && (
-          <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</div>
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+            <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6.25" /><path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" /></svg>
+            <span>{error}</span>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} noValidate className={`space-y-4 ${submitted ? "submitted" : ""}`}>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Team</label>
+            <label className="block text-sm font-medium text-slate-400">Team</label>
             <select
               required
               value={teamSlug}
               onChange={(e) => setTeamSlug(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className={INPUT_CLASS}
             >
               {teams.map((t) => (
                 <option key={t.id} value={t.slug}>{t.name}</option>
@@ -122,45 +128,45 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-slate-400">Name</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className={INPUT_CLASS}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Slug</label>
+            <label className="block text-sm font-medium text-slate-400">Slug</label>
             <input
               type="text"
               required
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className={`${INPUT_CLASS} font-mono`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-slate-400">Description</label>
             <textarea
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className={`${INPUT_CLASS} resize-none`}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-slate-400">Status</label>
               <select
                 value={statusVal}
                 onChange={(e) => setStatusVal(e.target.value as ProjectStatus)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                className={INPUT_CLASS}
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -168,11 +174,11 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Priority</label>
+              <label className="block text-sm font-medium text-slate-400">Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as ProjectPriority)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                className={INPUT_CLASS}
               >
                 {PRIORITY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -183,40 +189,43 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Start date</label>
+              <label className="block text-sm font-medium text-slate-400">Start date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                className={INPUT_CLASS}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Target date</label>
+              <label className="block text-sm font-medium text-slate-400">Target date</label>
               <input
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                className={INPUT_CLASS}
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || teams.length === 0}
-              className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {isSubmitting ? "Creating..." : "Create project"}
-            </button>
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate-600">esc to cancel</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || teams.length === 0}
+                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {isSubmitting ? "Creating..." : "Create project"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

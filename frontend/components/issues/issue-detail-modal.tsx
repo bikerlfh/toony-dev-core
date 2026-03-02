@@ -36,12 +36,12 @@ const STATUS_OPTIONS: { value: IssueStatus; label: string }[] = [
 ];
 
 const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {
-  BACKLOG: "bg-gray-100 text-gray-800",
-  TODO: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-  IN_REVIEW: "bg-purple-100 text-purple-800",
-  DONE: "bg-green-100 text-green-800",
-  CANCELED: "bg-red-100 text-red-800",
+  BACKLOG: "bg-slate-800 text-slate-400",
+  TODO: "bg-blue-500/15 text-blue-400",
+  IN_PROGRESS: "bg-amber-500/15 text-amber-400",
+  IN_REVIEW: "bg-purple-500/15 text-purple-400",
+  DONE: "bg-emerald-500/15 text-emerald-400",
+  CANCELED: "bg-red-500/15 text-red-400",
 };
 
 const ISSUE_STATUS_LABELS: Record<IssueStatus, string> = {
@@ -124,12 +124,12 @@ export function IssueDetailModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="flex h-[85vh] w-full max-w-4xl flex-col rounded-lg bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="flex h-[85vh] w-full max-w-4xl flex-col rounded-xl border border-slate-800/60 bg-slate-900">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-800/60 px-6 py-4">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm text-gray-500">{identifier}</span>
+            <span className="font-mono text-sm text-slate-500">{identifier}</span>
             {issue && (
               <>
                 <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ISSUE_STATUS_COLORS[issue.status]}`}>
@@ -139,25 +139,25 @@ export function IssueDetailModal({
               </>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors text-xl leading-none">&times;</button>
         </div>
 
         {isLoading || !issue ? (
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-gray-500">Loading issue...</p>
+            <p className="text-slate-500">Loading issue...</p>
           </div>
         ) : (
           <div className="flex flex-1 overflow-hidden">
             {/* Main content */}
             <div className="flex flex-1 flex-col overflow-y-auto p-6">
-              <h1 className="text-xl font-semibold text-gray-900">{issue.title}</h1>
+              <h1 className="text-xl font-medium text-white">{issue.title}</h1>
 
               {issue.description && (
-                <p className="mt-3 whitespace-pre-wrap text-sm text-gray-600">{issue.description}</p>
+                <p className="mt-3 whitespace-pre-wrap text-sm text-slate-400">{issue.description}</p>
               )}
 
               {/* Tabs */}
-              <div className="mt-6 border-b border-gray-200">
+              <div className="mt-6 border-b border-slate-800/60">
                 <nav className="-mb-px flex gap-4">
                   {(["comments", "activity"] as DetailTab[]).map((tab) => (
                     <button
@@ -165,8 +165,8 @@ export function IssueDetailModal({
                       onClick={() => setActiveTab(tab)}
                       className={`border-b-2 pb-2 text-sm font-medium capitalize transition-colors ${
                         activeTab === tab
-                          ? "border-indigo-600 text-indigo-600"
-                          : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                          ? "border-indigo-500 text-indigo-400"
+                          : "border-transparent text-slate-500 hover:border-slate-700 hover:text-slate-300"
                       }`}
                     >
                       {tab}
@@ -196,16 +196,16 @@ export function IssueDetailModal({
             </div>
 
             {/* Properties sidebar */}
-            <div className="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 p-4">
-              <h3 className="mb-3 text-xs font-semibold uppercase text-gray-500">Properties</h3>
+            <div className="w-72 shrink-0 overflow-y-auto border-l border-slate-800/60 bg-slate-950 p-4">
+              <h3 className="mb-3 text-xs font-medium uppercase text-slate-500">Properties</h3>
               <div className="space-y-3">
                 {/* Status */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Status</label>
+                  <label className="block text-xs font-medium text-slate-500">Status</label>
                   <select
                     value={issue.status}
                     onChange={(e) => handleFieldUpdate({ status: e.target.value })}
-                    className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   >
                     {STATUS_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -215,11 +215,11 @@ export function IssueDetailModal({
 
                 {/* Priority */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Priority</label>
+                  <label className="block text-xs font-medium text-slate-500">Priority</label>
                   <select
                     value={issue.priority}
                     onChange={(e) => handleFieldUpdate({ priority: e.target.value })}
-                    className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   >
                     {PRIORITY_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -229,11 +229,11 @@ export function IssueDetailModal({
 
                 {/* Assignee */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Assignee</label>
+                  <label className="block text-xs font-medium text-slate-500">Assignee</label>
                   <select
                     value={issue.assignee?.id || ""}
                     onChange={(e) => handleFieldUpdate({ assignee_id: e.target.value || null })}
-                    className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   >
                     <option value="">Unassigned</option>
                     {members.map((m) => (
@@ -247,11 +247,11 @@ export function IssueDetailModal({
                 {/* Milestone */}
                 {milestones.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-500">Milestone</label>
+                    <label className="block text-xs font-medium text-slate-500">Milestone</label>
                     <select
                       value={issue.milestone?.id || ""}
                       onChange={(e) => handleFieldUpdate({ milestone_id: e.target.value || null })}
-                      className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                      className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                     >
                       <option value="">None</option>
                       {milestones.map((m) => (
@@ -264,11 +264,11 @@ export function IssueDetailModal({
                 {/* Cycle */}
                 {cycles.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-500">Cycle</label>
+                    <label className="block text-xs font-medium text-slate-500">Cycle</label>
                     <select
                       value={issue.cycle?.id || ""}
                       onChange={(e) => handleFieldUpdate({ cycle_id: e.target.value || null })}
-                      className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                      className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                     >
                       <option value="">None</option>
                       {cycles.map((c) => (
@@ -280,7 +280,7 @@ export function IssueDetailModal({
 
                 {/* Estimate */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Estimate</label>
+                  <label className="block text-xs font-medium text-slate-500">Estimate</label>
                   <input
                     type="number"
                     min={0}
@@ -289,25 +289,25 @@ export function IssueDetailModal({
                       handleFieldUpdate({ estimate: e.target.value ? parseInt(e.target.value) : null })
                     }
                     placeholder="Points"
-                    className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Due date */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Due date</label>
+                  <label className="block text-xs font-medium text-slate-500">Due date</label>
                   <input
                     type="date"
                     value={issue.due_date || ""}
                     onChange={(e) => handleFieldUpdate({ due_date: e.target.value || null })}
-                    className="mt-1 block w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                 </div>
 
                 {/* Labels */}
                 {labels.length > 0 && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-500">Labels</label>
+                    <label className="block text-xs font-medium text-slate-500">Labels</label>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {labels.map((l) => {
                         const selected = issue.labels.some((il) => il.id === l.id);
@@ -323,8 +323,8 @@ export function IssueDetailModal({
                             }}
                             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
                               selected
-                                ? "border-gray-900 bg-gray-900 text-white"
-                                : "border-gray-300 text-gray-700 hover:border-gray-400"
+                                ? "border-indigo-500 bg-indigo-600 text-white"
+                                : "border-slate-700 text-slate-400 hover:border-slate-600"
                             }`}
                           >
                             <span
@@ -341,31 +341,31 @@ export function IssueDetailModal({
 
                 {/* Reporter */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Reporter</label>
-                  <p className="mt-1 text-sm text-gray-700">
+                  <label className="block text-xs font-medium text-slate-500">Reporter</label>
+                  <p className="mt-1 text-sm text-slate-300">
                     {issue.reporter.first_name} {issue.reporter.last_name}
                   </p>
                 </div>
 
                 {/* Created / Updated */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Created</label>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <label className="block text-xs font-medium text-slate-500">Created</label>
+                  <p className="mt-1 text-xs text-slate-500">
                     {new Date(issue.created_at).toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500">Updated</label>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <label className="block text-xs font-medium text-slate-500">Updated</label>
+                  <p className="mt-1 text-xs text-slate-500">
                     {new Date(issue.updated_at).toLocaleString()}
                   </p>
                 </div>
 
                 {/* Delete */}
-                <div className="border-t border-gray-200 pt-3">
+                <div className="border-t border-slate-800/60 pt-3">
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="text-sm text-red-600 hover:underline"
+                    className="text-sm text-red-400 transition-colors hover:text-red-300"
                   >
                     Delete issue
                   </button>
@@ -477,31 +477,31 @@ function CommentsSection({
     }
   }
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading comments...</p>;
+  if (isLoading) return <p className="text-sm text-slate-500">Loading comments...</p>;
 
   return (
     <div>
       {/* Comment list */}
       {comments.length === 0 ? (
-        <p className="text-sm text-gray-400">No comments yet.</p>
+        <p className="text-sm text-slate-500">No comments yet.</p>
       ) : (
         <div className="space-y-4">
           {comments.map((c) => (
-            <div key={c.id} className="rounded-lg border border-gray-200 bg-white p-3">
+            <div key={c.id} className="rounded-xl border border-slate-800/60 bg-slate-900 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-[10px] font-medium text-gray-600">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400">
                     {c.author.first_name?.[0]}
                     {c.author.last_name?.[0]}
                   </div>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-slate-200">
                     {c.author.first_name} {c.author.last_name}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-500">
                     {new Date(c.created_at).toLocaleString()}
                   </span>
                   {c.edited_at && (
-                    <span className="text-xs text-gray-400">(edited)</span>
+                    <span className="text-xs text-slate-500">(edited)</span>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -510,13 +510,13 @@ function CommentsSection({
                       setEditingId(c.id);
                       setEditBody(c.body);
                     }}
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-slate-500 hover:text-slate-300"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => setDeleteTarget(c)}
-                    className="text-xs text-red-500 hover:text-red-700"
+                    className="text-xs text-red-400 hover:text-red-300"
                   >
                     Delete
                   </button>
@@ -529,25 +529,25 @@ function CommentsSection({
                     value={editBody}
                     onChange={(e) => setEditBody(e.target.value)}
                     rows={2}
-                    className="block w-full rounded border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   />
                   <div className="mt-2 flex gap-2">
                     <button
                       onClick={() => handleUpdate(c.id)}
-                      className="rounded bg-indigo-600 px-3 py-1 text-xs text-white hover:bg-indigo-700"
+                      className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500"
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="rounded border border-gray-300 px-3 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                      className="rounded-lg border border-slate-700 px-3 py-1 text-xs text-slate-300 transition-colors hover:text-white"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{c.body}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{c.body}</p>
               )}
             </div>
           ))}
@@ -561,13 +561,13 @@ function CommentsSection({
           onChange={(e) => setNewBody(e.target.value)}
           rows={3}
           placeholder="Write a comment..."
-          className="block w-full rounded border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          className="block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
         />
         <div className="mt-2 flex justify-end">
           <button
             type="submit"
             disabled={isSubmitting || !newBody.trim()}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
           >
             {isSubmitting ? "Posting..." : "Comment"}
           </button>
@@ -613,26 +613,26 @@ function ActivitySection({
     })();
   }, [orgSlug, projectSlug, identifier]);
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading activity...</p>;
+  if (isLoading) return <p className="text-sm text-slate-500">Loading activity...</p>;
 
   if (activities.length === 0) {
-    return <p className="text-sm text-gray-400">No activity yet.</p>;
+    return <p className="text-sm text-slate-500">No activity yet.</p>;
   }
 
   return (
     <div className="space-y-3">
       {activities.map((a) => (
         <div key={a.id} className="flex gap-3">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-medium text-gray-600">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400">
             {a.user.first_name?.[0]}
             {a.user.last_name?.[0]}
           </div>
           <div className="text-sm">
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-slate-200">
               {a.user.first_name} {a.user.last_name}
             </span>{" "}
             <ActivityDescription activity={a} />
-            <p className="mt-0.5 text-xs text-gray-400">
+            <p className="mt-0.5 text-xs text-slate-500">
               {new Date(a.created_at).toLocaleString()}
             </p>
           </div>
@@ -644,22 +644,22 @@ function ActivitySection({
 
 function ActivityDescription({ activity }: { activity: IssueActivity }) {
   if (activity.action === "CREATED") {
-    return <span className="text-gray-600">created this issue</span>;
+    return <span className="text-slate-400">created this issue</span>;
   }
 
   if (activity.action === "UPDATED" && activity.field_changed) {
     const field = activity.field_changed.replace(/_/g, " ");
     return (
-      <span className="text-gray-600">
+      <span className="text-slate-400">
         changed <span className="font-medium">{field}</span>
         {activity.old_value && (
           <>
-            {" "}from <span className="rounded bg-gray-100 px-1 py-0.5 text-xs">{activity.old_value}</span>
+            {" "}from <span className="rounded bg-slate-800 px-1 py-0.5 text-xs text-slate-300">{activity.old_value}</span>
           </>
         )}
         {activity.new_value && (
           <>
-            {" "}to <span className="rounded bg-gray-100 px-1 py-0.5 text-xs">{activity.new_value}</span>
+            {" "}to <span className="rounded bg-slate-800 px-1 py-0.5 text-xs text-slate-300">{activity.new_value}</span>
           </>
         )}
       </span>
@@ -667,8 +667,8 @@ function ActivityDescription({ activity }: { activity: IssueActivity }) {
   }
 
   if (activity.action === "DELETED") {
-    return <span className="text-gray-600">deleted this issue</span>;
+    return <span className="text-slate-400">deleted this issue</span>;
   }
 
-  return <span className="text-gray-600">{activity.action.toLowerCase()}</span>;
+  return <span className="text-slate-400">{activity.action.toLowerCase()}</span>;
 }

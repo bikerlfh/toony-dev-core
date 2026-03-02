@@ -44,7 +44,7 @@ export function FilterBar({
       <select
         value={filters.status || ""}
         onChange={(e) => onChange({ ...filters, status: (e.target.value || undefined) as IssueStatus | undefined })}
-        className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
       >
         <option value="">All statuses</option>
         {STATUS_OPTIONS.map((o) => (
@@ -55,7 +55,7 @@ export function FilterBar({
       <select
         value={filters.priority || ""}
         onChange={(e) => onChange({ ...filters, priority: (e.target.value || undefined) as IssuePriority | undefined })}
-        className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
       >
         <option value="">All priorities</option>
         {PRIORITY_OPTIONS.map((o) => (
@@ -66,7 +66,7 @@ export function FilterBar({
       <select
         value={filters.assignee_id || ""}
         onChange={(e) => onChange({ ...filters, assignee_id: e.target.value || undefined })}
-        className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
       >
         <option value="">All assignees</option>
         {members.map((m) => (
@@ -80,7 +80,7 @@ export function FilterBar({
         <select
           value={filters.milestone_id || ""}
           onChange={(e) => onChange({ ...filters, milestone_id: e.target.value || undefined })}
-          className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
         >
           <option value="">All milestones</option>
           {milestones.map((m) => (
@@ -93,7 +93,7 @@ export function FilterBar({
         <select
           value={filters.cycle_id || ""}
           onChange={(e) => onChange({ ...filters, cycle_id: e.target.value || undefined })}
-          className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
         >
           <option value="">All cycles</option>
           {cycles.map((c) => (
@@ -113,7 +113,7 @@ export function FilterBar({
               onChange({ ...filters, label_ids: [...existing, id] });
             }
           }}
-          className="rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
         >
           <option value="">Add label filter</option>
           {labels.filter((l) => !(filters.label_ids || []).includes(l.id)).map((l) => (
@@ -126,12 +126,12 @@ export function FilterBar({
         const label = labels.find((l) => l.id === labelId);
         if (!label) return null;
         return (
-          <span key={labelId} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+          <span key={labelId} className="inline-flex items-center gap-1 rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-200">
             <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: label.color }} />
             {label.name}
             <button
               onClick={() => onChange({ ...filters, label_ids: (filters.label_ids || []).filter((id) => id !== labelId) })}
-              className="ml-0.5 text-gray-500 hover:text-gray-700"
+              className="ml-0.5 text-slate-500 hover:text-white"
             >
               &times;
             </button>
@@ -142,7 +142,7 @@ export function FilterBar({
       {hasFilters && (
         <button
           onClick={() => onChange({})}
-          className="text-sm text-gray-500 hover:text-gray-700"
+          className="text-sm text-slate-500 hover:text-white transition-colors"
         >
           Clear filters
         </button>

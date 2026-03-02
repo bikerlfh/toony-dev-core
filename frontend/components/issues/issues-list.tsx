@@ -5,12 +5,12 @@ import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 
 const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {
-  BACKLOG: "bg-gray-100 text-gray-800",
-  TODO: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-  IN_REVIEW: "bg-purple-100 text-purple-800",
-  DONE: "bg-green-100 text-green-800",
-  CANCELED: "bg-red-100 text-red-800",
+  BACKLOG: "bg-slate-800 text-slate-400",
+  TODO: "bg-blue-500/15 text-blue-400",
+  IN_PROGRESS: "bg-amber-500/15 text-amber-400",
+  IN_REVIEW: "bg-purple-500/15 text-purple-400",
+  DONE: "bg-emerald-500/15 text-emerald-400",
+  CANCELED: "bg-red-500/15 text-red-400",
 };
 
 const ISSUE_STATUS_LABELS: Record<IssueStatus, string> = {
@@ -34,30 +34,30 @@ const PRIORITY_OPTIONS: IssuePriority[] = ["NONE", "URGENT", "HIGH", "MEDIUM", "
 
 export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityChange }: IssuesListProps) {
   if (issues.length === 0) {
-    return <p className="py-8 text-center text-gray-500">No issues found.</p>;
+    return <p className="py-8 text-center text-slate-500">No issues found.</p>;
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="overflow-hidden rounded-xl border border-slate-800/60">
+      <table className="min-w-full divide-y divide-slate-800/60">
+        <thead className="bg-slate-900">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">ID</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Title</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Priority</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Assignee</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Labels</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Due</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">ID</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Title</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Priority</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Assignee</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Labels</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Due</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-slate-800/60">
           {issues.map((issue) => (
-            <tr key={issue.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onIssueClick(issue)}>
+            <tr key={issue.id} className="cursor-pointer hover:bg-slate-900/60" onClick={() => onIssueClick(issue)}>
               <td className="whitespace-nowrap px-4 py-3">
-                <span className="text-xs font-mono text-gray-500">{issue.identifier}</span>
+                <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
               </td>
-              <td className="max-w-xs truncate px-4 py-3 text-sm font-medium text-gray-900">
+              <td className="max-w-xs truncate px-4 py-3 text-sm font-medium text-slate-200">
                 {issue.title}
               </td>
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -65,7 +65,7 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
                   <select
                     value={issue.status}
                     onChange={(e) => onStatusChange(issue, e.target.value as IssueStatus)}
-                    className="rounded border border-gray-300 px-1.5 py-0.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="rounded-md border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>{ISSUE_STATUS_LABELS[s]}</option>
@@ -82,7 +82,7 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
                   <select
                     value={issue.priority}
                     onChange={(e) => onPriorityChange(issue, e.target.value as IssuePriority)}
-                    className="rounded border border-gray-300 px-1.5 py-0.5 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                    className="rounded-md border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                   >
                     {PRIORITY_OPTIONS.map((p) => (
                       <option key={p} value={p}>{p}</option>
@@ -92,7 +92,7 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
                   <PriorityBadge priority={issue.priority} />
                 )}
               </td>
-              <td className="px-4 py-3 text-sm text-gray-500">
+              <td className="px-4 py-3 text-sm text-slate-500">
                 {issue.assignee
                   ? `${issue.assignee.first_name} ${issue.assignee.last_name}`
                   : "—"}
@@ -109,11 +109,11 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
                     </span>
                   ))}
                   {issue.labels.length > 2 && (
-                    <span className="text-[10px] text-gray-400">+{issue.labels.length - 2}</span>
+                    <span className="text-[10px] text-slate-500">+{issue.labels.length - 2}</span>
                   )}
                 </div>
               </td>
-              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500">
+              <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">
                 {issue.due_date ? new Date(issue.due_date).toLocaleDateString() : "—"}
               </td>
             </tr>

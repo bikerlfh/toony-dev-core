@@ -9,11 +9,11 @@ import { StartImportWizard } from "@/components/start-import-wizard";
 import type { ImportJob, ImportJobDetail } from "@/types";
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-gray-100 text-gray-600",
-  IN_PROGRESS: "bg-blue-100 text-blue-700",
-  COMPLETED: "bg-green-100 text-green-700",
-  FAILED: "bg-red-100 text-red-700",
-  PARTIALLY_COMPLETED: "bg-yellow-100 text-yellow-700",
+  PENDING: "bg-slate-800 text-slate-400",
+  IN_PROGRESS: "bg-blue-500/15 text-blue-400",
+  COMPLETED: "bg-emerald-500/15 text-emerald-400",
+  FAILED: "bg-red-500/15 text-red-400",
+  PARTIALLY_COMPLETED: "bg-amber-500/15 text-amber-400",
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
@@ -54,7 +54,7 @@ export default function ImportsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900">Imports</h1>
+      <h1 className="text-2xl font-medium tracking-tight text-white">Imports</h1>
 
       {/* Wizard */}
       {canManage && (
@@ -65,41 +65,41 @@ export default function ImportsPage() {
 
       {/* Import History */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900">Import History</h2>
+        <h2 className="text-base font-medium text-white">Import History</h2>
 
         {isLoading ? (
-          <p className="mt-4 text-gray-500">Loading imports...</p>
+          <p className="mt-4 text-slate-500">Loading imports...</p>
         ) : jobs.length === 0 ? (
-          <p className="mt-4 text-gray-500">No imports yet.</p>
+          <p className="mt-4 text-slate-500">No imports yet.</p>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
+            <table className="min-w-full divide-y divide-slate-800/60">
+              <thead className="bg-slate-900">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                     Provider
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                     Progress
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                     Items
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-slate-500">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-slate-800/60">
                 {jobs.map((job) => (
                   <tr key={job.id}>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
                       {PROVIDER_LABELS[job.provider] || job.provider}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm">
@@ -111,9 +111,9 @@ export default function ImportsPage() {
                         {job.status.replace(/_/g, " ")}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                       <div className="flex items-center gap-2">
-                        <div className="h-2 w-20 rounded-full bg-gray-200">
+                        <div className="h-2 w-20 rounded-full bg-slate-800">
                           <div
                             className="h-2 rounded-full bg-indigo-600"
                             style={{ width: `${job.progress}%` }}
@@ -122,10 +122,10 @@ export default function ImportsPage() {
                         <span>{job.progress}%</span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                       {job.imported_items}/{job.total_items}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                       {new Date(job.created_at).toLocaleDateString()}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
@@ -146,29 +146,29 @@ export default function ImportsPage() {
 
       {/* Detail modal */}
       {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-lg rounded-xl border border-slate-800/60 bg-slate-900 p-6 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-base font-medium tracking-tight text-white">
                 Import Details
               </h2>
               <button
                 onClick={() => setSelectedJob(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-slate-500 hover:text-white transition-colors"
               >
                 Close
               </button>
             </div>
 
-            <div className="mt-4 space-y-3 text-sm">
+            <div className="mt-4 space-y-3 text-sm text-slate-300">
               <div className="flex justify-between">
-                <span className="text-gray-500">Provider</span>
+                <span className="text-slate-500">Provider</span>
                 <span className="font-medium">
                   {PROVIDER_LABELS[selectedJob.provider] || selectedJob.provider}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Status</span>
+                <span className="text-slate-500">Status</span>
                 <span
                   className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                     STATUS_COLORS[selectedJob.status] || ""
@@ -178,24 +178,24 @@ export default function ImportsPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Progress</span>
+                <span className="text-slate-500">Progress</span>
                 <span>{selectedJob.progress}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Items</span>
+                <span className="text-slate-500">Items</span>
                 <span>
                   {selectedJob.imported_items}/{selectedJob.total_items}
                 </span>
               </div>
               {selectedJob.started_at && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Started</span>
+                  <span className="text-slate-500">Started</span>
                   <span>{new Date(selectedJob.started_at).toLocaleString()}</span>
                 </div>
               )}
               {selectedJob.completed_at && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Completed</span>
+                  <span className="text-slate-500">Completed</span>
                   <span>
                     {new Date(selectedJob.completed_at).toLocaleString()}
                   </span>
@@ -203,7 +203,7 @@ export default function ImportsPage() {
               )}
               {selectedJob.started_by && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Started by</span>
+                  <span className="text-slate-500">Started by</span>
                   <span>{selectedJob.started_by.email}</span>
                 </div>
               )}
@@ -211,12 +211,12 @@ export default function ImportsPage() {
 
             {selectedJob.error_log && selectedJob.error_log.length > 0 && (
               <div className="mt-4">
-                <h3 className="text-sm font-semibold text-red-700">
+                <h3 className="text-sm font-medium text-red-400">
                   Errors ({selectedJob.error_log.length})
                 </h3>
-                <div className="mt-2 max-h-40 overflow-y-auto rounded border border-red-200 bg-red-50 p-3">
+                <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-red-500/20 bg-red-500/10 p-3">
                   {selectedJob.error_log.map((err, i) => (
-                    <div key={i} className="mb-1 text-xs text-red-600">
+                    <div key={i} className="mb-1 text-xs text-red-400">
                       {err.title && (
                         <span className="font-medium">{err.title}: </span>
                       )}
@@ -230,7 +230,7 @@ export default function ImportsPage() {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => setSelectedJob(null)}
-                className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
               >
                 Close
               </button>

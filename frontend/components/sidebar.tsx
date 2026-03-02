@@ -29,9 +29,9 @@ export function Sidebar() {
   const basePath = `/${currentOrg.slug}`;
 
   return (
-    <aside className="flex w-64 flex-col bg-gray-900 text-white">
+    <aside className="flex w-64 flex-col border-r border-slate-800/60 bg-slate-950">
       {/* Org Switcher */}
-      <div className="border-b border-gray-700 p-4">
+      <div className="border-b border-slate-800/60 p-4">
         <OrgSwitcher />
       </div>
 
@@ -43,7 +43,7 @@ export function Sidebar() {
               new KeyboardEvent("keydown", { key: "k", metaKey: true })
             )
           }
-          className="flex w-full items-center gap-2 rounded border border-gray-700 px-3 py-1.5 text-sm text-gray-400 hover:border-gray-500 hover:text-gray-300"
+          className="flex w-full items-center gap-2 rounded-md border border-slate-800 px-3 py-1.5 text-sm text-slate-500 transition-colors hover:border-slate-700 hover:text-slate-400"
         >
           <svg
             className="h-4 w-4"
@@ -59,7 +59,7 @@ export function Sidebar() {
             />
           </svg>
           <span className="flex-1 text-left">Search...</span>
-          <kbd className="rounded border border-gray-600 px-1 text-xs">
+          <kbd className="rounded border border-slate-700 px-1 text-xs text-slate-600">
             &#8984;K
           </kbd>
         </button>
@@ -68,7 +68,7 @@ export function Sidebar() {
       <SearchCommandPalette />
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-0.5 p-4">
         {NAV_ITEMS.map((item) => {
           const href = `${basePath}${item.path}`;
           const isActive =
@@ -80,10 +80,10 @@ export function Sidebar() {
             <Link
               key={item.path}
               href={href}
-              className={`block rounded px-3 py-2 text-sm font-medium transition-colors ${
+              className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200"
               }`}
             >
               {item.label}
@@ -93,14 +93,14 @@ export function Sidebar() {
       </nav>
 
       {/* User info + logout */}
-      <div className="border-t border-gray-700 p-4">
-        <div className="mb-2 text-sm text-gray-300">
+      <div className="border-t border-slate-800/60 p-4">
+        <div className="mb-1 text-sm font-medium text-slate-300">
           {user?.first_name} {user?.last_name}
         </div>
-        <div className="mb-3 truncate text-xs text-gray-500">{user?.email}</div>
+        <div className="mb-3 truncate text-xs text-slate-600">{user?.email}</div>
         <button
           onClick={logout}
-          className="w-full rounded px-3 py-1.5 text-left text-sm text-gray-400 hover:bg-gray-800 hover:text-white"
+          className="w-full rounded-md px-3 py-1.5 text-left text-sm text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
         >
           Sign out
         </button>

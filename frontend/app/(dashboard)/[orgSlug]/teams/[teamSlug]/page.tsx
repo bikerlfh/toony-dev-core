@@ -19,8 +19,8 @@ import type { TeamDetail, TeamMember, TeamRole } from "@/types";
 const TEAM_ROLES: TeamRole[] = ["LEAD", "MEMBER"];
 
 const ROLE_BADGE_COLORS: Record<TeamRole, string> = {
-  LEAD: "bg-purple-100 text-purple-800",
-  MEMBER: "bg-gray-100 text-gray-800",
+  LEAD: "bg-purple-500/20 text-purple-400",
+  MEMBER: "bg-slate-800 text-slate-400",
 };
 
 export default function TeamDetailPage() {
@@ -143,7 +143,7 @@ export default function TeamDetailPage() {
   }
 
   if (isLoading) {
-    return <p className="text-gray-500">Loading team...</p>;
+    return <p className="text-slate-500">Loading team...</p>;
   }
 
   if (!team) {
@@ -155,15 +155,15 @@ export default function TeamDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{team.name}</h1>
-          <span className="mt-1 inline-block rounded bg-gray-100 px-2 py-0.5 text-xs font-mono text-gray-600">
+          <h1 className="text-2xl font-medium tracking-tight text-white">{team.name}</h1>
+          <span className="mt-1 inline-block rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
             {team.identifier}
           </span>
         </div>
         {canManage && !isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
           >
             Edit
           </button>
@@ -172,38 +172,38 @@ export default function TeamDetailPage() {
 
       {/* Edit form */}
       {isEditing && canManage && (
-        <form onSubmit={handleSaveEdit} className="mt-4 rounded-lg border border-gray-200 bg-white p-5 space-y-4">
+        <form onSubmit={handleSaveEdit} className="mt-4 rounded-xl border border-slate-800/60 bg-slate-900 p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name</label>
+            <label className="block text-sm font-medium text-slate-400">Name</label>
             <input
               type="text"
               required
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-slate-400">Description</label>
             <textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={2}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
             />
           </div>
           <div className="flex gap-3">
             <button
               type="submit"
               disabled={isSaving}
-              className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
             >
               Cancel
             </button>
@@ -213,48 +213,48 @@ export default function TeamDetailPage() {
 
       {/* Description */}
       {!isEditing && team.description && (
-        <p className="mt-3 text-sm text-gray-600">{team.description}</p>
+        <p className="mt-3 text-sm text-slate-400">{team.description}</p>
       )}
 
       {/* Members */}
       <div className="mt-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Members</h2>
+          <h2 className="text-base font-medium text-white">Members</h2>
           {canManage && (
             <button
               onClick={() => setShowAddMember(true)}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700"
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
             >
               Add member
             </button>
           )}
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60 bg-slate-900">
+          <table className="min-w-full divide-y divide-slate-800/60">
+            <thead className="bg-slate-900">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Member</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Joined</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Member</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Joined</th>
                 {canManage && (
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-800/60">
               {members.map((member) => (
-                <tr key={member.id}>
+                <tr key={member.id} className="hover:bg-slate-900/60">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-medium text-slate-400">
                         {member.user.first_name?.[0]}{member.user.last_name?.[0]}
                       </div>
                       <div className="ml-3">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-slate-200">
                           {member.user.first_name} {member.user.last_name}
                         </p>
-                        <p className="text-sm text-gray-500">{member.user.email}</p>
+                        <p className="text-sm text-slate-500">{member.user.email}</p>
                       </div>
                     </div>
                   </td>
@@ -263,7 +263,7 @@ export default function TeamDetailPage() {
                       <select
                         value={member.role}
                         onChange={(e) => handleChangeRole(member, e.target.value as TeamRole)}
-                        className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                        className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                       >
                         {TEAM_ROLES.map((r) => (
                           <option key={r} value={r}>{r}</option>
@@ -275,14 +275,14 @@ export default function TeamDetailPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-500">
                     {new Date(member.joined_at).toLocaleDateString()}
                   </td>
                   {canManage && (
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => setRemoveTarget(member)}
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-400 transition-colors hover:text-red-300"
                       >
                         Remove
                       </button>
@@ -297,15 +297,15 @@ export default function TeamDetailPage() {
 
       {/* Danger zone */}
       {canManage && (
-        <div className="mt-8 rounded-lg border border-red-200 bg-white p-6">
-          <h2 className="text-lg font-medium text-red-900">Danger zone</h2>
-          <p className="mt-1 text-sm text-gray-600">
+        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
+          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
+          <p className="mt-1 text-sm text-slate-400">
             Permanently delete this team. Issues linked to this team will not be affected.
           </p>
           <button
             type="button"
             onClick={() => setShowDeleteTeam(true)}
-            className="mt-4 rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500"
           >
             Delete team
           </button>
@@ -314,29 +314,32 @@ export default function TeamDetailPage() {
 
       {/* Add member modal */}
       {showAddMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Add team member</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="mb-4 text-base font-medium tracking-tight text-white">Add team member</h2>
             {addError && (
-              <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{addError}</div>
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+                <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6.25" /><path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" /></svg>
+                <span>{addError}</span>
+              </div>
             )}
             <form onSubmit={handleAddMember} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <label className="block text-sm font-medium text-slate-400">Email</label>
                 <input
                   type="email"
                   required
                   value={newMemberEmail}
                   onChange={(e) => setNewMemberEmail(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <label className="block text-sm font-medium text-slate-400">Role</label>
                 <select
                   value={newMemberRole}
                   onChange={(e) => setNewMemberRole(e.target.value as TeamRole)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                 >
                   {TEAM_ROLES.map((r) => (
                     <option key={r} value={r}>{r}</option>
@@ -347,14 +350,14 @@ export default function TeamDetailPage() {
                 <button
                   type="button"
                   onClick={() => { setShowAddMember(false); setAddError(""); }}
-                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isAdding}
-                  className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
                 >
                   {isAdding ? "Adding..." : "Add member"}
                 </button>

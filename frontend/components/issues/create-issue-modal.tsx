@@ -92,37 +92,37 @@ export function CreateIssueModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Create issue</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="w-full max-w-lg rounded-xl border border-slate-800/60 bg-slate-900 p-6 max-h-[90vh] overflow-y-auto">
+        <h2 className="mb-4 text-base font-medium tracking-tight text-white">Create issue</h2>
 
-        {error && <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+        {error && <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Title</label>
+            <label className="block text-sm font-medium text-slate-400">Title</label>
             <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-slate-400">Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-slate-400">Status</label>
               <select value={status} onChange={(e) => setStatus(e.target.value as IssueStatus)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                 {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Priority</label>
+              <label className="block text-sm font-medium text-slate-400">Priority</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value as IssuePriority)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                 {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -130,26 +130,26 @@ export function CreateIssueModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Assignee</label>
+              <label className="block text-sm font-medium text-slate-400">Assignee</label>
               <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}
-                className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                 <option value="">Unassigned</option>
                 {members.map((m) => <option key={m.user.id} value={m.user.id}>{m.user.first_name} {m.user.last_name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Estimate</label>
+              <label className="block text-sm font-medium text-slate-400">Estimate</label>
               <input type="number" min={0} value={estimate} onChange={(e) => setEstimate(e.target.value)}
-                placeholder="Points" className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+                placeholder="Points" className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {milestones.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Milestone</label>
+                <label className="block text-sm font-medium text-slate-400">Milestone</label>
                 <select value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                   <option value="">None</option>
                   {milestones.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
@@ -157,9 +157,9 @@ export function CreateIssueModal({
             )}
             {cycles.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Cycle</label>
+                <label className="block text-sm font-medium text-slate-400">Cycle</label>
                 <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}
-                  className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
                   <option value="">None</option>
                   {cycles.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -168,19 +168,19 @@ export function CreateIssueModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Due date</label>
+            <label className="block text-sm font-medium text-slate-400">Due date</label>
             <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-              className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none" />
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
 
           {labels.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Labels</label>
+              <label className="block text-sm font-medium text-slate-400">Labels</label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {labels.map((l) => (
                   <button key={l.id} type="button" onClick={() => toggleLabel(l.id)}
                     className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                      labelIds.includes(l.id) ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 text-gray-700 hover:border-gray-400"
+                      labelIds.includes(l.id) ? "border-indigo-500 bg-indigo-600 text-white" : "border-slate-700 text-slate-400 hover:border-slate-600"
                     }`}>
                     <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />
                     {l.name}
@@ -192,9 +192,9 @@ export function CreateIssueModal({
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
             <button type="submit" disabled={isSubmitting}
-              className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
               {isSubmitting ? "Creating..." : "Create issue"}</button>
           </div>
         </form>
