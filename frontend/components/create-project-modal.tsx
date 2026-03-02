@@ -44,6 +44,7 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
   const [targetDate, setTargetDate] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const fetchTeams = useCallback(async () => {
     const res = await listTeams(orgSlug);
@@ -62,6 +63,11 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSubmitted(true);
+
+    const form = e.target as HTMLFormElement;
+    if (!form.checkValidity()) return;
+
     setError("");
     setIsSubmitting(true);
 
@@ -100,7 +106,7 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
           <div className="mb-4 rounded bg-red-50 p-3 text-sm text-red-600">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className={`space-y-4 ${submitted ? "submitted" : ""}`}>
           <div>
             <label className="block text-sm font-medium text-gray-700">Team</label>
             <select
@@ -138,10 +144,9 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400">(optional)</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Description</label>
             <textarea
+              required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
