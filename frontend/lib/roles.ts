@@ -39,3 +39,7 @@ export function canCreateProject(role: MembershipRole | undefined | null): boole
 export function canManageLabels(role: MembershipRole | undefined | null): boolean {
   return hasMinRole(role, "ADMIN");
 }
+
+export function canManageIssues(role: MembershipRole | undefined | null): boolean {
+  return hasMinRole(role, "MEMBER");
+}

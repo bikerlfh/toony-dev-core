@@ -28,7 +28,7 @@ import {
 } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/labels";
 import { listIssues, updateIssue } from "@/lib/api/issues";
-import { canCreateProject } from "@/lib/roles";
+import { canCreateProject, canManageIssues } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
@@ -129,6 +129,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const canManage = canCreateProject(currentMembership?.role);
+  const canEditIssues = canManageIssues(currentMembership?.role);
 
   const fetchProject = useCallback(async () => {
     try {
@@ -214,7 +215,7 @@ export default function ProjectDetailPage() {
           />
         )}
         {activeTab === "issues" && (
-          <IssuesTab orgSlug={orgSlug} projectSlug={projectSlug} projectId={project.id} canManage={canManage} />
+          <IssuesTab orgSlug={orgSlug} projectSlug={projectSlug} projectId={project.id} canManage={canEditIssues} />
         )}
         {activeTab === "milestones" && (
           <MilestonesTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
@@ -998,8 +999,14 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
   }, [fetchIssues]);
 
   async function handleStatusChange(issue: IssueList, status: IssueStatus) {
-    await updateIssue(orgSlug, projectSlug, issue.identifier, { status });
-    fetchIssues();
+    setIssues((prev) =>
+      prev.map((i) => (i.id === issue.id ? { ...i, status } : i)),
+    );
+    try {
+      await updateIssue(orgSlug, projectSlug, issue.identifier, { status });
+    } catch {
+      fetchIssues();
+    }
   }
 
   async function handlePriorityChange(issue: IssueList, priority: IssuePriority) {
@@ -1057,6 +1064,7 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
           <KanbanBoard
             issues={issues}
             onIssueClick={(issue) => setSelectedIssueId(issue.identifier)}
+            onStatusChange={canManage ? handleStatusChange : undefined}
           />
         ) : (
           <IssuesList
