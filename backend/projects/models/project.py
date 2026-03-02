@@ -47,6 +47,7 @@ class Project(BaseModel):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255)
     description = models.TextField(blank=True, default="")
+    short_summary = models.CharField(max_length=255, blank=True, default="")
     status = models.CharField(
         max_length=20,
         choices=ProjectStatus.choices,

@@ -103,6 +103,7 @@ export interface ProjectList {
 
 export interface ProjectDetail extends ProjectList {
   description: string;
+  short_summary: string;
   completed_at: string | null;
   updated_at: string;
 }
@@ -131,6 +132,7 @@ export interface CreateProjectPayload {
   name: string;
   slug: string;
   description?: string;
+  short_summary?: string;
   status?: ProjectStatus;
   priority?: ProjectPriority;
   start_date?: string | null;
@@ -140,6 +142,7 @@ export interface CreateProjectPayload {
 export interface UpdateProjectPayload {
   name?: string;
   description?: string;
+  short_summary?: string;
   status?: ProjectStatus;
   priority?: ProjectPriority;
   start_date?: string | null;
@@ -332,4 +335,29 @@ export interface IssueActivity {
   old_value: string;
   new_value: string;
   created_at: string;
+}
+
+// --- Resource ---
+
+export type ResourceType = "DOCUMENTATION" | "WEBPAGE";
+
+export interface ProjectResource {
+  id: string;
+  title: string;
+  url: string;
+  type: ResourceType;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateProjectResourcePayload {
+  title: string;
+  url: string;
+  type: ResourceType;
+}
+
+export interface UpdateProjectResourcePayload {
+  title?: string;
+  url?: string;
+  type?: ResourceType;
 }

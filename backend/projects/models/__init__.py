@@ -13,6 +13,7 @@ from projects.models.project import (
     ProjectSettings,
     ProjectStatus,
 )
+from projects.models.resource import ProjectResource, ResourceType
 from projects.models.team import Team, TeamMembership, TeamRole
 
 __all__ = [
@@ -36,4 +37,6 @@ __all__ = [
     "IssuePriority",
     "IssueComment",
     "IssueActivity",
+    "ProjectResource",
+    "ResourceType",
 ]

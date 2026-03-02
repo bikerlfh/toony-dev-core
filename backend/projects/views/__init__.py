@@ -1,4 +1,5 @@
 from projects.views.cycle_views import CycleDetailView, CycleListCreateView
+from projects.views.resource_views import ResourceDetailView, ResourceListCreateView
 from projects.views.issue_views import (
     IssueActivityListView,
     IssueCommentDetailView,
@@ -43,4 +44,6 @@ __all__ = [
     "IssueCommentListCreateView",
     "IssueCommentDetailView",
     "IssueActivityListView",
+    "ResourceListCreateView",
+    "ResourceDetailView",
 ]

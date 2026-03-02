@@ -28,6 +28,7 @@ import {
 } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/labels";
 import { listIssues, updateIssue } from "@/lib/api/issues";
+import { listResources, createResource, deleteResource } from "@/lib/api/resources";
 import { canCreateProject, canManageIssues } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
@@ -56,6 +57,8 @@ import type {
   IssueFilters,
   Label,
   ProjectWsEvent,
+  ProjectResource,
+  ResourceType,
 } from "@/types";
 import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 
@@ -181,6 +184,9 @@ export default function ProjectDetailPage() {
               </>
             )}
           </div>
+          {project.short_summary && (
+            <p className="mt-2 text-sm text-slate-400">{project.short_summary}</p>
+          )}
         </div>
       </div>
 
@@ -251,6 +257,7 @@ function OverviewTab({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(project.name);
+  const [shortSummary, setShortSummary] = useState(project.short_summary);
   const [description, setDescription] = useState(project.description);
   const [status, setStatus] = useState(project.status);
   const [priority, setPriority] = useState(project.priority);
@@ -258,12 +265,32 @@ function OverviewTab({
   const [targetDate, setTargetDate] = useState(project.target_date || "");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Resources
+  const [resources, setResources] = useState<ProjectResource[]>([]);
+  const [showAddResource, setShowAddResource] = useState(false);
+  const [resTitle, setResTitle] = useState("");
+  const [resUrl, setResUrl] = useState("");
+  const [resType, setResType] = useState<ResourceType>("DOCUMENTATION");
+  const [isAddingResource, setIsAddingResource] = useState(false);
+  const [isDeletingResource, setIsDeletingResource] = useState<string | null>(null);
+
+  const fetchResources = useCallback(async () => {
+    try {
+      setResources((await listResources(orgSlug, projectSlug)).results);
+    } catch { /* ignore */ }
+  }, [orgSlug, projectSlug]);
+
+  useEffect(() => {
+    fetchResources();
+  }, [fetchResources]);
+
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateProject(orgSlug, projectSlug, {
         name,
+        short_summary: shortSummary,
         description,
         status,
         priority,
@@ -284,6 +311,11 @@ function OverviewTab({
           <div>
             <label className="block text-sm font-medium text-slate-400">Name</label>
             <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
+              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Short summary</label>
+            <input type="text" value={shortSummary} onChange={(e) => setShortSummary(e.target.value)} maxLength={255} placeholder="A brief tagline for the project"
               className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
           </div>
           <div>
@@ -374,6 +406,100 @@ function OverviewTab({
           </button>
         </div>
       )}
+
+      {/* Resources */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-slate-300">Resources</h3>
+          {canManage && (
+            <button onClick={() => setShowAddResource(true)}
+              className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300">
+              + Add resource
+            </button>
+          )}
+        </div>
+
+        {showAddResource && (
+          <div className="mt-3 rounded-xl border border-slate-800/60 bg-slate-900 p-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Title</label>
+              <input type="text" required value={resTitle} onChange={(e) => setResTitle(e.target.value)}
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400">URL</label>
+              <input type="url" required value={resUrl} onChange={(e) => setResUrl(e.target.value)} placeholder="https://"
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Type</label>
+              <Select
+                options={[
+                  { value: "DOCUMENTATION", label: "Documentation" },
+                  { value: "WEBPAGE", label: "Webpage" },
+                ]}
+                value={resType}
+                onChange={(v) => setResType(v as ResourceType)}
+                className="mt-1.5"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                disabled={isAddingResource || !resTitle || !resUrl}
+                onClick={async () => {
+                  setIsAddingResource(true);
+                  try {
+                    await createResource(orgSlug, projectSlug, { title: resTitle, url: resUrl, type: resType });
+                    setResTitle(""); setResUrl(""); setResType("DOCUMENTATION");
+                    setShowAddResource(false);
+                    fetchResources();
+                  } finally { setIsAddingResource(false); }
+                }}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                {isAddingResource ? "Adding..." : "Add"}
+              </button>
+              <button onClick={() => setShowAddResource(false)}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {resources.length === 0 && !showAddResource ? (
+          <p className="mt-3 text-sm text-slate-600">No resources yet.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {resources.map((res) => (
+              <div key={res.id} className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900/50 px-4 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                    res.type === "DOCUMENTATION" ? "bg-blue-500/15 text-blue-400" : "bg-emerald-500/15 text-emerald-400"
+                  }`}>
+                    {res.type === "DOCUMENTATION" ? "Docs" : "Web"}
+                  </span>
+                  <a href={res.url} target="_blank" rel="noopener noreferrer"
+                    className="truncate text-sm font-medium text-slate-200 transition-colors hover:text-indigo-400">
+                    {res.title}
+                  </a>
+                </div>
+                {canManage && (
+                  <button
+                    disabled={isDeletingResource === res.id}
+                    onClick={async () => {
+                      setIsDeletingResource(res.id);
+                      try {
+                        await deleteResource(orgSlug, projectSlug, res.id);
+                        fetchResources();
+                      } finally { setIsDeletingResource(null); }
+                    }}
+                    className="ml-3 shrink-0 text-slate-600 transition-colors hover:text-red-400">
+                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" /></svg>
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

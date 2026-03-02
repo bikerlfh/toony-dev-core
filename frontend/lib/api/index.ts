@@ -106,4 +106,10 @@ export {
   getImportMappings,
   listExternalProjects,
 } from "./imports";
+export {
+  listResources,
+  createResource,
+  updateResource,
+  deleteResource,
+} from "./resources";
 export { globalSearch } from "./search";

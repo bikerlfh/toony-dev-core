@@ -9,6 +9,7 @@ from projects.models import (
     ProjectMemberRole,
     ProjectPriority,
     ProjectStatus,
+    ResourceType,
     TeamRole,
 )
 
@@ -60,6 +61,9 @@ class CreateProjectSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=255)
     description = serializers.CharField(required=False, default="")
+    short_summary = serializers.CharField(
+        max_length=255, required=False, default="",
+    )
     status = serializers.ChoiceField(
         choices=ProjectStatus.choices, required=False,
     )
@@ -73,6 +77,9 @@ class CreateProjectSerializer(serializers.Serializer):
 class UpdateProjectSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(required=False)
+    short_summary = serializers.CharField(
+        max_length=255, required=False, allow_blank=True,
+    )
     status = serializers.ChoiceField(
         choices=ProjectStatus.choices, required=False,
     )
@@ -211,3 +218,17 @@ class CreateCommentSerializer(serializers.Serializer):
 
 class UpdateCommentSerializer(serializers.Serializer):
     body = serializers.CharField()
+
+
+# --- Resource ---
+
+class CreateProjectResourceSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255)
+    url = serializers.URLField()
+    type = serializers.ChoiceField(choices=ResourceType.choices)
+
+
+class UpdateProjectResourceSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255, required=False)
+    url = serializers.URLField(required=False)
+    type = serializers.ChoiceField(choices=ResourceType.choices, required=False)

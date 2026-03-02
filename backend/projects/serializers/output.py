@@ -10,6 +10,7 @@ from projects.models import (
     Milestone,
     Project,
     ProjectMembership,
+    ProjectResource,
     ProjectSettings,
     Team,
     TeamMembership,
@@ -115,6 +116,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "description",
+            "short_summary",
             "status",
             "priority",
             "team",
@@ -302,5 +304,21 @@ class IssueActivitySerializer(serializers.ModelSerializer):
             "old_value",
             "new_value",
             "created_at",
+        ]
+        read_only_fields = fields
+
+
+# --- Resource ---
+
+class ProjectResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectResource
+        fields = [
+            "id",
+            "title",
+            "url",
+            "type",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields

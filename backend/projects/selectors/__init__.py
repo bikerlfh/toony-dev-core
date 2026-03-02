@@ -18,6 +18,10 @@ from projects.selectors.milestone_selector import (
     get_milestone_by_id,
     list_project_milestones,
 )
+from projects.selectors.resource_selector import (
+    get_resource_by_id,
+    list_project_resources,
+)
 from projects.selectors.project_selector import (
     get_project_by_slug,
     get_project_membership,
@@ -54,4 +58,6 @@ __all__ = [
     "get_issue_by_identifier",
     "list_issue_comments",
     "list_issue_activities",
+    "list_project_resources",
+    "get_resource_by_id",
 ]

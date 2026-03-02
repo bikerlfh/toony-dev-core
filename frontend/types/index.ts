@@ -65,6 +65,10 @@ export type {
   IssueComment,
   CreateCommentPayload,
   IssueActivity,
+  ResourceType,
+  ProjectResource,
+  CreateProjectResourcePayload,
+  UpdateProjectResourcePayload,
 } from "./projects";
 
 export type {

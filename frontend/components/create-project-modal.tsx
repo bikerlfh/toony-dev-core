@@ -41,6 +41,7 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
   const [teamSlug, setTeamSlug] = useState("");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [shortSummary, setShortSummary] = useState("");
   const [description, setDescription] = useState("");
   const [statusVal, setStatusVal] = useState<ProjectStatus>("BACKLOG");
   const [priority, setPriority] = useState<ProjectPriority>("NONE");
@@ -81,6 +82,7 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
         name,
         slug,
         description,
+        short_summary: shortSummary,
         status: statusVal,
         priority,
         start_date: startDate || null,
@@ -144,6 +146,18 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               className={`${INPUT_CLASS} font-mono`}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Short summary</label>
+            <input
+              type="text"
+              value={shortSummary}
+              onChange={(e) => setShortSummary(e.target.value)}
+              maxLength={255}
+              placeholder="A brief tagline for the project"
+              className={INPUT_CLASS}
             />
           </div>
 

@@ -13,6 +13,11 @@ from projects.services.milestone_service import (
     delete_milestone,
     update_milestone,
 )
+from projects.services.resource_service import (
+    create_resource,
+    delete_resource,
+    update_resource,
+)
 from projects.services.project_service import (
     add_project_member,
     create_project,
@@ -60,4 +65,7 @@ __all__ = [
     "create_comment",
     "update_comment",
     "delete_comment",
+    "create_resource",
+    "update_resource",
+    "delete_resource",
 ]

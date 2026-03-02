@@ -39,6 +39,7 @@ def update_project(project, **kwargs):
     allowed_fields = {
         "name",
         "description",
+        "short_summary",
         "status",
         "priority",
         "start_date",
