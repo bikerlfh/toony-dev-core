@@ -148,16 +148,37 @@ export default function ProjectDetailPage() {
 
   return (
     <div>
+      {/* Back link */}
+      <button
+        onClick={() => router.push(`/${orgSlug}/projects`)}
+        className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-300"
+      >
+        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 12L6 8l4-4" />
+        </svg>
+        Projects
+      </button>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight text-white">{project.name}</h1>
-          <div className="mt-1 flex items-center gap-2">
-            <StatusBadge status={project.status} />
-            <PriorityBadge priority={project.priority} />
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-medium tracking-tight text-white">{project.name}</h1>
             <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
               {project.team.identifier}
             </span>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <StatusBadge status={project.status} />
+            <PriorityBadge priority={project.priority} />
+            {project.lead && (
+              <>
+                <span className="text-slate-700">&middot;</span>
+                <span className="text-sm text-slate-500">
+                  {project.lead.first_name} {project.lead.last_name}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -190,7 +211,6 @@ export default function ProjectDetailPage() {
             projectSlug={projectSlug}
             canManage={canManage}
             onUpdated={fetchProject}
-            onDeleted={() => router.push(`/${orgSlug}/projects`)}
           />
         )}
         {activeTab === "issues" && (
@@ -206,7 +226,7 @@ export default function ProjectDetailPage() {
           <MembersTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
         )}
         {activeTab === "settings" && (
-          <SettingsTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} />
+          <SettingsTab orgSlug={orgSlug} projectSlug={projectSlug} canManage={canManage} onDeleted={() => router.push(`/${orgSlug}/projects`)} />
         )}
       </div>
     </div>
@@ -221,14 +241,12 @@ function OverviewTab({
   projectSlug,
   canManage,
   onUpdated,
-  onDeleted,
 }: {
   project: ProjectDetail;
   orgSlug: string;
   projectSlug: string;
   canManage: boolean;
   onUpdated: () => void;
-  onDeleted: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(project.name);
@@ -238,8 +256,6 @@ function OverviewTab({
   const [startDate, setStartDate] = useState(project.start_date || "");
   const [targetDate, setTargetDate] = useState(project.target_date || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -257,16 +273,6 @@ function OverviewTab({
       onUpdated();
     } finally {
       setIsSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    setIsDeleting(true);
-    try {
-      await deleteProject(orgSlug, projectSlug);
-      onDeleted();
-    } finally {
-      setIsDeleting(false);
     }
   }
 
@@ -320,59 +326,52 @@ function OverviewTab({
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            {project.description && (
-              <p className="text-sm text-slate-400">{project.description}</p>
-            )}
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <dt className="text-slate-500">Lead</dt>
-                <dd className="mt-1 font-medium text-slate-200">
-                  {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "\u2014"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Team</dt>
-                <dd className="mt-1 font-medium text-slate-200">{project.team.name}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Start date</dt>
-                <dd className="mt-1 font-medium text-slate-200">
-                  {project.start_date ? new Date(project.start_date).toLocaleDateString() : "\u2014"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Target date</dt>
-                <dd className="mt-1 font-medium text-slate-200">
-                  {project.target_date ? new Date(project.target_date).toLocaleDateString() : "\u2014"}
-                </dd>
-              </div>
-            </dl>
-          </div>
-          {canManage && (
-            <button onClick={() => setIsEditing(true)}
-              className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-1.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Edit</button>
-          )}
+    <div className="max-w-3xl">
+      {project.description && (
+        <p className="text-sm leading-relaxed text-slate-400">{project.description}</p>
+      )}
+
+      <div className={`${project.description ? "mt-6" : ""} grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30`}>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Team</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">{project.team.name}</p>
+          <span className="mt-1 inline-block rounded-md bg-slate-800 px-1.5 py-0.5 text-xs font-mono text-slate-500">{project.team.identifier}</span>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Lead</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">
+            {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "\u2014"}
+          </p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Issues</p>
+          <p className="mt-2 text-lg font-medium tracking-tight text-slate-200">{project.issue_count}</p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Start date</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">
+            {project.start_date ? new Date(project.start_date).toLocaleDateString() : "\u2014"}
+          </p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Target date</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">
+            {project.target_date ? new Date(project.target_date).toLocaleDateString() : "\u2014"}
+          </p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Members</p>
+          <p className="mt-2 text-lg font-medium tracking-tight text-slate-200">{project.member_count}</p>
         </div>
       </div>
 
       {canManage && (
-        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
-          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
-          <p className="mt-1 text-sm text-slate-400">Permanently delete this project and all its data.</p>
-          <button type="button" onClick={() => setShowDeleteConfirm(true)}
-            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500">Delete project</button>
+        <div className="mt-6">
+          <button onClick={() => setIsEditing(true)}
+            className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
+            Edit project
+          </button>
         </div>
-      )}
-
-      {showDeleteConfirm && (
-        <ConfirmModal title="Delete project"
-          message="This action cannot be undone. All issues, milestones, and cycles will be permanently deleted."
-          confirmLabel="Delete" confirmVariant="danger" isLoading={isDeleting}
-          onConfirm={handleDelete} onCancel={() => setShowDeleteConfirm(false)} />
       )}
     </div>
   );
@@ -782,11 +781,13 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
 
 // --- Settings Tab ---
 
-function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; projectSlug: string; canManage: boolean }) {
+function SettingsTab({ orgSlug, projectSlug, canManage, onDeleted }: { orgSlug: string; projectSlug: string; canManage: boolean; onDeleted: () => void }) {
   const [settings, setSettings] = useState<ProjectSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [repoUrl, setRepoUrl] = useState("");
   const [defaultBranch, setDefaultBranch] = useState("main");
@@ -831,6 +832,16 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
     } catch {
       setSaveMessage("Failed to save settings.");
     } finally { setIsSaving(false); }
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await deleteProject(orgSlug, projectSlug);
+      onDeleted();
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   if (isLoading) return <p className="text-slate-500">Loading settings...</p>;
@@ -894,6 +905,22 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
           )}
         </div>
       </form>
+
+      {canManage && (
+        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
+          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
+          <p className="mt-1 text-sm text-slate-400">Permanently delete this project and all its data.</p>
+          <button type="button" onClick={() => setShowDeleteConfirm(true)}
+            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500">Delete project</button>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmModal title="Delete project"
+          message="This action cannot be undone. All issues, milestones, and cycles will be permanently deleted."
+          confirmLabel="Delete" confirmVariant="danger" isLoading={isDeleting}
+          onConfirm={handleDelete} onCancel={() => setShowDeleteConfirm(false)} />
+      )}
     </div>
   );
 }

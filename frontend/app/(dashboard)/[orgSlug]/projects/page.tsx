@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useOrg } from "@/contexts/org-context";
-import { listProjects, deleteProject } from "@/lib/api/projects";
+import { listProjects } from "@/lib/api/projects";
 import { canCreateProject } from "@/lib/roles";
 import { CreateProjectModal } from "@/components/create-project-modal";
-import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import type { ProjectList } from "@/types";
@@ -20,8 +19,6 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<ProjectList | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const canCreate = canCreateProject(currentMembership?.role);
 
@@ -37,18 +34,6 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      await deleteProject(orgSlug, deleteTarget.slug);
-      setDeleteTarget(null);
-      fetchProjects();
-    } finally {
-      setIsDeleting(false);
-    }
-  }
 
   if (isLoading) {
     return <p className="text-slate-500">Loading projects...</p>;
@@ -81,9 +66,6 @@ export default function ProjectsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Priority</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Lead</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Target</th>
-                {canCreate && (
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
-                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -117,19 +99,6 @@ export default function ProjectsPage() {
                       ? new Date(project.target_date).toLocaleDateString()
                       : "—"}
                   </td>
-                  {canCreate && (
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget(project);
-                        }}
-                        className="text-sm text-red-400 transition-colors hover:text-red-300"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  )}
                 </tr>
               ))}
             </tbody>
@@ -145,17 +114,6 @@ export default function ProjectsPage() {
         />
       )}
 
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete project"
-          message={`Delete project "${deleteTarget.name}"? All issues, milestones, and cycles will be permanently deleted.`}
-          confirmLabel="Delete"
-          confirmVariant="danger"
-          isLoading={isDeleting}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
     </div>
   );
 }
