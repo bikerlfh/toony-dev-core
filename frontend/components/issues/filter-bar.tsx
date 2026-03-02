@@ -1,16 +1,7 @@
 "use client";
 
 import { Select } from "@/components/ui/select";
-import type { IssueFilters, IssueStatus, IssuePriority, Milestone, Cycle, Label, ProjectMember } from "@/types";
-
-const STATUS_OPTIONS: { value: IssueStatus; label: string }[] = [
-  { value: "BACKLOG", label: "Backlog" },
-  { value: "TODO", label: "Todo" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "IN_REVIEW", label: "In Review" },
-  { value: "DONE", label: "Done" },
-  { value: "CANCELED", label: "Canceled" },
-];
+import type { IssueFilters, IssuePriority, Milestone, Cycle, Label, ProjectMember } from "@/types";
 
 const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
   { value: "NONE", label: "None" },
@@ -37,17 +28,11 @@ export function FilterBar({
   cycles,
   labels,
 }: FilterBarProps) {
-  const hasFilters = filters.status || filters.priority || filters.assignee_id ||
+  const hasFilters = filters.priority || filters.assignee_id ||
     filters.milestone_id || filters.cycle_id || (filters.label_ids && filters.label_ids.length > 0);
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Select
-        options={[{ value: "", label: "All statuses" }, ...STATUS_OPTIONS]}
-        value={filters.status || ""}
-        onChange={(v) => onChange({ ...filters, status: (v || undefined) as IssueStatus | undefined })}
-      />
-
       <Select
         options={[{ value: "", label: "All priorities" }, ...PRIORITY_OPTIONS]}
         value={filters.priority || ""}

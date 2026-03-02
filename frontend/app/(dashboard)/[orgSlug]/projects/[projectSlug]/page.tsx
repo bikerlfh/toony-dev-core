@@ -1017,7 +1017,7 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
   if (isLoading) return <p className="text-slate-500">Loading issues...</p>;
 
   return (
-    <div>
+    <div className="overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
