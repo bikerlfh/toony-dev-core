@@ -27,7 +27,7 @@ down: ## Stop all dev services
 	$(COMPOSE) down
 
 up-backend: ## Start backend + db + redis only
-	$(COMPOSE) up -d db redis backend
+	$(COMPOSE) up -d postgres redis backend
 
 up-frontend: ## Start frontend only
 	$(COMPOSE) up -d frontend

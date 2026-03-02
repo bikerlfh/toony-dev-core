@@ -24,6 +24,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Django collectstatic output
+staticfiles/
+
 # Docker
 docker-data/
 
