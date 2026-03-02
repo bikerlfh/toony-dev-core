@@ -9,29 +9,47 @@ from agents.models.skill import SkillCategory, SkillStatus
 class CreateAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=255)
-    description = serializers.CharField(required=False, default="")
+    description = serializers.CharField(max_length=250, required=False, default="")
+    markdown = serializers.CharField(required=False, default="")
     version = serializers.CharField(max_length=50, required=False, default="0.1.0")
     status = serializers.ChoiceField(choices=AgentStatus.choices, required=False, default=AgentStatus.DRAFT)
     agent_type = serializers.ChoiceField(choices=AgentType.choices, required=False, default=AgentType.CUSTOM)
     capabilities = serializers.JSONField(required=False, default=list)
     encrypted_configuration = serializers.CharField(required=False, default="")
-    max_concurrent_tasks = serializers.IntegerField(required=False, default=1, min_value=1)
+    is_external = serializers.BooleanField(required=False, default=False)
+    external_command = serializers.CharField(required=False, default="")
     tags = serializers.JSONField(required=False, default=list)
+
+    def validate(self, attrs):
+        if attrs.get("is_external") and not attrs.get("external_command", "").strip():
+            raise serializers.ValidationError(
+                {"external_command": "This field is required when is_external is enabled."}
+            )
+        return attrs
 
 
 class UpdateAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
-    description = serializers.CharField(required=False)
+    description = serializers.CharField(max_length=250, required=False)
+    markdown = serializers.CharField(required=False)
     version = serializers.CharField(max_length=50, required=False)
     status = serializers.ChoiceField(choices=AgentStatus.choices, required=False)
     agent_type = serializers.ChoiceField(choices=AgentType.choices, required=False)
     capabilities = serializers.JSONField(required=False)
     encrypted_configuration = serializers.CharField(required=False)
-    max_concurrent_tasks = serializers.IntegerField(required=False, min_value=1)
+    is_external = serializers.BooleanField(required=False)
+    external_command = serializers.CharField(required=False)
     tags = serializers.JSONField(required=False)
     assigned_projects = serializers.ListField(
         child=serializers.UUIDField(), required=False,
     )
+
+    def validate(self, attrs):
+        if attrs.get("is_external") and not attrs.get("external_command", "").strip():
+            raise serializers.ValidationError(
+                {"external_command": "This field is required when is_external is enabled."}
+            )
+        return attrs
 
 
 # --- Skill ---
@@ -47,7 +65,16 @@ class CreateSkillSerializer(serializers.Serializer):
     input_schema = serializers.JSONField(required=False, allow_null=True, default=None)
     output_schema = serializers.JSONField(required=False, allow_null=True, default=None)
     compatible_agent_types = serializers.JSONField(required=False, default=list)
+    is_external = serializers.BooleanField(required=False, default=False)
+    external_command = serializers.CharField(required=False, default="")
     tags = serializers.JSONField(required=False, default=list)
+
+    def validate(self, attrs):
+        if attrs.get("is_external") and not attrs.get("external_command", "").strip():
+            raise serializers.ValidationError(
+                {"external_command": "This field is required when is_external is enabled."}
+            )
+        return attrs
 
 
 class UpdateSkillSerializer(serializers.Serializer):
@@ -60,8 +87,17 @@ class UpdateSkillSerializer(serializers.Serializer):
     input_schema = serializers.JSONField(required=False, allow_null=True)
     output_schema = serializers.JSONField(required=False, allow_null=True)
     compatible_agent_types = serializers.JSONField(required=False)
+    is_external = serializers.BooleanField(required=False)
+    external_command = serializers.CharField(required=False)
     tags = serializers.JSONField(required=False)
     changelog = serializers.CharField(required=False, default="")
+
+    def validate(self, attrs):
+        if attrs.get("is_external") and not attrs.get("external_command", "").strip():
+            raise serializers.ValidationError(
+                {"external_command": "This field is required when is_external is enabled."}
+            )
+        return attrs
 
 
 # --- AgentSkill ---

@@ -16,7 +16,7 @@ export interface AgentList {
   status: AgentStatus;
   agent_type: AgentType;
   version: string;
-  max_concurrent_tasks: number;
+  is_external: boolean;
   created_at: string;
 }
 
@@ -25,11 +25,13 @@ export interface AgentDetail {
   name: string;
   slug: string;
   description: string;
+  markdown: string;
   version: string;
   status: AgentStatus;
   agent_type: AgentType;
   capabilities: string[];
-  max_concurrent_tasks: number;
+  is_external: boolean;
+  external_command: string;
   created_by: { id: string; email: string; first_name: string; last_name: string } | null;
   tags: string[];
   created_at: string;
@@ -40,24 +42,28 @@ export interface CreateAgentPayload {
   name: string;
   slug: string;
   description?: string;
+  markdown?: string;
   version?: string;
   status?: AgentStatus;
   agent_type?: AgentType;
   capabilities?: string[];
   encrypted_configuration?: string;
-  max_concurrent_tasks?: number;
+  is_external?: boolean;
+  external_command?: string;
   tags?: string[];
 }
 
 export interface UpdateAgentPayload {
   name?: string;
   description?: string;
+  markdown?: string;
   version?: string;
   status?: AgentStatus;
   agent_type?: AgentType;
   capabilities?: string[];
   encrypted_configuration?: string;
-  max_concurrent_tasks?: number;
+  is_external?: boolean;
+  external_command?: string;
   tags?: string[];
   assigned_projects?: string[];
 }
@@ -69,6 +75,7 @@ export interface SkillList {
   status: SkillStatus;
   category: SkillCategory;
   version: string;
+  is_external: boolean;
   created_at: string;
 }
 
@@ -84,6 +91,8 @@ export interface SkillDetail {
   input_schema: Record<string, unknown> | null;
   output_schema: Record<string, unknown> | null;
   compatible_agent_types: string[];
+  is_external: boolean;
+  external_command: string;
   created_by: { id: string; email: string; first_name: string; last_name: string } | null;
   tags: string[];
   created_at: string;
@@ -101,6 +110,8 @@ export interface CreateSkillPayload {
   input_schema?: Record<string, unknown> | null;
   output_schema?: Record<string, unknown> | null;
   compatible_agent_types?: string[];
+  is_external?: boolean;
+  external_command?: string;
   tags?: string[];
 }
 
@@ -114,6 +125,8 @@ export interface UpdateSkillPayload {
   input_schema?: Record<string, unknown> | null;
   output_schema?: Record<string, unknown> | null;
   compatible_agent_types?: string[];
+  is_external?: boolean;
+  external_command?: string;
   tags?: string[];
   changelog?: string;
 }

@@ -16,7 +16,7 @@ class AgentListSerializer(serializers.ModelSerializer):
             "status",
             "agent_type",
             "version",
-            "max_concurrent_tasks",
+            "is_external",
             "created_at",
         ]
         read_only_fields = fields
@@ -32,11 +32,13 @@ class AgentDetailSerializer(serializers.ModelSerializer):
             "name",
             "slug",
             "description",
+            "markdown",
             "version",
             "status",
             "agent_type",
             "capabilities",
-            "max_concurrent_tasks",
+            "is_external",
+            "external_command",
             "created_by",
             "tags",
             "created_at",
@@ -57,6 +59,7 @@ class SkillListSerializer(serializers.ModelSerializer):
             "status",
             "category",
             "version",
+            "is_external",
             "created_at",
         ]
         read_only_fields = fields
@@ -79,6 +82,8 @@ class SkillDetailSerializer(serializers.ModelSerializer):
             "input_schema",
             "output_schema",
             "compatible_agent_types",
+            "is_external",
+            "external_command",
             "created_by",
             "tags",
             "created_at",

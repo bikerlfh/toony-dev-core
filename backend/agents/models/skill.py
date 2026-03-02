@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 
 from common.models import BaseModel
 
@@ -25,6 +26,8 @@ class Skill(BaseModel):
         "organizations.Organization",
         on_delete=models.CASCADE,
         related_name="skills",
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255)
@@ -44,6 +47,8 @@ class Skill(BaseModel):
     input_schema = models.JSONField(null=True, blank=True)
     output_schema = models.JSONField(null=True, blank=True)
     compatible_agent_types = models.JSONField(default=list, blank=True)
+    is_external = models.BooleanField(default=False)
+    external_command = models.TextField(blank=True, default="")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -58,7 +63,13 @@ class Skill(BaseModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["organization", "slug"],
+                condition=Q(organization__isnull=False),
                 name="unique_org_skill_slug",
+            ),
+            models.UniqueConstraint(
+                fields=["slug"],
+                condition=Q(organization__isnull=True),
+                name="unique_global_skill_slug",
             ),
         ]
 

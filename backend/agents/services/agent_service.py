@@ -25,8 +25,9 @@ def create_agent(organization, created_by, name, slug, **kwargs):
 
 def update_agent(agent, **kwargs):
     allowed_fields = {
-        "name", "description", "version", "status", "agent_type",
-        "capabilities", "encrypted_configuration", "max_concurrent_tasks", "tags",
+        "name", "description", "markdown", "version", "status", "agent_type",
+        "capabilities", "encrypted_configuration", "is_external", "external_command",
+        "tags",
     }
 
     assigned_projects = kwargs.pop("assigned_projects", None)

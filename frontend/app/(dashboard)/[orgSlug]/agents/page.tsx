@@ -1,17 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useOrg } from "@/contexts/org-context";
 import { canEditOrg } from "@/lib/roles";
-import { listAgents, getAgent, deleteAgent } from "@/lib/api/agents";
-import { listSkills, getSkill, deleteSkill } from "@/lib/api/skills";
+import { listAgents, deleteAgent } from "@/lib/api/agents";
+import { listSkills, deleteSkill } from "@/lib/api/skills";
 import { ConfirmModal } from "@/components/confirm-modal";
-import { CreateAgentModal } from "@/components/create-agent-modal";
-import { EditAgentModal } from "@/components/edit-agent-modal";
-import { CreateSkillModal } from "@/components/create-skill-modal";
-import { EditSkillModal } from "@/components/edit-skill-modal";
-import type { AgentList, AgentDetail, SkillList, SkillDetail } from "@/types";
+import type { AgentList, SkillList } from "@/types";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-slate-800 text-slate-400",
@@ -41,6 +37,7 @@ type Tab = "agents" | "skills";
 
 export default function AgentsPage() {
   const params = useParams();
+  const router = useRouter();
   const orgSlug = params.orgSlug as string;
   const { currentMembership } = useOrg();
 
@@ -50,16 +47,12 @@ export default function AgentsPage() {
   // Agents state
   const [agents, setAgents] = useState<AgentList[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
-  const [showCreateAgent, setShowCreateAgent] = useState(false);
-  const [editAgent, setEditAgent] = useState<AgentDetail | null>(null);
   const [deleteAgentTarget, setDeleteAgentTarget] = useState<AgentList | null>(null);
   const [isDeletingAgent, setIsDeletingAgent] = useState(false);
 
   // Skills state
   const [skills, setSkills] = useState<SkillList[]>([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
-  const [showCreateSkill, setShowCreateSkill] = useState(false);
-  const [editSkillTarget, setEditSkillTarget] = useState<SkillDetail | null>(null);
   const [deleteSkillTarget, setDeleteSkillTarget] = useState<SkillList | null>(null);
   const [isDeletingSkill, setIsDeletingSkill] = useState(false);
 
@@ -84,11 +77,6 @@ export default function AgentsPage() {
     fetchSkills();
   }, [fetchAgents, fetchSkills]);
 
-  async function handleEditAgent(agent: AgentList) {
-    const detail = await getAgent(orgSlug, agent.slug);
-    setEditAgent(detail);
-  }
-
   async function handleDeleteAgent() {
     if (!deleteAgentTarget) return;
     setIsDeletingAgent(true);
@@ -99,11 +87,6 @@ export default function AgentsPage() {
     } finally {
       setIsDeletingAgent(false);
     }
-  }
-
-  async function handleEditSkill(skill: SkillList) {
-    const detail = await getSkill(orgSlug, skill.slug);
-    setEditSkillTarget(detail);
   }
 
   async function handleDeleteSkill() {
@@ -153,7 +136,7 @@ export default function AgentsPage() {
             <h2 className="text-lg font-semibold text-slate-200">Agents</h2>
             {canManage && (
               <button
-                onClick={() => setShowCreateAgent(true)}
+                onClick={() => router.push(`/${orgSlug}/agents/new`)}
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add agent
@@ -183,7 +166,14 @@ export default function AgentsPage() {
                   {agents.map((agent) => (
                     <tr key={agent.id} className="hover:bg-slate-900/60">
                       <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
-                        {agent.name}
+                        <span className="flex items-center gap-2">
+                          {agent.name}
+                          {agent.is_external && (
+                            <span className="inline-flex rounded-full bg-purple-900/50 px-2 py-0.5 text-xs font-medium text-purple-400">
+                              External
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {AGENT_TYPE_LABELS[agent.agent_type] || agent.agent_type}
@@ -198,7 +188,10 @@ export default function AgentsPage() {
                       </td>
                       {canManage && (
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                          <button onClick={() => handleEditAgent(agent)} className="text-indigo-400 transition-colors hover:text-indigo-300">
+                          <button
+                            onClick={() => router.push(`/${orgSlug}/agents/${agent.slug}/edit`)}
+                            className="text-indigo-400 transition-colors hover:text-indigo-300"
+                          >
                             Edit
                           </button>
                           <button onClick={() => setDeleteAgentTarget(agent)} className="ml-3 text-red-400 transition-colors hover:text-red-300">
@@ -222,7 +215,7 @@ export default function AgentsPage() {
             <h2 className="text-lg font-semibold text-slate-200">Skills</h2>
             {canManage && (
               <button
-                onClick={() => setShowCreateSkill(true)}
+                onClick={() => router.push(`/${orgSlug}/agents/skills/new`)}
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
               >
                 Add skill
@@ -252,7 +245,14 @@ export default function AgentsPage() {
                   {skills.map((skill) => (
                     <tr key={skill.id} className="hover:bg-slate-900/60">
                       <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
-                        {skill.name}
+                        <span className="flex items-center gap-2">
+                          {skill.name}
+                          {skill.is_external && (
+                            <span className="inline-flex rounded-full bg-purple-900/50 px-2 py-0.5 text-xs font-medium text-purple-400">
+                              External
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
                         {CATEGORY_LABELS[skill.category] || skill.category}
@@ -267,7 +267,10 @@ export default function AgentsPage() {
                       </td>
                       {canManage && (
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
-                          <button onClick={() => handleEditSkill(skill)} className="text-indigo-400 transition-colors hover:text-indigo-300">
+                          <button
+                            onClick={() => router.push(`/${orgSlug}/agents/skills/${skill.slug}/edit`)}
+                            className="text-indigo-400 transition-colors hover:text-indigo-300"
+                          >
                             Edit
                           </button>
                           <button onClick={() => setDeleteSkillTarget(skill)} className="ml-3 text-red-400 transition-colors hover:text-red-300">
@@ -284,22 +287,7 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {/* Agent modals */}
-      {showCreateAgent && (
-        <CreateAgentModal
-          orgSlug={orgSlug}
-          onClose={() => setShowCreateAgent(false)}
-          onSaved={fetchAgents}
-        />
-      )}
-      {editAgent && (
-        <EditAgentModal
-          orgSlug={orgSlug}
-          agent={editAgent}
-          onClose={() => setEditAgent(null)}
-          onSaved={fetchAgents}
-        />
-      )}
+      {/* Delete modals */}
       {deleteAgentTarget && (
         <ConfirmModal
           title="Delete agent"
@@ -309,23 +297,6 @@ export default function AgentsPage() {
           isLoading={isDeletingAgent}
           onConfirm={handleDeleteAgent}
           onCancel={() => setDeleteAgentTarget(null)}
-        />
-      )}
-
-      {/* Skill modals */}
-      {showCreateSkill && (
-        <CreateSkillModal
-          orgSlug={orgSlug}
-          onClose={() => setShowCreateSkill(false)}
-          onSaved={fetchSkills}
-        />
-      )}
-      {editSkillTarget && (
-        <EditSkillModal
-          orgSlug={orgSlug}
-          skill={editSkillTarget}
-          onClose={() => setEditSkillTarget(null)}
-          onSaved={fetchSkills}
         />
       )}
       {deleteSkillTarget && (

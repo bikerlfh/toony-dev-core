@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from encrypted_model_fields.fields import EncryptedTextField
 
 from common.models import BaseModel
@@ -25,10 +26,13 @@ class Agent(BaseModel):
         "organizations.Organization",
         on_delete=models.CASCADE,
         related_name="agents",
+        null=True,
+        blank=True,
     )
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255)
-    description = models.TextField(blank=True, default="")
+    description = models.CharField(max_length=250, blank=True, default="")
+    markdown = models.TextField(blank=True, default="")
     version = models.CharField(max_length=50, default="0.1.0")
     status = models.CharField(
         max_length=20,
@@ -42,7 +46,8 @@ class Agent(BaseModel):
     )
     capabilities = models.JSONField(default=list, blank=True)
     encrypted_configuration = EncryptedTextField(blank=True, default="")
-    max_concurrent_tasks = models.IntegerField(default=1)
+    is_external = models.BooleanField(default=False)
+    external_command = models.TextField(blank=True, default="")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -62,7 +67,13 @@ class Agent(BaseModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["organization", "slug"],
+                condition=Q(organization__isnull=False),
                 name="unique_org_agent_slug",
+            ),
+            models.UniqueConstraint(
+                fields=["slug"],
+                condition=Q(organization__isnull=True),
+                name="unique_global_agent_slug",
             ),
         ]
 
