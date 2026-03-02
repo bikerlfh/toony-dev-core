@@ -28,7 +28,7 @@ import {
 } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/labels";
 import { listIssues, updateIssue } from "@/lib/api/issues";
-import { listResources, createResource, deleteResource } from "@/lib/api/resources";
+import { listResources, createResource, updateResource, deleteResource } from "@/lib/api/resources";
 import { canCreateProject, canManageIssues } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
@@ -267,11 +267,8 @@ function OverviewTab({
 
   // Resources
   const [resources, setResources] = useState<ProjectResource[]>([]);
-  const [showAddResource, setShowAddResource] = useState(false);
-  const [resTitle, setResTitle] = useState("");
-  const [resUrl, setResUrl] = useState("");
-  const [resType, setResType] = useState<ResourceType>("DOCUMENTATION");
-  const [isAddingResource, setIsAddingResource] = useState(false);
+  // undefined = closed, null = creating, ProjectResource = editing
+  const [resourceModalTarget, setResourceModalTarget] = useState<ProjectResource | null | undefined>(undefined);
   const [isDeletingResource, setIsDeletingResource] = useState<string | null>(null);
 
   const fetchResources = useCallback(async () => {
@@ -412,59 +409,14 @@ function OverviewTab({
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-slate-300">Resources</h3>
           {canManage && (
-            <button onClick={() => setShowAddResource(true)}
+            <button onClick={() => setResourceModalTarget(null)}
               className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300">
               + Add resource
             </button>
           )}
         </div>
 
-        {showAddResource && (
-          <div className="mt-3 rounded-xl border border-slate-800/60 bg-slate-900 p-4 space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Title</label>
-              <input type="text" required value={resTitle} onChange={(e) => setResTitle(e.target.value)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">URL</label>
-              <input type="url" required value={resUrl} onChange={(e) => setResUrl(e.target.value)} placeholder="https://"
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Type</label>
-              <Select
-                options={[
-                  { value: "DOCUMENTATION", label: "Documentation" },
-                  { value: "WEBPAGE", label: "Webpage" },
-                ]}
-                value={resType}
-                onChange={(v) => setResType(v as ResourceType)}
-                className="mt-1.5"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                disabled={isAddingResource || !resTitle || !resUrl}
-                onClick={async () => {
-                  setIsAddingResource(true);
-                  try {
-                    await createResource(orgSlug, projectSlug, { title: resTitle, url: resUrl, type: resType });
-                    setResTitle(""); setResUrl(""); setResType("DOCUMENTATION");
-                    setShowAddResource(false);
-                    fetchResources();
-                  } finally { setIsAddingResource(false); }
-                }}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
-                {isAddingResource ? "Adding..." : "Add"}
-              </button>
-              <button onClick={() => setShowAddResource(false)}
-                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
-            </div>
-          </div>
-        )}
-
-        {resources.length === 0 && !showAddResource ? (
+        {resources.length === 0 ? (
           <p className="mt-3 text-sm text-slate-600">No resources yet.</p>
         ) : (
           <div className="mt-3 space-y-2">
@@ -482,23 +434,152 @@ function OverviewTab({
                   </a>
                 </div>
                 {canManage && (
-                  <button
-                    disabled={isDeletingResource === res.id}
-                    onClick={async () => {
-                      setIsDeletingResource(res.id);
-                      try {
-                        await deleteResource(orgSlug, projectSlug, res.id);
-                        fetchResources();
-                      } finally { setIsDeletingResource(null); }
-                    }}
-                    className="ml-3 shrink-0 text-slate-600 transition-colors hover:text-red-400">
-                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" /></svg>
-                  </button>
+                  <div className="ml-3 flex shrink-0 items-center gap-2">
+                    <button onClick={() => setResourceModalTarget(res)}
+                      className="text-slate-600 transition-colors hover:text-indigo-400">
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" /></svg>
+                    </button>
+                    <button
+                      disabled={isDeletingResource === res.id}
+                      onClick={async () => {
+                        setIsDeletingResource(res.id);
+                        try {
+                          await deleteResource(orgSlug, projectSlug, res.id);
+                          fetchResources();
+                        } finally { setIsDeletingResource(null); }
+                      }}
+                      className="text-slate-600 transition-colors hover:text-red-400">
+                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" /></svg>
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {resourceModalTarget !== undefined && (
+        <ResourceModal
+          orgSlug={orgSlug}
+          projectSlug={projectSlug}
+          resource={resourceModalTarget}
+          onClose={() => setResourceModalTarget(undefined)}
+          onSaved={fetchResources}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Resource Modal ---
+
+const RESOURCE_INPUT_CLASS =
+  "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
+
+function ResourceModal({
+  orgSlug,
+  projectSlug,
+  resource,
+  onClose,
+  onSaved,
+}: {
+  orgSlug: string;
+  projectSlug: string;
+  resource: ProjectResource | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = resource !== null;
+  const [title, setTitle] = useState(resource?.title ?? "");
+  const [url, setUrl] = useState(resource?.url ?? "");
+  const [type, setType] = useState<ResourceType>(resource?.type ?? "DOCUMENTATION");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setIsSaving(true);
+    try {
+      if (isEdit) {
+        await updateResource(orgSlug, projectSlug, resource.id, { title, url, type });
+      } else {
+        await createResource(orgSlug, projectSlug, { title, url, type });
+      }
+      onSaved();
+      onClose();
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? Object.values((err as { response: { data: Record<string, string[]> } }).response.data).flat().join(" ")
+          : "Something went wrong";
+      setError(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+        <h2 className="mb-4 text-base font-medium tracking-tight text-white">
+          {isEdit ? "Edit resource" : "Add resource"}
+        </h2>
+
+        {error && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+            <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="8" cy="8" r="6.25" />
+              <path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Title</label>
+            <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className={RESOURCE_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400">URL</label>
+            <input type="url" required value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" className={RESOURCE_INPUT_CLASS} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Type</label>
+            <Select
+              options={[
+                { value: "DOCUMENTATION", label: "Documentation" },
+                { value: "WEBPAGE", label: "Webpage" },
+              ]}
+              value={type}
+              onChange={(v) => setType(v as ResourceType)}
+              className="mt-1.5"
+            />
+          </div>
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate-600">esc to cancel</span>
+            <div className="flex gap-3">
+              <button type="button" onClick={onClose}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
+                Cancel
+              </button>
+              <button type="submit" disabled={isSaving || !title || !url}
+                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                {isSaving ? "Saving..." : isEdit ? "Save resource" : "Add"}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   );
