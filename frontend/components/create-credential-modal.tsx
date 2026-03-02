@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { createCredential } from "@/lib/api/credentials";
+import { Select } from "@/components/ui/select";
 import type { CredentialProvider, CredentialType } from "@/types";
 
 const PROVIDERS: { value: CredentialProvider; label: string }[] = [
@@ -87,16 +88,22 @@ export function CreateCredentialModal({
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Provider</label>
-            <select value={provider} onChange={(e) => setProvider(e.target.value as CredentialProvider)} className={INPUT_CLASS}>
-              {PROVIDERS.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
-            </select>
+            <Select
+              options={PROVIDERS}
+              value={provider}
+              onChange={(v) => setProvider(v as CredentialProvider)}
+              className="mt-1.5"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Credential type</label>
-            <select value={credentialType} onChange={(e) => setCredentialType(e.target.value as CredentialType)} className={INPUT_CLASS}>
-              {CREDENTIAL_TYPES.map((t) => (<option key={t.value} value={t.value}>{t.label}</option>))}
-            </select>
+            <Select
+              options={CREDENTIAL_TYPES}
+              value={credentialType}
+              onChange={(v) => setCredentialType(v as CredentialType)}
+              className="mt-1.5"
+            />
           </div>
 
           <div>

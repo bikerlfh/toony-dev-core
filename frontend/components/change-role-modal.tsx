@@ -2,9 +2,16 @@
 
 import { FormEvent, useState } from "react";
 import { updateMemberRole } from "@/lib/api/members";
+import { Select } from "@/components/ui/select";
 import type { Member, MembershipRole } from "@/types";
 
-const ROLES: MembershipRole[] = ["OWNER", "ADMIN", "MANAGER", "MEMBER", "VIEWER"];
+const ROLES: { value: MembershipRole; label: string }[] = [
+  { value: "OWNER", label: "Owner" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "MEMBER", label: "Member" },
+  { value: "VIEWER", label: "Viewer" },
+];
 
 interface ChangeRoleModalProps {
   orgSlug: string;
@@ -63,15 +70,12 @@ export function ChangeRoleModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-400">Role</label>
-            <select
+            <Select
+              options={ROLES}
               value={role}
-              onChange={(e) => setRole(e.target.value as MembershipRole)}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+              onChange={(v) => setRole(v as MembershipRole)}
+              className="mt-1.5"
+            />
           </div>
 
           <div className="flex items-center justify-between pt-2">

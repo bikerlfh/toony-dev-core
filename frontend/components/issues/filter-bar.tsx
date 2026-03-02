@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/select";
 import type { IssueFilters, IssueStatus, IssuePriority, Milestone, Cycle, Label, ProjectMember } from "@/types";
 
 const STATUS_OPTIONS: { value: IssueStatus; label: string }[] = [
@@ -41,85 +42,53 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <select
+      <Select
+        options={[{ value: "", label: "All statuses" }, ...STATUS_OPTIONS]}
         value={filters.status || ""}
-        onChange={(e) => onChange({ ...filters, status: (e.target.value || undefined) as IssueStatus | undefined })}
-        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-      >
-        <option value="">All statuses</option>
-        {STATUS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        onChange={(v) => onChange({ ...filters, status: (v || undefined) as IssueStatus | undefined })}
+      />
 
-      <select
+      <Select
+        options={[{ value: "", label: "All priorities" }, ...PRIORITY_OPTIONS]}
         value={filters.priority || ""}
-        onChange={(e) => onChange({ ...filters, priority: (e.target.value || undefined) as IssuePriority | undefined })}
-        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-      >
-        <option value="">All priorities</option>
-        {PRIORITY_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+        onChange={(v) => onChange({ ...filters, priority: (v || undefined) as IssuePriority | undefined })}
+      />
 
-      <select
+      <Select
+        options={[{ value: "", label: "All assignees" }, ...members.map((m) => ({ value: m.user.id, label: `${m.user.first_name} ${m.user.last_name}` }))]}
         value={filters.assignee_id || ""}
-        onChange={(e) => onChange({ ...filters, assignee_id: e.target.value || undefined })}
-        className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-      >
-        <option value="">All assignees</option>
-        {members.map((m) => (
-          <option key={m.user.id} value={m.user.id}>
-            {m.user.first_name} {m.user.last_name}
-          </option>
-        ))}
-      </select>
+        onChange={(v) => onChange({ ...filters, assignee_id: v || undefined })}
+      />
 
       {milestones.length > 0 && (
-        <select
+        <Select
+          options={[{ value: "", label: "All milestones" }, ...milestones.map((m) => ({ value: m.id, label: m.name }))]}
           value={filters.milestone_id || ""}
-          onChange={(e) => onChange({ ...filters, milestone_id: e.target.value || undefined })}
-          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-        >
-          <option value="">All milestones</option>
-          {milestones.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
+          onChange={(v) => onChange({ ...filters, milestone_id: v || undefined })}
+        />
       )}
 
       {cycles.length > 0 && (
-        <select
+        <Select
+          options={[{ value: "", label: "All cycles" }, ...cycles.map((c) => ({ value: c.id, label: c.name }))]}
           value={filters.cycle_id || ""}
-          onChange={(e) => onChange({ ...filters, cycle_id: e.target.value || undefined })}
-          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-        >
-          <option value="">All cycles</option>
-          {cycles.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
+          onChange={(v) => onChange({ ...filters, cycle_id: v || undefined })}
+        />
       )}
 
       {labels.length > 0 && (
-        <select
+        <Select
+          options={labels.filter((l) => !(filters.label_ids || []).includes(l.id)).map((l) => ({ value: l.id, label: l.name }))}
           value=""
-          onChange={(e) => {
-            const id = e.target.value;
-            if (!id) return;
+          onChange={(v) => {
+            if (!v) return;
             const existing = filters.label_ids || [];
-            if (!existing.includes(id)) {
-              onChange({ ...filters, label_ids: [...existing, id] });
+            if (!existing.includes(v)) {
+              onChange({ ...filters, label_ids: [...existing, v] });
             }
           }}
-          className="rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-        >
-          <option value="">Add label filter</option>
-          {labels.filter((l) => !(filters.label_ids || []).includes(l.id)).map((l) => (
-            <option key={l.id} value={l.id}>{l.name}</option>
-          ))}
-        </select>
+          placeholder="Add label filter"
+        />
       )}
 
       {(filters.label_ids || []).map((labelId) => {

@@ -10,6 +10,7 @@ import {
 import { deleteOrganization } from "@/lib/api/organizations";
 import { canEditOrg, canDeleteOrg } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { Select } from "@/components/ui/select";
 import type { MethodologyChoice, OrganizationSettings } from "@/types";
 
 const METHODOLOGY_OPTIONS: { value: MethodologyChoice; label: string }[] = [
@@ -107,16 +108,13 @@ export default function SettingsPage() {
           <div className="mt-4 space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-400">Default methodology</label>
-              <select
+              <Select
+                options={METHODOLOGY_OPTIONS}
                 value={methodology}
-                onChange={(e) => setMethodology(e.target.value as MethodologyChoice)}
+                onChange={(v) => setMethodology(v as MethodologyChoice)}
                 disabled={!canEdit}
-                className={INPUT_CLASS}
-              >
-                {METHODOLOGY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+                className="mt-1.5"
+              />
             </div>
 
             <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { listExternalProjects } from "@/lib/api/imports";
 import { listProjects } from "@/lib/api/projects";
 import { startImport } from "@/lib/api/imports";
+import { Select } from "@/components/ui/select";
 import type { ExternalProject, ImportProvider, ProjectList } from "@/types";
 
 const PROVIDERS: { value: ImportProvider; label: string }[] = [
@@ -106,23 +107,18 @@ export function StartImportWizard({
             Step 1: Select provider
           </label>
           <div className="mt-1.5 flex gap-3">
-            <select
+            <Select
+              options={PROVIDERS}
               value={provider}
-              onChange={(e) => {
-                setProvider(e.target.value as ImportProvider);
+              onChange={(v) => {
+                setProvider(v as ImportProvider);
                 setStep(1);
                 setExternalProjects([]);
                 setSelectedExternal("");
               }}
-              className="block w-full max-w-xs rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              <option value="">Choose provider...</option>
-              {PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              placeholder="Choose provider..."
+              className="w-full max-w-xs"
+            />
             <button
               onClick={handleLoadProjects}
               disabled={!provider || isLoading}
@@ -139,21 +135,16 @@ export function StartImportWizard({
             <label className="block text-sm font-medium text-slate-400">
               Step 2: Select external project
             </label>
-            <select
+            <Select
+              options={externalProjects.map((ep) => ({ value: ep.id, label: ep.name }))}
               value={selectedExternal}
-              onChange={(e) => {
-                setSelectedExternal(e.target.value);
-                if (e.target.value) setStep(3);
+              onChange={(v) => {
+                setSelectedExternal(v);
+                if (v) setStep(3);
               }}
-              className="mt-1.5 block w-full max-w-xs rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              <option value="">Choose project...</option>
-              {externalProjects.map((ep) => (
-                <option key={ep.id} value={ep.id}>
-                  {ep.name}
-                </option>
-              ))}
-            </select>
+              placeholder="Choose project..."
+              className="mt-1.5 max-w-xs"
+            />
           </div>
         )}
 
@@ -163,18 +154,13 @@ export function StartImportWizard({
             <label className="block text-sm font-medium text-slate-400">
               Step 3: Select target project
             </label>
-            <select
+            <Select
+              options={projects.map((p) => ({ value: p.slug, label: p.name }))}
               value={targetProjectSlug}
-              onChange={(e) => setTargetProjectSlug(e.target.value)}
-              className="mt-1.5 block w-full max-w-xs rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              <option value="">Choose target project...</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.slug}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setTargetProjectSlug(v)}
+              placeholder="Choose target project..."
+              className="mt-1.5 max-w-xs"
+            />
 
             {targetProjectSlug && (
               <button

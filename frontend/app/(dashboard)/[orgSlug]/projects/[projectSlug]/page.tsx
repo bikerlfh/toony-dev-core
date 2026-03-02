@@ -37,6 +37,7 @@ import { KanbanBoard } from "@/components/issues/kanban-board";
 import { IssuesList } from "@/components/issues/issues-list";
 import { CreateIssueModal } from "@/components/issues/create-issue-modal";
 import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
+import { Select } from "@/components/ui/select";
 import type {
   ProjectDetail,
   ProjectMember,
@@ -86,7 +87,11 @@ const PROJECT_PRIORITY_OPTIONS: { value: ProjectPriority; label: string }[] = [
   { value: "LOW", label: "Low" },
 ];
 
-const PROJECT_MEMBER_ROLES: ProjectMemberRole[] = ["LEAD", "CONTRIBUTOR", "REVIEWER"];
+const PROJECT_MEMBER_ROLES: { value: ProjectMemberRole; label: string }[] = [
+  { value: "LEAD", label: "Lead" },
+  { value: "CONTRIBUTOR", label: "Contributor" },
+  { value: "REVIEWER", label: "Reviewer" },
+];
 
 const MEMBER_ROLE_COLORS: Record<ProjectMemberRole, string> = {
   LEAD: "bg-purple-500/15 text-purple-400",
@@ -282,17 +287,11 @@ function OverviewTab({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-400">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                {PROJECT_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select options={PROJECT_STATUS_OPTIONS} value={status} onChange={(v) => setStatus(v as ProjectStatus)} className="mt-1.5" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as ProjectPriority)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                {PROJECT_PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select options={PROJECT_PRIORITY_OPTIONS} value={priority} onChange={(v) => setPriority(v as ProjectPriority)} className="mt-1.5" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -452,10 +451,7 @@ function MilestonesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; p
                 <p className="font-medium text-slate-200">{m.name}</p>
                 <div className="mt-1 flex items-center gap-2">
                   {canManage ? (
-                    <select value={m.status} onChange={(e) => handleStatusChange(m, e.target.value as MilestoneStatus)}
-                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                      {MILESTONE_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                    <Select options={MILESTONE_STATUS_OPTIONS} value={m.status} onChange={(v) => handleStatusChange(m, v as MilestoneStatus)} size="sm" />
                   ) : (
                     <StatusBadge status={m.status} type="milestone" />
                   )}
@@ -582,10 +578,7 @@ function CyclesTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proje
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   {canManage ? (
-                    <select value={c.status} onChange={(e) => handleStatusChange(c, e.target.value as CycleStatus)}
-                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                      {CYCLE_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                    <Select options={CYCLE_STATUS_OPTIONS} value={c.status} onChange={(v) => handleStatusChange(c, v as CycleStatus)} size="sm" />
                   ) : (
                     <StatusBadge status={c.status} type="cycle" />
                   )}
@@ -733,10 +726,7 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
                 </td>
                 <td className="px-6 py-4">
                   {canManage ? (
-                    <select value={m.role} onChange={(e) => handleRoleChange(m, e.target.value as ProjectMemberRole)}
-                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                      {PROJECT_MEMBER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
+                    <Select options={PROJECT_MEMBER_ROLES} value={m.role} onChange={(v) => handleRoleChange(m, v as ProjectMemberRole)} size="sm" />
                   ) : (
                     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${MEMBER_ROLE_COLORS[m.role]}`}>{m.role}</span>
                   )}
@@ -766,10 +756,7 @@ function MembersTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; proj
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400">Role</label>
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value as ProjectMemberRole)}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                  {PROJECT_MEMBER_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                </select>
+                <Select options={PROJECT_MEMBER_ROLES} value={newRole} onChange={(v) => setNewRole(v as ProjectMemberRole)} className="mt-1.5" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => { setShowAdd(false); setAddError(""); }}
@@ -886,10 +873,7 @@ function SettingsTab({ orgSlug, projectSlug, canManage }: { orgSlug: string; pro
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400">Estimation method</label>
-              <select value={estimation} onChange={(e) => setEstimation(e.target.value as EstimationMethod)} disabled={!canManage}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900">
-                {ESTIMATION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select options={ESTIMATION_OPTIONS} value={estimation} onChange={(v) => setEstimation(v as EstimationMethod)} disabled={!canManage} className="mt-1.5" />
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="autoClose" checked={autoClose} onChange={(e) => setAutoClose(e.target.checked)} disabled={!canManage}

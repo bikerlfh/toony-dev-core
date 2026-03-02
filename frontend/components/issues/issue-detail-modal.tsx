@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/issues";
 import { PriorityBadge } from "@/components/priority-badge";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { Select } from "@/components/ui/select";
 import type {
   IssueDetail,
   IssueStatus,
@@ -202,62 +203,38 @@ export function IssueDetailModal({
                 {/* Status */}
                 <div>
                   <label className="block text-xs font-medium text-slate-500">Status</label>
-                  <select
-                    value={issue.status}
-                    onChange={(e) => handleFieldUpdate({ status: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                  >
-                    {STATUS_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Select options={STATUS_OPTIONS} value={issue.status} onChange={(v) => handleFieldUpdate({ status: v })} className="mt-1" />
                 </div>
 
                 {/* Priority */}
                 <div>
                   <label className="block text-xs font-medium text-slate-500">Priority</label>
-                  <select
-                    value={issue.priority}
-                    onChange={(e) => handleFieldUpdate({ priority: e.target.value })}
-                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                  >
-                    {PRIORITY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Select options={PRIORITY_OPTIONS} value={issue.priority} onChange={(v) => handleFieldUpdate({ priority: v })} className="mt-1" />
                 </div>
 
                 {/* Assignee */}
                 <div>
                   <label className="block text-xs font-medium text-slate-500">Assignee</label>
-                  <select
+                  <Select
+                    options={[{ value: "", label: "Unassigned" }, ...members.map((m) => ({ value: m.user.id, label: `${m.user.first_name} ${m.user.last_name}` }))]}
                     value={issue.assignee?.id || ""}
-                    onChange={(e) => handleFieldUpdate({ assignee_id: e.target.value || null })}
-                    className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                  >
-                    <option value="">Unassigned</option>
-                    {members.map((m) => (
-                      <option key={m.user.id} value={m.user.id}>
-                        {m.user.first_name} {m.user.last_name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => handleFieldUpdate({ assignee_id: v || null })}
+                    placeholder="Unassigned"
+                    className="mt-1"
+                  />
                 </div>
 
                 {/* Milestone */}
                 {milestones.length > 0 && (
                   <div>
                     <label className="block text-xs font-medium text-slate-500">Milestone</label>
-                    <select
+                    <Select
+                      options={[{ value: "", label: "None" }, ...milestones.map((m) => ({ value: m.id, label: m.name }))]}
                       value={issue.milestone?.id || ""}
-                      onChange={(e) => handleFieldUpdate({ milestone_id: e.target.value || null })}
-                      className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                    >
-                      <option value="">None</option>
-                      {milestones.map((m) => (
-                        <option key={m.id} value={m.id}>{m.name}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleFieldUpdate({ milestone_id: v || null })}
+                      placeholder="None"
+                      className="mt-1"
+                    />
                   </div>
                 )}
 
@@ -265,16 +242,13 @@ export function IssueDetailModal({
                 {cycles.length > 0 && (
                   <div>
                     <label className="block text-xs font-medium text-slate-500">Cycle</label>
-                    <select
+                    <Select
+                      options={[{ value: "", label: "None" }, ...cycles.map((c) => ({ value: c.id, label: c.name }))]}
                       value={issue.cycle?.id || ""}
-                      onChange={(e) => handleFieldUpdate({ cycle_id: e.target.value || null })}
-                      className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                    >
-                      <option value="">None</option>
-                      {cycles.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => handleFieldUpdate({ cycle_id: v || null })}
+                      placeholder="None"
+                      className="mt-1"
+                    />
                   </div>
                 )}
 

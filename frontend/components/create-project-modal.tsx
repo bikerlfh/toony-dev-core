@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { createProject } from "@/lib/api/projects";
 import { listTeams } from "@/lib/api/teams";
+import { Select } from "@/components/ui/select";
 import type { Team, ProjectDetail, ProjectStatus, ProjectPriority } from "@/types";
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
@@ -115,16 +116,13 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
         <form onSubmit={handleSubmit} noValidate className={`space-y-4 ${submitted ? "submitted" : ""}`}>
           <div>
             <label className="block text-sm font-medium text-slate-400">Team</label>
-            <select
-              required
+            <Select
+              options={teams.map((t) => ({ value: t.slug, label: t.name }))}
               value={teamSlug}
-              onChange={(e) => setTeamSlug(e.target.value)}
-              className={INPUT_CLASS}
-            >
-              {teams.map((t) => (
-                <option key={t.id} value={t.slug}>{t.name}</option>
-              ))}
-            </select>
+              onChange={(v) => setTeamSlug(v)}
+              required
+              className="mt-1.5"
+            />
           </div>
 
           <div>
@@ -163,27 +161,11 @@ export function CreateProjectModal({ orgSlug, onClose, onCreated }: CreateProjec
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-400">Status</label>
-              <select
-                value={statusVal}
-                onChange={(e) => setStatusVal(e.target.value as ProjectStatus)}
-                className={INPUT_CLASS}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <Select options={STATUS_OPTIONS} value={statusVal} onChange={(v) => setStatusVal(v as ProjectStatus)} className="mt-1.5" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400">Priority</label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as ProjectPriority)}
-                className={INPUT_CLASS}
-              >
-                {PRIORITY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <Select options={PRIORITY_OPTIONS} value={priority} onChange={(v) => setPriority(v as ProjectPriority)} className="mt-1.5" />
             </div>
           </div>
 

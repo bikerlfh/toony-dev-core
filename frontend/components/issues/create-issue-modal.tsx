@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { createIssue } from "@/lib/api/issues";
+import { Select } from "@/components/ui/select";
 import type {
   IssueStatus,
   IssuePriority,
@@ -114,28 +115,24 @@ export function CreateIssueModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-400">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value as IssueStatus)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select options={STATUS_OPTIONS} value={status} onChange={(v) => setStatus(v as IssueStatus)} className="mt-1.5" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400">Priority</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as IssuePriority)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <Select options={PRIORITY_OPTIONS} value={priority} onChange={(v) => setPriority(v as IssuePriority)} className="mt-1.5" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-400">Assignee</label>
-              <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                <option value="">Unassigned</option>
-                {members.map((m) => <option key={m.user.id} value={m.user.id}>{m.user.first_name} {m.user.last_name}</option>)}
-              </select>
+              <Select
+                options={[{ value: "", label: "Unassigned" }, ...members.map((m) => ({ value: m.user.id, label: `${m.user.first_name} ${m.user.last_name}` }))]}
+                value={assigneeId}
+                onChange={(v) => setAssigneeId(v)}
+                placeholder="Unassigned"
+                className="mt-1.5"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400">Estimate</label>
@@ -148,21 +145,25 @@ export function CreateIssueModal({
             {milestones.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-slate-400">Milestone</label>
-                <select value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                  <option value="">None</option>
-                  {milestones.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
+                <Select
+                  options={[{ value: "", label: "None" }, ...milestones.map((m) => ({ value: m.id, label: m.name }))]}
+                  value={milestoneId}
+                  onChange={(v) => setMilestoneId(v)}
+                  placeholder="None"
+                  className="mt-1.5"
+                />
               </div>
             )}
             {cycles.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-slate-400">Cycle</label>
-                <select value={cycleId} onChange={(e) => setCycleId(e.target.value)}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors">
-                  <option value="">None</option>
-                  {cycles.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <Select
+                  options={[{ value: "", label: "None" }, ...cycles.map((c) => ({ value: c.id, label: c.name }))]}
+                  value={cycleId}
+                  onChange={(v) => setCycleId(v)}
+                  placeholder="None"
+                  className="mt-1.5"
+                />
               </div>
             )}
           </div>

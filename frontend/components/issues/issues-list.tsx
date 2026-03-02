@@ -3,6 +3,7 @@
 import type { IssueList, IssueStatus, IssuePriority } from "@/types";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
+import { Select } from "@/components/ui/select";
 
 const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {
   BACKLOG: "bg-slate-800 text-slate-400",
@@ -62,15 +63,12 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
               </td>
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                 {onStatusChange ? (
-                  <select
+                  <Select
+                    options={STATUS_OPTIONS.map((s) => ({ value: s, label: ISSUE_STATUS_LABELS[s] }))}
                     value={issue.status}
-                    onChange={(e) => onStatusChange(issue, e.target.value as IssueStatus)}
-                    className="rounded-md border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>{ISSUE_STATUS_LABELS[s]}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => onStatusChange(issue, v as IssueStatus)}
+                    size="sm"
+                  />
                 ) : (
                   <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ISSUE_STATUS_COLORS[issue.status]}`}>
                     {ISSUE_STATUS_LABELS[issue.status]}
@@ -79,15 +77,12 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
               </td>
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                 {onPriorityChange ? (
-                  <select
+                  <Select
+                    options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))}
                     value={issue.priority}
-                    onChange={(e) => onPriorityChange(issue, e.target.value as IssuePriority)}
-                    className="rounded-md border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                  >
-                    {PRIORITY_OPTIONS.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
+                    onChange={(v) => onPriorityChange(issue, v as IssuePriority)}
+                    size="sm"
+                  />
                 ) : (
                   <PriorityBadge priority={issue.priority} />
                 )}

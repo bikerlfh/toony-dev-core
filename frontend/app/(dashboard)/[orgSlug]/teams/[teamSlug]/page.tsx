@@ -14,9 +14,13 @@ import {
 } from "@/lib/api/teams";
 import { canManageTeams } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { Select } from "@/components/ui/select";
 import type { TeamDetail, TeamMember, TeamRole } from "@/types";
 
-const TEAM_ROLES: TeamRole[] = ["LEAD", "MEMBER"];
+const TEAM_ROLES: { value: TeamRole; label: string }[] = [
+  { value: "LEAD", label: "Lead" },
+  { value: "MEMBER", label: "Member" },
+];
 
 const ROLE_BADGE_COLORS: Record<TeamRole, string> = {
   LEAD: "bg-purple-500/20 text-purple-400",
@@ -260,15 +264,12 @@ export default function TeamDetailPage() {
                   </td>
                   <td className="px-6 py-4">
                     {canManage ? (
-                      <select
+                      <Select
+                        options={TEAM_ROLES}
                         value={member.role}
-                        onChange={(e) => handleChangeRole(member, e.target.value as TeamRole)}
-                        className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                      >
-                        {TEAM_ROLES.map((r) => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
+                        onChange={(v) => handleChangeRole(member, v as TeamRole)}
+                        size="sm"
+                      />
                     ) : (
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_BADGE_COLORS[member.role]}`}>
                         {member.role}
@@ -336,15 +337,12 @@ export default function TeamDetailPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-400">Role</label>
-                <select
+                <Select
+                  options={TEAM_ROLES}
                   value={newMemberRole}
-                  onChange={(e) => setNewMemberRole(e.target.value as TeamRole)}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-                >
-                  {TEAM_ROLES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setNewMemberRole(v as TeamRole)}
+                  className="mt-1.5"
+                />
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button

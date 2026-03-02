@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { updateAgent } from "@/lib/api/agents";
+import { Select } from "@/components/ui/select";
 import type { AgentDetail, AgentStatus, AgentType } from "@/types";
 
 const AGENT_TYPES: { value: AgentType; label: string }[] = [
@@ -105,28 +106,22 @@ export function EditAgentModal({
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Type</label>
-            <select
+            <Select
+              options={AGENT_TYPES}
               value={agentType}
-              onChange={(e) => setAgentType(e.target.value as AgentType)}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              {AGENT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+              onChange={(v) => setAgentType(v as AgentType)}
+              className="mt-1.5"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Status</label>
-            <select
+            <Select
+              options={STATUSES}
               value={statusVal}
-              onChange={(e) => setStatusVal(e.target.value as AgentStatus)}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              {STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+              onChange={(v) => setStatusVal(v as AgentStatus)}
+              className="mt-1.5"
+            />
           </div>
 
           <div>

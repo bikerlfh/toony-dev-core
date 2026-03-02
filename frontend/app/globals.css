@@ -3,7 +3,19 @@
 /* Highlight required fields on submit attempt */
 form.submitted input:invalid,
 form.submitted select:invalid,
-form.submitted textarea:invalid {
+form.submitted textarea:invalid,
+form.submitted [data-select-invalid] {
   border-color: #ef4444;
   box-shadow: 0 0 0 1px #ef4444;
+}
+
+@keyframes selectDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

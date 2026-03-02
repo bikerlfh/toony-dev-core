@@ -2,9 +2,15 @@
 
 import { FormEvent, useState } from "react";
 import { addMember } from "@/lib/api/members";
+import { Select } from "@/components/ui/select";
 import type { MembershipRole } from "@/types";
 
-const ROLES: MembershipRole[] = ["ADMIN", "MANAGER", "MEMBER", "VIEWER"];
+const ROLES: { value: MembershipRole; label: string }[] = [
+  { value: "ADMIN", label: "Admin" },
+  { value: "MANAGER", label: "Manager" },
+  { value: "MEMBER", label: "Member" },
+  { value: "VIEWER", label: "Viewer" },
+];
 
 interface AddMemberModalProps {
   orgSlug: string;
@@ -70,15 +76,12 @@ export function AddMemberModal({ orgSlug, onClose, onAdded }: AddMemberModalProp
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Role</label>
-            <select
+            <Select
+              options={ROLES}
               value={role}
-              onChange={(e) => setRole(e.target.value as MembershipRole)}
-              className={INPUT_CLASS}
-            >
-              {ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+              onChange={(v) => setRole(v as MembershipRole)}
+              className="mt-1.5"
+            />
           </div>
 
           <div className="flex items-center justify-between pt-2">

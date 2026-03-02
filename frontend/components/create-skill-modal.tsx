@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { createSkill } from "@/lib/api/skills";
+import { Select } from "@/components/ui/select";
 import type { SkillCategory } from "@/types";
 
 const CATEGORIES: { value: SkillCategory; label: string }[] = [
@@ -109,15 +110,12 @@ export function CreateSkillModal({
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Category</label>
-            <select
+            <Select
+              options={CATEGORIES}
               value={category}
-              onChange={(e) => setCategory(e.target.value as SkillCategory)}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
+              onChange={(v) => setCategory(v as SkillCategory)}
+              className="mt-1.5"
+            />
           </div>
 
           <div>
