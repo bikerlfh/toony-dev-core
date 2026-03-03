@@ -6,9 +6,9 @@ Usage::
     toony-agent-runner --config config.yml
 
 The daemon connects to the Toony backend via WebSocket, registers itself,
-and waits for task assignments.  When a task arrives it spawns a Claude CLI
-subprocess, streams events back to the backend, handles approval gates,
-and reports completion or failure.
+and waits for task assignments.  When a task arrives it uses the Claude
+Agent SDK to execute the prompt, streams events back to the backend,
+handles approval gates, and reports completion or failure.
 """
 
 from __future__ import annotations
@@ -27,7 +27,6 @@ from typing import Any
 import yaml
 
 from . import __version__
-from .claude_process import ClaudeProcess
 from .connection import BackendConnection
 from .protocol import (
     ApprovalNeededMessage,
@@ -46,11 +45,19 @@ from .protocol import (
 )
 from .stream_parser import (
     classify_event,
-    extract_approval_data,
     extract_event_data,
     extract_session_id,
-    is_approval_gate,
 )
+
+from claude_agent_sdk import (
+    ClaudeAgentOptions,
+    ClaudeSDKClient,
+    PermissionResultAllow,
+    PermissionResultDeny,
+    ResultMessage,
+    ToolPermissionContext,
+)
+from claude_agent_sdk.types import StreamEvent
 
 logger = logging.getLogger("toony_agent_runner")
 
@@ -63,10 +70,15 @@ HEARTBEAT_INTERVAL = 30  # seconds
 
 @dataclass
 class ClaudeConfig:
-    binary: str = "claude"
-    output_format: str = "stream-json"
     working_directory: str = "."
     max_task_timeout: int = 3600
+    approval_timeout: int = 600  # 10 minutes
+    oauth_token: str = ""
+    permission_mode: str = "acceptEdits"
+    allowed_tools: list[str] = field(default_factory=lambda: [
+        "Read", "Edit", "Write", "Bash", "Grep", "Glob",
+        "WebFetch", "WebSearch", "NotebookEdit", "AskUserQuestion",
+    ])
 
 
 @dataclass
@@ -101,15 +113,23 @@ def load_config(path: str) -> RunnerConfig:
         backend_url=raw.get("backend_url", RunnerConfig.backend_url),
         api_key=raw.get("api_key", ""),
         claude=ClaudeConfig(
-            binary=claude_raw.get("binary", ClaudeConfig.binary),
-            output_format=claude_raw.get(
-                "output_format", ClaudeConfig.output_format
-            ),
             working_directory=claude_raw.get(
                 "working_directory", ClaudeConfig.working_directory
             ),
             max_task_timeout=claude_raw.get(
                 "max_task_timeout", ClaudeConfig.max_task_timeout
+            ),
+            approval_timeout=claude_raw.get(
+                "approval_timeout", ClaudeConfig.approval_timeout
+            ),
+            oauth_token=claude_raw.get(
+                "oauth_token", ClaudeConfig.oauth_token
+            ),
+            permission_mode=claude_raw.get(
+                "permission_mode", ClaudeConfig.permission_mode
+            ),
+            allowed_tools=claude_raw.get(
+                "allowed_tools", ClaudeConfig.allowed_tools
             ),
         ),
         reconnect=ReconnectConfig(
@@ -127,6 +147,134 @@ def load_config(path: str) -> RunnerConfig:
 
 
 # ---------------------------------------------------------------------------
+# SDK helpers
+# ---------------------------------------------------------------------------
+
+async def _prompt_to_stream(prompt: str, session_id: str = "default"):
+    """Wrap a prompt string into an async iterable for SDK streaming mode.
+
+    The ``ClaudeSDKClient.connect()`` requires an ``AsyncIterable`` (not a
+    plain string) when ``can_use_tool`` is set.  This helper yields a single
+    user message dict in the expected format.
+    """
+    yield {
+        "type": "user",
+        "message": {"role": "user", "content": prompt},
+        "parent_tool_use_id": None,
+        "session_id": session_id,
+    }
+
+
+def _build_sdk_options(
+    config: RunnerConfig,
+    approval_handler: Any | None = None,
+    session_id: str | None = None,
+) -> ClaudeAgentOptions:
+    """Build ``ClaudeAgentOptions`` from the runner configuration.
+
+    Parameters
+    ----------
+    config:
+        The full runner configuration.
+    approval_handler:
+        Optional ``can_use_tool`` callback for handling approval gates.
+    session_id:
+        If provided, resume the given session instead of starting fresh.
+    """
+    # Inject OAuth token into environment if configured.
+    oauth_token = config.claude.oauth_token or os.environ.get(
+        "CLAUDE_CODE_OAUTH_TOKEN", ""
+    )
+    env: dict[str, str] = {}
+    if oauth_token:
+        env["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+
+    opts = ClaudeAgentOptions(
+        cwd=config.claude.working_directory,
+        allowed_tools=list(config.claude.allowed_tools),
+        permission_mode=config.claude.permission_mode,  # type: ignore[arg-type]
+        can_use_tool=approval_handler,
+        resume=session_id,
+        env=env,
+    )
+    return opts
+
+
+def _make_approval_handler(
+    conn: BackendConnection,
+    task_id: str,
+    config: RunnerConfig,
+):
+    """Create a ``can_use_tool`` callback for the SDK.
+
+    When Claude invokes ``AskUserQuestion``, this handler:
+    1. Sends an ``ApprovalNeededMessage`` to the backend via WebSocket.
+    2. Creates an ``asyncio.Future`` stored on ``conn.pending_approval``.
+    3. Waits for the future to be resolved (by the main message loop when
+       an ``ApprovalResponse`` arrives) or for the approval timeout.
+    4. Returns ``PermissionResultAllow`` or ``PermissionResultDeny``
+       accordingly.
+
+    For all other tools, it returns ``PermissionResultAllow`` immediately.
+    """
+    # Track the sequence counter across calls via mutable container.
+    seq_counter = [0]
+
+    async def handler(
+        tool_name: str,
+        tool_input: dict[str, Any],
+        ctx: ToolPermissionContext,
+    ) -> PermissionResultAllow | PermissionResultDeny:
+        # Auto-approve everything except AskUserQuestion.
+        if tool_name != "AskUserQuestion":
+            return PermissionResultAllow()
+
+        seq_counter[0] += 1
+        sequence = seq_counter[0]
+
+        # Build approval data for the backend.
+        approval_data: dict[str, Any] = {
+            "tool_name": tool_name,
+            "input": tool_input,
+        }
+
+        await conn.send(
+            ApprovalNeededMessage(task_id, approval_data, sequence).to_json()
+        )
+        logger.info(
+            "Approval needed for task %s: %s (seq=%d)",
+            task_id, tool_name, sequence,
+        )
+
+        # Create a future for the main message loop to resolve.
+        loop = asyncio.get_running_loop()
+        future: asyncio.Future[dict[str, Any]] = loop.create_future()
+        conn.pending_approval = future
+
+        try:
+            response = await asyncio.wait_for(
+                future,
+                timeout=config.claude.approval_timeout,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Approval timeout for task %s (seq=%d)", task_id, sequence
+            )
+            return PermissionResultDeny(message="Approval timeout")
+        finally:
+            conn.pending_approval = None
+
+        if response.get("action") == "reject":
+            logger.info("Approval rejected for task %s (seq=%d)", task_id, sequence)
+            reason = response.get("response") or "Approval rejected by user"
+            return PermissionResultDeny(message=reason, interrupt=True)
+
+        return PermissionResultAllow()
+
+    return handler
+
+
+# ---------------------------------------------------------------------------
 # Task execution
 # ---------------------------------------------------------------------------
 
@@ -137,7 +285,7 @@ async def execute_task(
     config: RunnerConfig,
     cancel_event: asyncio.Event,
 ) -> None:
-    """Execute a single task by running Claude and streaming events.
+    """Execute a single task using the Claude Agent SDK.
 
     Parameters
     ----------
@@ -152,101 +300,43 @@ async def execute_task(
     cancel_event:
         Set externally when a ``task.cancel`` arrives.
     """
-    claude = ClaudeProcess(
-        binary=config.claude.binary,
-        working_dir=config.claude.working_directory,
-        output_format=config.claude.output_format,
-    )
-
-    try:
-        await claude.start(prompt)
-    except Exception as exc:
-        logger.error("Failed to start Claude process: %s", exc)
-        await conn.send(
-            TaskFailedMessage(task_id, error=f"Failed to start Claude: {exc}").to_json()
-        )
-        return
-
-    # Verify the process is still alive after start.
-    if not claude.is_running:
-        exit_code = await claude.wait()
-        logger.error(
-            "Claude process exited immediately with code %d", exit_code
-        )
-        await conn.send(
-            TaskFailedMessage(
-                task_id,
-                error=f"Claude process exited immediately (code {exit_code})",
-            ).to_json()
-        )
-        return
+    approval_handler = _make_approval_handler(conn, task_id, config)
+    options = _build_sdk_options(config, approval_handler=approval_handler)
 
     await conn.send(TaskAcceptedMessage(task_id).to_json())
 
+    client = ClaudeSDKClient(options=options)
     sequence = 0
     session_id: str | None = None
-    approval_future: asyncio.Future[dict[str, Any]] | None = None
 
     try:
-        async for event in claude.stream_events():
+        # Connect and send the initial prompt.
+        # The SDK requires an AsyncIterable when can_use_tool is set.
+        await client.connect(_prompt_to_stream(prompt))
+
+        async for message in client.receive_messages():
             # Check for cancellation.
             if cancel_event.is_set():
-                logger.info("Task %s cancelled", task_id)
-                await claude.cancel()
+                logger.info("Task %s cancelled, interrupting SDK client", task_id)
+                client.interrupt()
+                await conn.send(
+                    TaskFailedMessage(
+                        task_id, error="Task cancelled by user"
+                    ).to_json()
+                )
                 return
 
-            sequence += 1
+            if isinstance(message, StreamEvent):
+                sequence += 1
+                event = message.event
 
-            if is_approval_gate(event):
-                data = extract_approval_data(event)
-                await conn.send(
-                    ApprovalNeededMessage(task_id, data, sequence).to_json()
-                )
-
-                # Create a future that the message handler will resolve.
-                loop = asyncio.get_running_loop()
-                approval_future = loop.create_future()
-
-                # Store on the connection so the message loop can find it.
-                conn._pending_approval = approval_future  # type: ignore[attr-defined]
-
-                try:
-                    response = await asyncio.wait_for(
-                        approval_future,
-                        timeout=config.claude.max_task_timeout,
-                    )
-                except asyncio.TimeoutError:
-                    logger.warning(
-                        "Approval timeout for task %s, cancelling", task_id
-                    )
-                    await claude.cancel()
-                    await conn.send(
-                        TaskFailedMessage(
-                            task_id, error="Approval timeout"
-                        ).to_json()
-                    )
-                    return
-                finally:
-                    conn._pending_approval = None  # type: ignore[attr-defined]
-
-                if response.get("action") == "reject":
-                    logger.info("Approval rejected for task %s", task_id)
-                    await claude.cancel()
-                    await conn.send(
-                        TaskFailedMessage(
-                            task_id, error="Approval rejected by user"
-                        ).to_json()
-                    )
-                    return
-
-                # Forward the approval response to Claude's stdin.
-                stdin_text = response.get("response") or "yes"
-                await claude.send_input(stdin_text)
-            else:
-                # Capture session_id from init event
+                # Capture session_id from init event.
                 sid = extract_session_id(event)
                 if sid:
                     session_id = sid
+                # Also capture from StreamEvent directly.
+                if not session_id and message.session_id:
+                    session_id = message.session_id
 
                 event_type = classify_event(event)
                 data = extract_event_data(event)
@@ -254,27 +344,58 @@ async def execute_task(
                     TaskEventMessage(task_id, event_type, data, sequence).to_json()
                 )
 
+            elif isinstance(message, ResultMessage):
+                # Capture session_id from result.
+                if message.session_id:
+                    session_id = message.session_id
+
+                if message.is_error:
+                    error_msg = message.result or f"Claude error: {message.subtype}"
+                    await conn.send(
+                        TaskFailedMessage(task_id, error=error_msg).to_json()
+                    )
+                    return
+
+                # Successful completion.
+                result_text = message.result or "Task completed"
+                await conn.send(
+                    TaskCompletedMessage(
+                        task_id, result=result_text, session_id=session_id
+                    ).to_json()
+                )
+                return
+
+    except asyncio.CancelledError:
+        logger.info("Task %s async-cancelled", task_id)
+        try:
+            client.interrupt()
+        except Exception:
+            pass
+        await conn.send(
+            TaskFailedMessage(task_id, error="Task cancelled").to_json()
+        )
+        return
+
     except Exception as exc:
-        logger.exception("Error streaming Claude events for task %s", task_id)
+        logger.exception("Error executing task %s via SDK", task_id)
         await conn.send(
             TaskFailedMessage(task_id, error=str(exc)).to_json()
         )
-        await claude.cancel()
         return
 
-    exit_code = await claude.wait()
-    if exit_code == 0:
-        await conn.send(
-            TaskCompletedMessage(
-                task_id, result="Task completed", session_id=session_id
-            ).to_json()
-        )
-    else:
-        await conn.send(
-            TaskFailedMessage(
-                task_id, error=f"Claude exited with code {exit_code}"
-            ).to_json()
-        )
+    finally:
+        try:
+            client.disconnect()
+        except Exception:
+            pass
+
+    # If we exit the loop without a ResultMessage, report completion
+    # with whatever session_id we captured.
+    await conn.send(
+        TaskCompletedMessage(
+            task_id, result="Task completed", session_id=session_id
+        ).to_json()
+    )
 
 
 async def execute_task_reply(
@@ -286,82 +407,104 @@ async def execute_task_reply(
     cancel_event: asyncio.Event,
     sequence_offset: int = 0,
 ) -> None:
-    """Resume a completed task conversation via ``--resume``.
+    """Resume a completed task conversation using the SDK's session resume.
 
-    Similar to ``execute_task()`` but resumes an existing Claude session.
+    Similar to ``execute_task()`` but resumes an existing Claude session
+    via ``ClaudeAgentOptions(resume=session_id)``.
     """
-    claude = ClaudeProcess(
-        binary=config.claude.binary,
-        working_dir=config.claude.working_directory,
-        output_format=config.claude.output_format,
+    approval_handler = _make_approval_handler(conn, task_id, config)
+    options = _build_sdk_options(
+        config, approval_handler=approval_handler, session_id=session_id
     )
 
-    try:
-        await claude.start(message, session_id=session_id)
-    except Exception as exc:
-        logger.error("Failed to start Claude reply process: %s", exc)
-        await conn.send(
-            TaskFailedMessage(task_id, error=f"Failed to resume Claude: {exc}").to_json()
-        )
-        return
-
-    if not claude.is_running:
-        exit_code = await claude.wait()
-        logger.error(
-            "Claude reply process exited immediately with code %d", exit_code
-        )
-        await conn.send(
-            TaskFailedMessage(
-                task_id,
-                error=f"Claude reply process exited immediately (code {exit_code})",
-            ).to_json()
-        )
-        return
-
+    client = ClaudeSDKClient(options=options)
     sequence = sequence_offset
     new_session_id: str | None = None
 
     try:
-        async for event in claude.stream_events():
+        # Connect with the reply message, resuming the session.
+        # The SDK requires an AsyncIterable when can_use_tool is set.
+        await client.connect(_prompt_to_stream(message, session_id=session_id))
+
+        async for msg in client.receive_messages():
             if cancel_event.is_set():
-                logger.info("Task reply %s cancelled", task_id)
-                await claude.cancel()
+                logger.info("Task reply %s cancelled, interrupting", task_id)
+                client.interrupt()
+                await conn.send(
+                    TaskFailedMessage(
+                        task_id, error="Task cancelled by user"
+                    ).to_json()
+                )
                 return
 
-            sequence += 1
+            if isinstance(msg, StreamEvent):
+                sequence += 1
+                event = msg.event
 
-            sid = extract_session_id(event)
-            if sid:
-                new_session_id = sid
+                sid = extract_session_id(event)
+                if sid:
+                    new_session_id = sid
+                if not new_session_id and msg.session_id:
+                    new_session_id = msg.session_id
 
-            event_type = classify_event(event)
-            data = extract_event_data(event)
-            await conn.send(
-                TaskEventMessage(task_id, event_type, data, sequence).to_json()
-            )
+                event_type = classify_event(event)
+                data = extract_event_data(event)
+                await conn.send(
+                    TaskEventMessage(task_id, event_type, data, sequence).to_json()
+                )
+
+            elif isinstance(msg, ResultMessage):
+                if msg.session_id:
+                    new_session_id = msg.session_id
+
+                final_sid = new_session_id or session_id
+
+                if msg.is_error:
+                    error_msg = msg.result or f"Claude error: {msg.subtype}"
+                    await conn.send(
+                        TaskFailedMessage(task_id, error=error_msg).to_json()
+                    )
+                    return
+
+                result_text = msg.result or "Task completed"
+                await conn.send(
+                    TaskCompletedMessage(
+                        task_id, result=result_text, session_id=final_sid
+                    ).to_json()
+                )
+                return
+
+    except asyncio.CancelledError:
+        logger.info("Task reply %s async-cancelled", task_id)
+        try:
+            client.interrupt()
+        except Exception:
+            pass
+        await conn.send(
+            TaskFailedMessage(task_id, error="Task cancelled").to_json()
+        )
+        return
 
     except Exception as exc:
-        logger.exception("Error streaming Claude reply events for task %s", task_id)
+        logger.exception("Error executing task reply %s via SDK", task_id)
         await conn.send(
             TaskFailedMessage(task_id, error=str(exc)).to_json()
         )
-        await claude.cancel()
         return
 
-    exit_code = await claude.wait()
-    final_session_id = new_session_id or session_id
-    if exit_code == 0:
-        await conn.send(
-            TaskCompletedMessage(
-                task_id, result="Task completed", session_id=final_session_id
-            ).to_json()
-        )
-    else:
-        await conn.send(
-            TaskFailedMessage(
-                task_id, error=f"Claude exited with code {exit_code}"
-            ).to_json()
-        )
+    finally:
+        try:
+            client.disconnect()
+        except Exception:
+            pass
+
+    # If we exit the loop without a ResultMessage, report completion.
+    final_sid = new_session_id or session_id
+    await conn.send(
+        TaskCompletedMessage(
+            task_id, result="Task completed", session_id=final_sid
+        ).to_json()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -505,9 +648,8 @@ async def run(config: RunnerConfig) -> None:
                     msg.action,
                 )
                 # Resolve the pending approval future if one exists.
-                pending = getattr(conn, "_pending_approval", None)
-                if pending is not None and not pending.done():
-                    pending.set_result({
+                if conn.pending_approval is not None and not conn.pending_approval.done():
+                    conn.pending_approval.set_result({
                         "action": msg.action,
                         "response": msg.response,
                     })
