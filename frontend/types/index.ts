@@ -126,6 +126,26 @@ export type {
   WsReadyState,
 } from "./websocket";
 
+export type {
+  ToonyAgentStatus,
+  AgentTaskStatus,
+  TaskEventType,
+  ToonyAgentList,
+  ToonyAgentDetail,
+  CreateToonyAgentPayload,
+  UpdateToonyAgentPayload,
+  ToonyAgentKeyItem,
+  AgentTaskList,
+  AgentTaskDetail,
+  CreateAgentTaskPayload,
+  TaskEventItem,
+  ToonyAgentStatusWsEvent,
+  TaskStatusWsEvent,
+  TaskEventWsEvent,
+  ApprovalNeededWsEvent,
+  ToonyAgentWsEvent,
+} from "./toony-agents";
+
 // --- Pagination & Search ---
 
 export interface PaginatedResponse<T> {

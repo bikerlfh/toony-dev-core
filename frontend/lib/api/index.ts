@@ -113,3 +113,18 @@ export {
   deleteResource,
 } from "./resources";
 export { globalSearch } from "./search";
+export {
+  listToonyAgents,
+  createToonyAgent,
+  getToonyAgent,
+  updateToonyAgent,
+  deleteToonyAgent,
+  listAgentKeys,
+  generateAgentKey,
+  revokeAgentKey,
+  listAgentTasks,
+  createAgentTask,
+  getAgentTask,
+  cancelAgentTask,
+  listTaskEvents,
+} from "./toony-agents";
