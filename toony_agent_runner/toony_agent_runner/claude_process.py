@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import shutil
 import signal
 from collections.abc import AsyncIterator
 
@@ -44,6 +45,7 @@ class ClaudeProcess:
         self._working_dir = working_dir
         self._output_format = output_format
         self._process: asyncio.subprocess.Process | None = None
+        self._stderr_task: asyncio.Task | None = None
 
     # ------------------------------------------------------------------
     # Properties
@@ -67,19 +69,48 @@ class ClaudeProcess:
             self._binary,
             "--output-format",
             self._output_format,
+            "--verbose",
             "-p",
             prompt,
         ]
-        logger.info("Starting Claude process: %s", " ".join(cmd))
+        resolved_binary = shutil.which(self._binary)
+        logger.info(
+            "Starting Claude process: %s (binary: %s, cwd: %s)",
+            " ".join(cmd[:5]) + f' "{prompt}"',
+            resolved_binary or "NOT FOUND",
+            self._working_dir,
+        )
 
         self._process = await asyncio.create_subprocess_exec(
             *cmd,
-            stdin=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=self._working_dir,
         )
         logger.info("Claude process started (pid=%d)", self._process.pid)
+        self._stderr_task = asyncio.create_task(self._drain_stderr())
+
+    async def _drain_stderr(self) -> None:
+        """Read stderr line by line to prevent pipe buffer deadlock."""
+        if self._process is None or self._process.stderr is None:
+            return
+        logger.debug("stderr drain started")
+        line_count = 0
+        while True:
+            line_bytes = await self._process.stderr.readline()
+            if not line_bytes:
+                break
+            line_count += 1
+            line = line_bytes.decode("utf-8", errors="replace").rstrip()
+            if not line:
+                continue
+            lowered = line.lower()
+            if "error" in lowered or "fatal" in lowered:
+                logger.warning("Claude stderr: %s", line)
+            else:
+                logger.debug("Claude stderr: %s", line)
+        logger.debug("stderr drain EOF — read %d lines", line_count)
 
     async def stream_events(self) -> AsyncIterator[dict]:
         """Yield parsed JSON events from Claude's stdout, line by line.
@@ -88,27 +119,41 @@ class ClaudeProcess:
         when stdout reaches EOF (process exited or stdout closed).
         """
         if self._process is None or self._process.stdout is None:
+            logger.warning("stream_events called but process/stdout is None")
             return
+
+        logger.info("Starting to stream events from Claude stdout")
+        count = 0
 
         while True:
             line_bytes = await self._process.stdout.readline()
             if not line_bytes:
-                # EOF — process has finished writing.
                 break
 
             line = line_bytes.decode("utf-8", errors="replace")
+            logger.debug("Claude stdout raw: %s", line.rstrip()[:300])
             event = parse_stream_json_line(line)
             if event is not None:
+                count += 1
                 yield event
+
+        rc = self._process.returncode
+        logger.info(
+            "Claude stdout EOF — streamed %d events (exit_code=%s)", count, rc
+        )
 
     async def send_input(self, text: str) -> None:
         """Write *text* to the process's stdin.
 
         Used to send approval responses back to Claude.  A newline is
         appended automatically if *text* does not already end with one.
+
+        NOTE: Currently stdin is opened as DEVNULL, so this method will
+        always warn and return.  When approval-gate support is added,
+        stdin should be switched back to PIPE conditionally.
         """
         if self._process is None or self._process.stdin is None:
-            logger.warning("Cannot send input: process not running")
+            logger.warning("Cannot send input: stdin unavailable (opened as DEVNULL)")
             return
 
         if not text.endswith("\n"):
@@ -152,8 +197,22 @@ class ClaudeProcess:
             except ProcessLookupError:
                 pass
 
+        await self._cleanup_stderr_task()
+
+    async def _cleanup_stderr_task(self) -> None:
+        """Cancel and await the stderr drain task."""
+        if self._stderr_task is not None:
+            self._stderr_task.cancel()
+            try:
+                await self._stderr_task
+            except asyncio.CancelledError:
+                pass
+            self._stderr_task = None
+
     async def wait(self) -> int:
         """Wait for the process to exit and return its exit code."""
         if self._process is None:
             return -1
-        return await self._process.wait()
+        exit_code = await self._process.wait()
+        await self._cleanup_stderr_task()
+        return exit_code
