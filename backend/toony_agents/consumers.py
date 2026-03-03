@@ -1,5 +1,3 @@
-import hashlib
-
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
@@ -12,8 +10,10 @@ from toony_agents.models import (
     TaskEvent,
     TaskEventType,
     ToonyAgent,
-    ToonyAgentKey,
     ToonyAgentStatus,
+)
+from toony_agents.services.toony_agent_service import (
+    verify_api_key as _sync_verify_api_key,
 )
 
 
@@ -22,18 +22,7 @@ from toony_agents.models import (
 
 @database_sync_to_async
 def _verify_api_key(raw_key):
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-    try:
-        key = ToonyAgentKey.objects.select_related("toony_agent").get(
-            key_hash=key_hash, is_active=True,
-        )
-    except ToonyAgentKey.DoesNotExist:
-        return None
-    if key.expires_at and key.expires_at < timezone.now():
-        return None
-    key.last_used_at = timezone.now()
-    key.save(update_fields=["last_used_at"])
-    return key.toony_agent
+    return _sync_verify_api_key(raw_key)
 
 
 @database_sync_to_async
@@ -53,8 +42,6 @@ def _set_agent_status(agent_id, agent_status, **kwargs):
 @database_sync_to_async
 def _update_task_status(task_id, new_status, **kwargs):
     updates = {"status": new_status}
-    if new_status == AgentTaskStatus.RUNNING:
-        updates["started_at"] = timezone.now()
     if new_status in (
         AgentTaskStatus.COMPLETED,
         AgentTaskStatus.FAILED,
@@ -65,7 +52,20 @@ def _update_task_status(task_id, new_status, **kwargs):
         updates["result"] = kwargs["result"]
     if "error" in kwargs:
         updates["error"] = kwargs["error"]
-    AgentTask.objects.filter(id=task_id).update(**updates)
+    if kwargs.get("toony_agent_id"):
+        return AgentTask.objects.filter(
+            id=task_id, toony_agent_id=kwargs["toony_agent_id"],
+        ).update(**updates)
+    return AgentTask.objects.filter(id=task_id).update(**updates)
+
+
+@database_sync_to_async
+def _mark_task_running_if_assigned(task_id):
+    """Atomically transition task from ASSIGNED to RUNNING. Returns True if transitioned."""
+    rows = AgentTask.objects.filter(
+        id=task_id, status=AgentTaskStatus.ASSIGNED,
+    ).update(status=AgentTaskStatus.RUNNING, started_at=timezone.now())
+    return rows > 0
 
 
 @database_sync_to_async
@@ -98,6 +98,32 @@ def _is_org_member(user, agent_id):
     return OrganizationMembership.objects.filter(
         user=user, organization_id__in=org_ids, is_active=True,
     ).exists()
+
+
+@database_sync_to_async
+def _validate_task_ownership(task_id, agent_id):
+    """Check that a task belongs to the given agent."""
+    return AgentTask.objects.filter(
+        id=task_id, toony_agent_id=agent_id,
+    ).exists()
+
+
+@database_sync_to_async
+def _validate_task_org_member(task_id, user):
+    """Check that a task belongs to an org the user is a member of."""
+    org_ids = list(
+        AgentTask.objects.filter(id=task_id).values_list(
+            "organization_id", flat=True,
+        )
+    )
+    if not org_ids:
+        return False
+    return OrganizationMembership.objects.filter(
+        user=user, organization_id__in=org_ids, is_active=True,
+    ).exists()
+
+
+_VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
 # -- Runner-facing consumer ----------------------------------------------------
@@ -169,7 +195,15 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "task.accepted":
             task_id = content.get("task_id")
-            await _update_task_status(task_id, AgentTaskStatus.ASSIGNED)
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
+            await _update_task_status(
+                task_id, AgentTaskStatus.ASSIGNED, toony_agent_id=self.agent_id,
+            )
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
@@ -180,13 +214,22 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "task.event":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
             event_type = content.get("event_type", TaskEventType.LOG)
+            if event_type not in _VALID_EVENT_TYPES:
+                await self.send_json({"type": "error", "message": f"Invalid event_type: {event_type}"})
+                return
             data = content.get("data", {})
             sequence = content.get("sequence", 0)
             await _create_task_event(task_id, event_type, data, sequence)
-            # If first event, mark as running
-            if sequence == 1:
-                await _update_task_status(task_id, AgentTaskStatus.RUNNING)
+            # Atomically transition ASSIGNED -> RUNNING (only happens once)
+            transitioned = await _mark_task_running_if_assigned(task_id)
+            if transitioned:
                 await _set_agent_status(self.agent_id, ToonyAgentStatus.BUSY)
             await self.channel_layer.group_send(
                 self.frontend_group,
@@ -203,10 +246,17 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "approval.needed":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
             data = content.get("data", {})
             sequence = content.get("sequence", 0)
             await _update_task_status(
                 task_id, AgentTaskStatus.AWAITING_APPROVAL,
+                toony_agent_id=self.agent_id,
             )
             await _create_task_event(
                 task_id, TaskEventType.APPROVAL_NEEDED, data, sequence,
@@ -225,9 +275,16 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "task.completed":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
             result = content.get("result", "")
             await _update_task_status(
-                task_id, AgentTaskStatus.COMPLETED, result=result,
+                task_id, AgentTaskStatus.COMPLETED,
+                result=result, toony_agent_id=self.agent_id,
             )
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
             await self.channel_layer.group_send(
@@ -244,9 +301,16 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "task.failed":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
             error = content.get("error", "")
             await _update_task_status(
-                task_id, AgentTaskStatus.FAILED, error=error,
+                task_id, AgentTaskStatus.FAILED,
+                error=error, toony_agent_id=self.agent_id,
             )
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
             await self.channel_layer.group_send(
@@ -264,6 +328,9 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 self.frontend_group,
                 {"type": "agent_status", "data": {"status": "ONLINE"}},
             )
+
+        else:
+            await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
     # Group handlers (receive from frontend consumer via channel layer)
 
@@ -309,6 +376,7 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4003)
             return
 
+        self.user = user
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -324,6 +392,12 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
         if msg_type == "approval.response":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_org_member(task_id, self.user):
+                await self.send_json({"type": "error", "message": "Task not found"})
+                return
             action = content.get("action", "approve")
             response = content.get("response", "")
             await _create_task_event(
@@ -353,11 +427,20 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
         elif msg_type == "task.cancel":
             task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_org_member(task_id, self.user):
+                await self.send_json({"type": "error", "message": "Task not found"})
+                return
             await _update_task_status(task_id, AgentTaskStatus.CANCELLED)
             await self.channel_layer.group_send(
                 runner_group,
                 {"type": "task_cancel", "data": {"task_id": task_id}},
             )
+
+        else:
+            await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
     # Group handlers (receive broadcasts)
 
