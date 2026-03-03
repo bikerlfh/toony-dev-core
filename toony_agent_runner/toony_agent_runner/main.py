@@ -170,9 +170,11 @@ def _build_sdk_options(
         If provided, resume the given session instead of starting fresh.
     """
     # Inject OAuth token into environment if configured.
-    oauth_token = config.claude.oauth_token or os.environ.get(
-        "CLAUDE_CODE_OAUTH_TOKEN", ""
-    )
+    # Strip surrounding quotes in case user wrapped the token in quotes.
+    oauth_token = (
+        config.claude.oauth_token
+        or os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "")
+    ).strip().strip("\"'")
     env: dict[str, str] = {}
     if oauth_token:
         env["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
