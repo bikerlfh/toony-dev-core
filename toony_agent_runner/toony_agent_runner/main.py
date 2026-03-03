@@ -56,12 +56,19 @@ from .stream_parser import (
 from claude_agent_sdk import (
     ClaudeAgentOptions,
     ClaudeSDKClient,
+    HookMatcher,
     PermissionResultAllow,
-    PermissionResultDeny,
     ResultMessage,
-    ToolPermissionContext,
 )
-from claude_agent_sdk.types import AssistantMessage, StreamEvent, SystemMessage
+from claude_agent_sdk.types import (
+    AssistantMessage,
+    HookContext,
+    PreToolUseHookInput,
+    StreamEvent,
+    SyncHookJSONOutput,
+    SystemMessage,
+    TextBlock,
+)
 
 logger = logging.getLogger("toony_agent_runner")
 
@@ -75,9 +82,9 @@ HEARTBEAT_INTERVAL = 30  # seconds
 _DEFAULT_ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Bash", "Grep", "Glob",
     "WebFetch", "WebSearch", "NotebookEdit",
-    # NOTE: AskUserQuestion is intentionally excluded so that the CLI sends
-    # a control_request to the SDK, which triggers our can_use_tool callback
-    # and lets us relay the question to the user via WebSocket.
+    # NOTE: AskUserQuestion is intentionally excluded from this list.
+    # Approval gating is handled by a PreToolUse hook (not can_use_tool)
+    # which fires for ALL tool uses regardless of permission settings.
 ]
 
 
@@ -162,7 +169,7 @@ def load_config(path: str) -> RunnerConfig:
 
 def _build_sdk_options(
     config: RunnerConfig,
-    approval_handler: Any | None = None,
+    hook_callback: Any | None = None,
     session_id: str | None = None,
 ) -> ClaudeAgentOptions:
     """Build ``ClaudeAgentOptions`` from the runner configuration.
@@ -171,8 +178,9 @@ def _build_sdk_options(
     ----------
     config:
         The full runner configuration.
-    approval_handler:
-        Optional ``can_use_tool`` callback for handling approval gates.
+    hook_callback:
+        Optional ``PreToolUse`` hook callback for intercepting
+        ``AskUserQuestion`` calls.
     session_id:
         If provided, resume the given session instead of starting fresh.
     """
@@ -186,11 +194,25 @@ def _build_sdk_options(
     if oauth_token:
         env["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
 
+    # Build PreToolUse hooks if a callback is provided.
+    hooks = None
+    if hook_callback is not None:
+        hooks = {
+            "PreToolUse": [
+                HookMatcher(
+                    matcher="AskUserQuestion",
+                    hooks=[hook_callback],
+                    timeout=float(config.claude.approval_timeout),
+                ),
+            ],
+        }
+
     opts = ClaudeAgentOptions(
         cwd=config.claude.working_directory,
         allowed_tools=list(config.claude.allowed_tools),
         permission_mode=config.claude.permission_mode,  # type: ignore[arg-type]
-        can_use_tool=approval_handler,
+        can_use_tool=_auto_approve_tool,
+        hooks=hooks,
         resume=session_id,
         env=env,
         include_partial_messages=True,
@@ -198,37 +220,51 @@ def _build_sdk_options(
     return opts
 
 
-def _make_approval_handler(
+async def _auto_approve_tool(
+    tool_name: str,
+    tool_input: dict[str, Any],
+    ctx: Any,
+) -> PermissionResultAllow:
+    """Always-allow ``can_use_tool`` callback.
+
+    Its only purpose is to make the SDK set ``--permission-prompt-tool stdio``,
+    which enables the bidirectional control protocol required for hook callbacks.
+    """
+    return PermissionResultAllow()
+
+
+def _make_pretooluse_hook(
     conn: BackendConnection,
     task_id: str,
     config: RunnerConfig,
 ):
-    """Create a ``can_use_tool`` callback for the SDK.
+    """Create a ``PreToolUse`` hook callback for ``AskUserQuestion``.
 
-    When Claude invokes ``AskUserQuestion``, this handler:
+    Unlike ``can_use_tool``, PreToolUse hooks fire for **all** tool uses
+    before execution — regardless of permission mode.  This means the hook
+    reliably intercepts ``AskUserQuestion`` even when the CLI auto-approves it
+    under ``acceptEdits`` mode.
+
+    The hook:
     1. Sends an ``ApprovalNeededMessage`` to the backend via WebSocket.
     2. Creates an ``asyncio.Future`` stored on ``conn.pending_approval``.
-    3. Waits for the future to be resolved (by the main message loop when
-       an ``ApprovalResponse`` arrives) or for the approval timeout.
-    4. Returns ``PermissionResultAllow`` or ``PermissionResultDeny``
-       accordingly.
-
-    For all other tools, it returns ``PermissionResultAllow`` immediately.
+    3. Awaits the future (resolved by the main loop on ``ApprovalResponse``).
+    4. Always returns ``permissionDecision: "deny"`` with the user's answer
+       as ``permissionDecisionReason``.  We deny because there is no terminal
+       for the CLI to render the question — Claude receives the answer via
+       the denial reason and continues normally.
     """
-    # Track the sequence counter across calls via mutable container.
     seq_counter = [0]
 
-    async def handler(
-        tool_name: str,
-        tool_input: dict[str, Any],
-        ctx: ToolPermissionContext,
-    ) -> PermissionResultAllow | PermissionResultDeny:
-        # Auto-approve everything except AskUserQuestion.
-        if tool_name != "AskUserQuestion":
-            return PermissionResultAllow()
-
+    async def hook(
+        input_data: PreToolUseHookInput,
+        tool_use_id: str | None,
+        context: HookContext,
+    ) -> SyncHookJSONOutput:
         seq_counter[0] += 1
         sequence = seq_counter[0]
+
+        tool_input = input_data.tool_input
 
         # Build approval data in the format the frontend expects:
         # { question: string, options?: [{label, description}], tool_name: string }
@@ -238,31 +274,36 @@ def _make_approval_handler(
             approval_data: dict[str, Any] = {
                 "question": first_q.get("question", "Approval required"),
                 "options": first_q.get("options"),
-                "tool_name": tool_name,
+                "tool_name": "AskUserQuestion",
             }
         else:
-            approval_data: dict[str, Any] = {
+            approval_data = {
                 "question": str(tool_input) if tool_input else "Approval required",
-                "tool_name": tool_name,
+                "tool_name": "AskUserQuestion",
             }
 
         await conn.send(
             ApprovalNeededMessage(task_id, approval_data, sequence).to_json()
         )
         logger.info(
-            "Approval needed for task %s: %s (seq=%d)",
-            task_id, tool_name, sequence,
+            "Approval needed for task %s: AskUserQuestion (seq=%d)",
+            task_id, sequence,
         )
 
-        # Guard against concurrent approvals (the SDK serializes tool calls,
-        # so this should never happen, but defend against it).
+        # Guard against concurrent approvals.
         if conn.pending_approval is not None and not conn.pending_approval.done():
             logger.error(
                 "New approval requested (seq=%d) while a previous approval is "
                 "still pending — this is a bug; rejecting",
                 sequence,
             )
-            return PermissionResultDeny(message="Concurrent approval conflict")
+            return SyncHookJSONOutput(
+                hookSpecificOutput={
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": "Concurrent approval conflict",
+                }
+            )
 
         # Create a future for the main message loop to resolve.
         loop = asyncio.get_running_loop()
@@ -278,18 +319,34 @@ def _make_approval_handler(
             logger.warning(
                 "Approval timeout for task %s (seq=%d)", task_id, sequence
             )
-            return PermissionResultDeny(message="Approval timeout")
+            return SyncHookJSONOutput(
+                hookSpecificOutput={
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": "Approval timeout",
+                }
+            )
         finally:
             conn.pending_approval = None
 
         if response.get("action") == "reject":
             logger.info("Approval rejected for task %s (seq=%d)", task_id, sequence)
             reason = response.get("response") or "Approval rejected by user"
-            return PermissionResultDeny(message=reason, interrupt=True)
+        else:
+            reason = response.get("response") or "User approved"
 
-        return PermissionResultAllow()
+        # Always deny: prevents the CLI from executing AskUserQuestion
+        # (headless — no terminal).  Claude receives the user's answer
+        # as the denial reason and uses it to continue.
+        return SyncHookJSONOutput(
+            hookSpecificOutput={
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        )
 
-    return handler
+    return hook
 
 
 # ---------------------------------------------------------------------------
@@ -318,8 +375,8 @@ async def execute_task(
     cancel_event:
         Set externally when a ``task.cancel`` arrives.
     """
-    approval_handler = _make_approval_handler(conn, task_id, config)
-    options = _build_sdk_options(config, approval_handler=approval_handler)
+    hook = _make_pretooluse_hook(conn, task_id, config)
+    options = _build_sdk_options(config, hook_callback=hook)
 
     await conn.send(TaskAcceptedMessage(task_id).to_json())
 
@@ -367,7 +424,8 @@ async def execute_task(
                 # TOOL_USE (input JSON fragments).
                 should_forward = (
                     (event_type == EVENT_TYPE_TOOL_USE
-                     and etype == "content_block_start")
+                     and etype == "content_block_start"
+                     and event.get("content_block", {}).get("name") != "AskUserQuestion")
                     or event_type == EVENT_TYPE_TOOL_RESULT
                     or event_type == EVENT_TYPE_ERROR
                 )
@@ -391,8 +449,8 @@ async def execute_task(
                 )
                 text_parts = []
                 for block in message.content:
-                    if getattr(block, "type", "") == "text":
-                        text_parts.append(getattr(block, "text", ""))
+                    if isinstance(block, TextBlock):
+                        text_parts.append(block.text)
                 if text_parts:
                     sequence += 1
                     await conn.send(
@@ -494,9 +552,9 @@ async def execute_task_reply(
     Similar to ``execute_task()`` but resumes an existing Claude session
     via ``ClaudeAgentOptions(resume=session_id)``.
     """
-    approval_handler = _make_approval_handler(conn, task_id, config)
+    hook = _make_pretooluse_hook(conn, task_id, config)
     options = _build_sdk_options(
-        config, approval_handler=approval_handler, session_id=session_id
+        config, hook_callback=hook, session_id=session_id
     )
 
     client = ClaudeSDKClient(options=options)
@@ -533,7 +591,8 @@ async def execute_task_reply(
 
                 should_forward = (
                     (event_type == EVENT_TYPE_TOOL_USE
-                     and etype == "content_block_start")
+                     and etype == "content_block_start"
+                     and event.get("content_block", {}).get("name") != "AskUserQuestion")
                     or event_type == EVENT_TYPE_TOOL_RESULT
                     or event_type == EVENT_TYPE_ERROR
                 )
@@ -549,8 +608,8 @@ async def execute_task_reply(
             elif isinstance(msg, AssistantMessage):
                 text_parts = []
                 for block in msg.content:
-                    if getattr(block, "type", "") == "text":
-                        text_parts.append(getattr(block, "text", ""))
+                    if isinstance(block, TextBlock):
+                        text_parts.append(block.text)
                 if text_parts:
                     sequence += 1
                     await conn.send(
