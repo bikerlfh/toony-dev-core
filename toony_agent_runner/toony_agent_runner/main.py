@@ -356,13 +356,20 @@ async def execute_task(
                 event_type = classify_event(event)
                 etype = event.get("type", "")
 
-                # Skip LOG events (text deltas are too fragmented for the
-                # frontend).  Complete text comes from AssistantMessage.
-                if event_type == EVENT_TYPE_LOG:
-                    continue
-                # Skip partial tool-input JSON deltas — only forward the
-                # content_block_start which carries the tool name.
-                if event_type == EVENT_TYPE_TOOL_USE and etype != "content_block_start":
+                # Only forward actionable events to the frontend:
+                #  - TOOL_USE from content_block_start (tool name)
+                #  - TOOL_RESULT (tool output)
+                #  - ERROR
+                # Skip LOG (text deltas), STATUS_CHANGE (message_start/
+                # delta/stop — just structural noise), and partial
+                # TOOL_USE (input JSON fragments).
+                should_forward = (
+                    (event_type == EVENT_TYPE_TOOL_USE
+                     and etype == "content_block_start")
+                    or event_type == EVENT_TYPE_TOOL_RESULT
+                    or event_type == EVENT_TYPE_ERROR
+                )
+                if not should_forward:
                     continue
 
                 sequence += 1
@@ -374,6 +381,12 @@ async def execute_task(
             elif isinstance(message, AssistantMessage):
                 # Send complete text as a single LOG event (avoids
                 # per-delta fragmentation).
+                logger.debug(
+                    "Task %s: AssistantMessage with %d content blocks: %s",
+                    task_id,
+                    len(message.content),
+                    [type(b).__name__ for b in message.content],
+                )
                 text_parts = []
                 for block in message.content:
                     if getattr(block, "type", "") == "text":
@@ -387,9 +400,16 @@ async def execute_task(
                             sequence,
                         ).to_json()
                     )
+                else:
+                    logger.debug(
+                        "Task %s: AssistantMessage had no text blocks", task_id
+                    )
 
             elif isinstance(message, SystemMessage):
                 # Capture session_id from system init.
+                logger.debug(
+                    "Task %s: SystemMessage subtype=%s", task_id, message.subtype
+                )
                 if message.subtype == "init" and isinstance(message.data, dict):
                     sid = message.data.get("session_id")
                     if sid:
@@ -415,6 +435,13 @@ async def execute_task(
                     ).to_json()
                 )
                 return
+
+            else:
+                logger.debug(
+                    "Task %s: unhandled message type %s",
+                    task_id,
+                    type(message).__name__,
+                )
 
     except asyncio.CancelledError:
         logger.info("Task %s async-cancelled", task_id)
@@ -502,9 +529,13 @@ async def execute_task_reply(
                 event_type = classify_event(event)
                 etype = event.get("type", "")
 
-                if event_type == EVENT_TYPE_LOG:
-                    continue
-                if event_type == EVENT_TYPE_TOOL_USE and etype != "content_block_start":
+                should_forward = (
+                    (event_type == EVENT_TYPE_TOOL_USE
+                     and etype == "content_block_start")
+                    or event_type == EVENT_TYPE_TOOL_RESULT
+                    or event_type == EVENT_TYPE_ERROR
+                )
+                if not should_forward:
                     continue
 
                 sequence += 1
