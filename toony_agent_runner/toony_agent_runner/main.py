@@ -68,6 +68,12 @@ HEARTBEAT_INTERVAL = 30  # seconds
 # Configuration
 # ---------------------------------------------------------------------------
 
+_DEFAULT_ALLOWED_TOOLS = [
+    "Read", "Edit", "Write", "Bash", "Grep", "Glob",
+    "WebFetch", "WebSearch", "NotebookEdit", "AskUserQuestion",
+]
+
+
 @dataclass
 class ClaudeConfig:
     working_directory: str = "."
@@ -75,10 +81,7 @@ class ClaudeConfig:
     approval_timeout: int = 600  # 10 minutes
     oauth_token: str = ""
     permission_mode: str = "acceptEdits"
-    allowed_tools: list[str] = field(default_factory=lambda: [
-        "Read", "Edit", "Write", "Bash", "Grep", "Glob",
-        "WebFetch", "WebSearch", "NotebookEdit", "AskUserQuestion",
-    ])
+    allowed_tools: list[str] = field(default_factory=lambda: list(_DEFAULT_ALLOWED_TOOLS))
 
 
 @dataclass
@@ -129,7 +132,7 @@ def load_config(path: str) -> RunnerConfig:
                 "permission_mode", ClaudeConfig.permission_mode
             ),
             allowed_tools=claude_raw.get(
-                "allowed_tools", ClaudeConfig.allowed_tools
+                "allowed_tools", _DEFAULT_ALLOWED_TOOLS
             ),
         ),
         reconnect=ReconnectConfig(
