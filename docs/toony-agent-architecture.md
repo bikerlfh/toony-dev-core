@@ -49,15 +49,15 @@ The ToonyAgent Bot Control Plane enables users to send development tasks from th
 │  │ toony_agent_runner (Python asyncio daemon)                          │   │
 │  │                                                                      │   │
 │  │  ┌─────────────┐  ┌──────────────┐  ┌────────────────────────────┐  │   │
-│  │  │ connection   │  │ main         │  │ claude_process             │  │   │
-│  │  │ (WS client)  │  │ (lifecycle)  │  │ (subprocess management)   │  │   │
+│  │  │ connection   │  │ main         │  │ claude-agent-sdk           │  │   │
+│  │  │ (WS client)  │  │ (lifecycle)  │  │ (ClaudeSDKClient)         │  │   │
 │  │  └─────────────┘  └──────────────┘  └────────────┬───────────────┘  │   │
 │  │                                                    │                  │   │
 │  │  ┌──────────────┐  ┌──────────────┐               ▼                  │   │
 │  │  │ protocol     │  │ stream_parser│         ┌────────────┐           │   │
-│  │  │ (messages)   │  │ (JSON parse) │         │ claude CLI │           │   │
-│  │  └──────────────┘  └──────────────┘         │ (subprocess)│          │   │
-│  │                                              └────────────┘           │   │
+│  │  │ (messages)   │  │ (SDK events) │         │ claude CLI │           │   │
+│  │  └──────────────┘  └──────────────┘         │ (managed   │           │   │
+│  │                                              │  by SDK)   │           │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -186,11 +186,11 @@ Immutable, append-only event stream. Does NOT extend `BaseModel` (no `updated_at
 Transitions:
   QUEUED → ASSIGNED         Runner sends "task.accepted"
   ASSIGNED → RUNNING        First task event arrives (atomic, happens once)
-  RUNNING → AWAITING_APPROVAL   Runner detects AskUserQuestion
-  AWAITING_APPROVAL → RUNNING   User approves
-  AWAITING_APPROVAL → CANCELLED User rejects
-  RUNNING → COMPLETED      Claude exits with code 0
-  RUNNING → FAILED          Claude exits with non-zero code
+  RUNNING → AWAITING_APPROVAL   SDK fires can_use_tool for AskUserQuestion
+  AWAITING_APPROVAL → RUNNING   User approves (PermissionResultAllow)
+  AWAITING_APPROVAL → CANCELLED User rejects (PermissionResultDeny)
+  RUNNING → COMPLETED      SDK emits ResultMessage (success)
+  RUNNING → FAILED          SDK emits ResultMessage (error) or exception
   Any active → CANCELLED    User cancels from frontend
 ```
 
@@ -220,7 +220,7 @@ Frontend → FrontendConsumer → [save to DB] → group_send → RunnerConsumer
 | `heartbeat` | — | Keepalive every 30s. Backend updates `last_heartbeat`, replies with `heartbeat.ack` |
 | `task.accepted` | `task_id` | Runner acknowledges task receipt. Status: QUEUED → ASSIGNED |
 | `task.event` | `task_id`, `event_type`, `data`, `sequence` | Claude output event. Saved as TaskEvent, forwarded to frontend |
-| `approval.needed` | `task_id`, `data`, `sequence` | Claude hit AskUserQuestion. Status: → AWAITING_APPROVAL |
+| `approval.needed` | `task_id`, `data`, `sequence` | SDK fired can_use_tool for AskUserQuestion. Status: → AWAITING_APPROVAL |
 | `task.completed` | `task_id`, `result` | Claude exited successfully. Status: → COMPLETED |
 | `task.failed` | `task_id`, `error` | Claude failed. Status: → FAILED |
 
@@ -231,6 +231,7 @@ Frontend → FrontendConsumer → [save to DB] → group_send → RunnerConsumer
 | `heartbeat.ack` | — | Heartbeat acknowledged |
 | `task.assign` | `task_id`, `title`, `prompt` | Backend assigns a task to execute |
 | `approval.response` | `task_id`, `action`, `response` | User approved/rejected/messaged at an approval gate |
+| `task.reply` | `task_id`, `message`, `session_id`, `sequence_offset` | Resume conversation with session |
 | `task.cancel` | `task_id` | User cancelled the task |
 
 ### Messages: Backend → Frontend (Broadcasts)
@@ -265,7 +266,7 @@ Runner                          Backend                         Frontend
   │  "metadata":{                 │                               │
   │    "hostname":"dev-01",       │                               │
   │    "platform":"darwin",       │                               │
-  │    "runner_version":"0.1.0",  │                               │
+  │    "runner_version":"0.2.0",  │                               │
   │    "pid": 12345}}             │                               │
   │ ──────────────────────────>   │                               │
   │                           Set agent ONLINE                    │
@@ -322,13 +323,13 @@ User                   Frontend              Backend                   Runner
   │                       │                     │ <──────────────────────│
   │                       │                     │ status: ASSIGNED       │
   │                       │ {"task.status":     │                        │
-  │                       │  "ASSIGNED"}        │                        │ Spawn claude
-  │                       │ <───────────────────│                        │ --output-format
-  │                       │                     │                        │ stream-json
-  │                       │                     │                        │ -p "<prompt>"
+  │                       │  "ASSIGNED"}        │                        │ Create SDK
+  │                       │ <───────────────────│                        │ client with
+  │                       │                     │                        │ can_use_tool
+  │                       │                     │                        │ callback
   │                       │                     │                        │
-  │                       │                     │ {"task.event":         │ Read stdout
-  │                       │                     │  "TOOL_USE",           │ line by line
+  │                       │                     │ {"task.event":         │ Stream SDK
+  │                       │                     │  "TOOL_USE",           │ events
   │                       │                     │  "data":{"tool_name":  │
   │                       │                     │   "Read",...}}         │
   │                       │                     │ <──────────────────────│
@@ -343,7 +344,7 @@ User                   Frontend              Backend                   Runner
   │                       │ ... forwarded ...   │                        │
   │ <─────────────────────│ <───────────────────│                        │
   │                       │                     │                        │
-  │                       │                     │ {"task.completed":     │ Claude exits 0
+  │                       │                     │ {"task.completed":     │ ResultMessage
   │                       │                     │  "result":"..."}       │
   │                       │                     │ <──────────────────────│
   │                       │                     │ status: COMPLETED      │
@@ -355,28 +356,22 @@ User                   Frontend              Backend                   Runner
 
 ### 4. Approval Gate Flow
 
-This is the core interactive feature. When Claude uses the `AskUserQuestion` tool, the runner detects it and pauses execution until the user responds.
+This is the core interactive feature. When Claude calls the `AskUserQuestion` tool, the SDK fires the runner's `can_use_tool` callback, which bridges to the backend and awaits the user's response.
 
 ```
 Runner                          Backend                         Frontend
   │                               │                               │
-  │  Claude outputs:              │                               │
-  │  {"type":"assistant",         │                               │
-  │   "message":{"content":[      │                               │
-  │     {"type":"tool_use",       │                               │
-  │      "name":"AskUserQuestion",│                               │
-  │      "input":{                │                               │
-  │        "question":"Which      │                               │
-  │         approach?",           │                               │
-  │        "options":[...]}}]}}   │                               │
-  │                               │                               │
-  │ stream_parser detects gate    │                               │
+  │  SDK fires can_use_tool       │                               │
+  │  callback for                 │                               │
+  │  AskUserQuestion tool call    │                               │
   │                               │                               │
   │ {"type":"approval.needed",    │                               │
   │  "task_id":"...",             │                               │
   │  "data":{                     │                               │
-  │    "question":"Which...?",    │                               │
-  │    "options":[...]},          │                               │
+  │    "tool_name":               │                               │
+  │      "AskUserQuestion",      │                               │
+  │    "input":{                  │                               │
+  │      "questions":[...]}},     │                               │
   │  "sequence": 42}              │                               │
   │ ──────────────────────────>   │                               │
   │                           Save TaskEvent                      │
@@ -393,8 +388,8 @@ Runner                          Backend                         Frontend
   │                               │                     with question +
   │                               │                     [Approve] [Reject]
   │                               │                               │
-  │  (runner is BLOCKED here,     │                               │
-  │   waiting for response)       │                    User clicks
+  │  (can_use_tool callback       │                               │
+  │   awaits Future resolution)   │                    User clicks
   │                               │                    [Approve]  │
   │                               │                               │
   │                               │ {"type":"approval.response",  │
@@ -413,10 +408,10 @@ Runner                          Backend                         Frontend
   │  "response":"option 1"}      │                               │
   │ <─────────────────────────────│                               │
   │                               │                               │
-  │ Write "option 1\n" to        │                               │
-  │ Claude stdin                  │                               │
+  │ Callback returns              │                               │
+  │ PermissionResultAllow         │                               │
   │                               │                               │
-  │ Claude resumes execution...   │                               │
+  │ SDK resumes execution...      │                               │
 ```
 
 ### 5. Task Cancellation
@@ -433,12 +428,8 @@ User                   Frontend              Backend                   Runner
   │                       │                     │                        │
   │                       │                     │ group_send task_cancel │
   │                       │                     │ ──────────────────────>│
-  │                       │                     │                        │ Send SIGTERM
-  │                       │                     │                        │ to Claude
-  │                       │                     │                        │
-  │                       │                     │                        │ (5s grace)
-  │                       │                     │                        │ Send SIGKILL
-  │                       │                     │                        │ if still alive
+  │                       │                     │                        │ Call SDK
+  │                       │                     │                        │ client.interrupt()
   │                       │                     │                        │
   │                       │                     │ {"task.failed":        │
   │                       │                     │  "error":"Cancelled"}  │
@@ -455,7 +446,7 @@ Runner                          Backend                         Frontend
   │                               │                               │
   │  ──── NETWORK DROPS ────      │                               │
   │                               │                               │
-  │  Claude keeps running         │ Detects disconnect            │
+  │  SDK keeps executing           │ Detects disconnect            │
   │  Runner buffers events        │ Sets agent: OFFLINE           │
   │  in memory deque              │ ─────────────────────────────>│
   │                               │ {"agent.status":"OFFLINE"}    │
@@ -502,14 +493,14 @@ Events streamed from Claude are classified into these types:
 
 ### Tool-Specific Data Extraction
 
-The `stream_parser` extracts relevant fields per tool to avoid sending full tool inputs:
+The `stream_parser` extracts relevant fields per tool from SDK `StreamEvent` objects to avoid sending full tool inputs:
 
 | Tool | Extracted Fields |
 |------|------------------|
 | Read | `file_path` |
 | Edit | `file_path`, `old_string` (truncated), `new_string` (truncated) |
 | Write | `file_path` |
-| Bash | `command` |
+| Bash | `command`, `description` |
 | Grep | `pattern`, `path`, `glob` |
 | Glob | `pattern`, `path` |
 | WebFetch | `url` |
