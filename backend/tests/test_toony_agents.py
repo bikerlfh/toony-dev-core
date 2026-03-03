@@ -69,3 +69,61 @@ class TestToonyAgentModel:
         )
         assert event.event_type == TaskEventType.LOG
         assert event.sequence == 1
+
+
+class TestToonyAgentService:
+    def test_generate_api_key(self, user):
+        from toony_agents.services import generate_api_key, verify_api_key
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(name="Bot", slug="svc-bot", registered_by=user)
+        key_obj, raw_key = generate_api_key(agent, user, name="test-key")
+        assert raw_key.startswith("tok_ta_")
+        assert key_obj.key_prefix == raw_key[:12]
+        verified = verify_api_key(raw_key)
+        assert verified == agent
+        assert verify_api_key("tok_ta_invalid") is None
+
+    def test_revoke_api_key(self, user):
+        from toony_agents.services import generate_api_key, revoke_api_key, verify_api_key
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(name="Bot", slug="revoke-bot", registered_by=user)
+        key_obj, raw_key = generate_api_key(agent, user)
+        revoke_api_key(key_obj)
+        assert verify_api_key(raw_key) is None
+
+
+class TestAgentTaskService:
+    def test_create_task(self, user, organization):
+        from toony_agents.services import create_agent_task
+        from toony_agents.models import ToonyAgent, AgentTaskStatus
+        agent = ToonyAgent.objects.create(name="Bot", slug="task-svc-bot", registered_by=user)
+        task = create_agent_task(
+            organization=organization, toony_agent=agent, created_by=user,
+            title="Fix bug", prompt="Fix the login bug",
+        )
+        assert task.status == AgentTaskStatus.QUEUED
+        assert task.toony_agent == agent
+
+    def test_update_task_status(self, user, organization):
+        from toony_agents.services import create_agent_task, update_task_status
+        from toony_agents.models import ToonyAgent, AgentTaskStatus
+        agent = ToonyAgent.objects.create(name="Bot", slug="status-svc-bot", registered_by=user)
+        task = create_agent_task(
+            organization=organization, toony_agent=agent, created_by=user,
+            title="Task", prompt="Do something",
+        )
+        task = update_task_status(task, AgentTaskStatus.RUNNING)
+        assert task.status == AgentTaskStatus.RUNNING
+        assert task.started_at is not None
+
+    def test_create_task_event(self, user, organization):
+        from toony_agents.services import create_agent_task, create_task_event
+        from toony_agents.models import ToonyAgent, TaskEventType
+        agent = ToonyAgent.objects.create(name="Bot", slug="event-svc-bot", registered_by=user)
+        task = create_agent_task(
+            organization=organization, toony_agent=agent, created_by=user,
+            title="Task", prompt="Do it",
+        )
+        event = create_task_event(task, TaskEventType.LOG, {"msg": "hello"}, 1)
+        assert event.event_type == TaskEventType.LOG
+        assert event.sequence == 1
