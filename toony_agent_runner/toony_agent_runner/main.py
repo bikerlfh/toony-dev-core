@@ -165,6 +165,20 @@ async def execute_task(
         )
         return
 
+    # Verify the process is still alive after start.
+    if not claude.is_running:
+        exit_code = await claude.wait()
+        logger.error(
+            "Claude process exited immediately with code %d", exit_code
+        )
+        await conn.send(
+            TaskFailedMessage(
+                task_id,
+                error=f"Claude process exited immediately (code {exit_code})",
+            ).to_json()
+        )
+        return
+
     await conn.send(TaskAcceptedMessage(task_id).to_json())
 
     sequence = 0

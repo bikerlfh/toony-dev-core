@@ -2,6 +2,8 @@
 .env
 
 # Python
+.python-version
+*.egg-info/
 __pycache__/
 *.py[cod]
 venv/

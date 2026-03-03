@@ -38,7 +38,7 @@ def parse_stream_json_line(line: str) -> dict | None:
     try:
         return json.loads(stripped)
     except json.JSONDecodeError:
-        logger.debug("Ignoring non-JSON line: %s", stripped[:200])
+        logger.info("Non-JSON line from Claude stdout: %s", stripped[:200])
         return None
 
 
