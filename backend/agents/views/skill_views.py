@@ -8,6 +8,7 @@ from accounts.models import OrganizationMembership
 from organizations.models import Organization
 from agents.selectors import (
     get_skill_by_slug,
+    list_skills_for_organization,
     list_skills_for_user,
     list_skill_versions,
 )
@@ -24,7 +25,24 @@ class SkillListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        skills = list_skills_for_user(request.user)
+        org_slug = request.query_params.get("organization")
+        if org_slug:
+            organization = Organization.objects.filter(slug=org_slug).first()
+            if organization is None:
+                return Response(
+                    {"detail": "Organization not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if not OrganizationMembership.objects.filter(
+                user=request.user, organization=organization, is_active=True,
+            ).exists():
+                return Response(
+                    {"detail": "You are not a member of this organization."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            skills = list_skills_for_organization(organization)
+        else:
+            skills = list_skills_for_user(request.user)
         return self.paginate(skills, SkillListSerializer, request)
 
     def post(self, request):

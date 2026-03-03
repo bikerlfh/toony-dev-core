@@ -6,7 +6,11 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from accounts.models import OrganizationMembership
 from organizations.models import Organization
-from agents.selectors import get_agent_by_slug, list_agents_for_user
+from agents.selectors import (
+    get_agent_by_slug,
+    list_agents_for_organization,
+    list_agents_for_user,
+)
 from agents.serializers.input import CreateAgentSerializer, UpdateAgentSerializer
 from agents.serializers.output import AgentDetailSerializer, AgentListSerializer
 from agents.services import create_agent, delete_agent, update_agent
@@ -16,7 +20,24 @@ class AgentListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        agents = list_agents_for_user(request.user)
+        org_slug = request.query_params.get("organization")
+        if org_slug:
+            organization = Organization.objects.filter(slug=org_slug).first()
+            if organization is None:
+                return Response(
+                    {"detail": "Organization not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if not OrganizationMembership.objects.filter(
+                user=request.user, organization=organization, is_active=True,
+            ).exists():
+                return Response(
+                    {"detail": "You are not a member of this organization."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            agents = list_agents_for_organization(organization)
+        else:
+            agents = list_agents_for_user(request.user)
         return self.paginate(agents, AgentListSerializer, request)
 
     def post(self, request):

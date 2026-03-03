@@ -9,9 +9,11 @@ import type {
 } from "@/types";
 
 export async function listSkills(
+  orgSlug?: string,
   cursor?: string
 ): Promise<PaginatedResponse<SkillList>> {
   const params: Record<string, string> = {};
+  if (orgSlug) params.organization = orgSlug;
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<SkillList>>(
     `/skills/`,

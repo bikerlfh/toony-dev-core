@@ -58,19 +58,19 @@ export default function AgentsPage() {
 
   const fetchAgents = useCallback(async () => {
     try {
-      setAgents((await listAgents()).results);
+      setAgents((await listAgents(orgSlug)).results);
     } finally {
       setAgentsLoading(false);
     }
-  }, []);
+  }, [orgSlug]);
 
   const fetchSkills = useCallback(async () => {
     try {
-      setSkills((await listSkills()).results);
+      setSkills((await listSkills(orgSlug)).results);
     } finally {
       setSkillsLoading(false);
     }
-  }, []);
+  }, [orgSlug]);
 
   useEffect(() => {
     fetchAgents();

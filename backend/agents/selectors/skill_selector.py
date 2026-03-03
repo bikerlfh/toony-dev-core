@@ -14,6 +14,12 @@ def list_skills_for_user(user):
     ).order_by("name")
 
 
+def list_skills_for_organization(organization):
+    return Skill.objects.filter(
+        Q(organization=organization) | Q(organization__isnull=True)
+    ).order_by("name")
+
+
 def get_skill_by_slug(slug, organization=None):
     if organization is not None:
         return Skill.objects.filter(organization=organization, slug=slug).first()

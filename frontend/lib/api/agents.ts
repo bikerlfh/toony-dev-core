@@ -8,9 +8,11 @@ import type {
 } from "@/types";
 
 export async function listAgents(
+  orgSlug?: string,
   cursor?: string
 ): Promise<PaginatedResponse<AgentList>> {
   const params: Record<string, string> = {};
+  if (orgSlug) params.organization = orgSlug;
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<AgentList>>(
     `/agents/`,

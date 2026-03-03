@@ -14,6 +14,12 @@ def list_agents_for_user(user):
     ).order_by("name")
 
 
+def list_agents_for_organization(organization):
+    return Agent.objects.filter(
+        Q(organization=organization) | Q(organization__isnull=True)
+    ).order_by("name")
+
+
 def get_agent_by_slug(slug, organization=None):
     if organization is not None:
         return Agent.objects.filter(organization=organization, slug=slug).first()
