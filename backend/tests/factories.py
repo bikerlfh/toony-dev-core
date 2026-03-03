@@ -16,6 +16,7 @@ from projects.models import (
     Team,
     TeamMembership,
 )
+from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent, ToonyAgentKey
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -151,3 +152,34 @@ class IssueCommentFactory(factory.django.DjangoModelFactory):
     issue = factory.SubFactory(IssueFactory)
     author = factory.SubFactory(UserFactory)
     body = "Test comment"
+
+
+class ToonyAgentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ToonyAgent
+
+    name = factory.Sequence(lambda n: f"Bot {n}")
+    slug = factory.Sequence(lambda n: f"bot-{n}")
+    registered_by = factory.SubFactory(UserFactory)
+
+
+class ToonyAgentKeyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ToonyAgentKey
+
+    toony_agent = factory.SubFactory(ToonyAgentFactory)
+    key_hash = factory.Sequence(lambda n: f"hash_{n}")
+    key_prefix = factory.Sequence(lambda n: f"tok_ta_{n}")
+    name = "default"
+    created_by = factory.SubFactory(UserFactory)
+
+
+class AgentTaskFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = AgentTask
+
+    organization = factory.SubFactory(OrganizationFactory)
+    toony_agent = factory.SubFactory(ToonyAgentFactory)
+    title = factory.Sequence(lambda n: f"Task {n}")
+    prompt = "Fix the bug"
+    created_by = factory.SubFactory(UserFactory)

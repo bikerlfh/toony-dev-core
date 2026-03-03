@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "organizations",
     "projects",
     "agents",
+    "toony_agents",
     "importers",
 ]
 
