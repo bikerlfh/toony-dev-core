@@ -6,6 +6,7 @@ Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backe
 
 - Python 3.11+
 - Claude Code CLI installed and available in `$PATH`
+- Claude authentication configured (see [Claude Authentication](#claude-authentication) below)
 - Network access to the Toony Dev Core backend
 
 ## Installation
@@ -16,6 +17,49 @@ pip install -e .
 ```
 
 This installs the `toony-agent-runner` CLI command.
+
+## Claude Authentication
+
+The runner uses the Claude Agent SDK, which needs valid credentials to communicate with the Claude API. There are two options:
+
+### Option A: MAX Plan (OAuth token) — recommended for personal use
+
+1. Run `claude setup-token` in your terminal and follow the prompts to authenticate with your Anthropic account.
+
+2. This generates an OAuth token. Pass it to the runner via **environment variable** or **config file**:
+
+   ```bash
+   # Environment variable (recommended — avoids storing token in config file)
+   export CLAUDE_CODE_OAUTH_TOKEN="your-oauth-token-here"
+   toony-agent-runner --config config.yml
+   ```
+
+   Or in `config.yml`:
+
+   ```yaml
+   claude:
+     oauth_token: "your-oauth-token-here"
+   ```
+
+### Option B: API Key
+
+If you have an Anthropic API key, set it as an environment variable:
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+toony-agent-runner --config config.yml
+```
+
+The SDK will pick it up automatically — no config file changes needed.
+
+### Verifying authentication
+
+```bash
+# Quick test — should print a response without errors
+claude -p "say hello" --output-format stream-json 2>&1 | head -5
+```
+
+If this works, the runner will be able to authenticate.
 
 ## Quick Start
 
@@ -55,14 +99,10 @@ This installs the `toony-agent-runner` CLI command.
      working_directory: "/path/to/your/project"
      max_task_timeout: 3600
      approval_timeout: 600
-     # oauth_token: ""  # or set CLAUDE_CODE_OAUTH_TOKEN env var
      permission_mode: "acceptEdits"
-
-   reconnect:
-     max_retries: -1
-     backoff_base: 1
-     backoff_max: 30
    ```
+
+   > **Note:** Claude authentication (`CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`) should be set as an environment variable before starting the runner. See [Claude Authentication](#claude-authentication).
 
 4. **Start the runner**:
 
