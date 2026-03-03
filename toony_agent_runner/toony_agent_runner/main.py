@@ -44,7 +44,9 @@ from .protocol import (
     parse_server_message,
 )
 from .stream_parser import (
+    EVENT_TYPE_ERROR,
     EVENT_TYPE_LOG,
+    EVENT_TYPE_TOOL_RESULT,
     EVENT_TYPE_TOOL_USE,
     classify_event,
     extract_event_data,
