@@ -112,8 +112,8 @@ export default function TaskViewPage() {
           created_at: new Date().toISOString(),
         };
         setEvents((prev) => {
-          // Avoid duplicates by sequence
-          if (prev.some((e) => e.sequence === event.sequence)) return prev;
+          // Avoid duplicates by id (not sequence — different event types can share a sequence number)
+          if (prev.some((e) => e.id === newEvent.id)) return prev;
           return [...prev, newEvent];
         });
       } else if (
@@ -129,7 +129,7 @@ export default function TaskViewPage() {
           created_at: new Date().toISOString(),
         };
         setEvents((prev) => {
-          if (prev.some((e) => e.sequence === event.sequence)) return prev;
+          if (prev.some((e) => e.id === newEvent.id)) return prev;
           return [...prev, newEvent];
         });
       }
