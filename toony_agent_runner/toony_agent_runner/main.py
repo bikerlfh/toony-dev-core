@@ -153,21 +153,6 @@ def load_config(path: str) -> RunnerConfig:
 # SDK helpers
 # ---------------------------------------------------------------------------
 
-async def _prompt_to_stream(prompt: str, session_id: str | None = None):
-    """Wrap a prompt string into an async iterable for SDK streaming mode.
-
-    The ``ClaudeSDKClient.connect()`` requires an ``AsyncIterable`` (not a
-    plain string) when ``can_use_tool`` is set.  This helper yields a single
-    user message dict in the expected format.
-    """
-    yield {
-        "type": "user",
-        "message": {"role": "user", "content": prompt},
-        "parent_tool_use_id": None,
-        "session_id": session_id,
-    }
-
-
 def _build_sdk_options(
     config: RunnerConfig,
     approval_handler: Any | None = None,
@@ -323,9 +308,10 @@ async def execute_task(
     session_id: str | None = None
 
     try:
-        # Connect and send the initial prompt.
-        # The SDK requires an AsyncIterable when can_use_tool is set.
-        await client.connect(_prompt_to_stream(prompt))
+        # Connect first (no prompt), then send via query().
+        # query() handles both string and AsyncIterable prompts natively.
+        await client.connect()
+        await client.query(prompt)
 
         async for message in client.receive_messages():
             # Check for cancellation.
@@ -390,9 +376,11 @@ async def execute_task(
         return
 
     except Exception as exc:
-        logger.exception("Error executing task %s via SDK", task_id)
+        error_str = str(exc)
+        logger.error("Task %s failed: %s", task_id, error_str)
+        logger.exception("Full traceback for task %s", task_id)
         await conn.send(
-            TaskFailedMessage(task_id, error=str(exc)).to_json()
+            TaskFailedMessage(task_id, error=error_str).to_json()
         )
         return
 
@@ -435,9 +423,9 @@ async def execute_task_reply(
     new_session_id: str | None = None
 
     try:
-        # Connect with the reply message, resuming the session.
-        # The SDK requires an AsyncIterable when can_use_tool is set.
-        await client.connect(_prompt_to_stream(message, session_id=session_id))
+        # Connect first (resume=session_id is set in options), then send reply.
+        await client.connect()
+        await client.query(message, session_id=session_id)
 
         async for msg in client.receive_messages():
             if cancel_event.is_set():
