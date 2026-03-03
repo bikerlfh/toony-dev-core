@@ -49,6 +49,7 @@ export default function TaskViewPage() {
   const [agent, setAgent] = useState<ToonyAgentDetail | null>(null);
   const [task, setTask] = useState<AgentTaskDetail | null>(null);
   const [taskStatus, setTaskStatus] = useState<AgentTaskStatus>("QUEUED");
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [events, setEvents] = useState<TaskEventItem[]>([]);
   const [approvedSequences, setApprovedSequences] = useState<Set<number>>(
     new Set()
@@ -67,6 +68,7 @@ export default function TaskViewPage() {
       setAgent(agentData);
       setTask(taskData);
       setTaskStatus(taskData.status);
+      setSessionId(taskData.session_id ?? null);
       setEvents(eventsData.results);
 
       // Mark already-resolved approval gates
@@ -98,6 +100,9 @@ export default function TaskViewPage() {
     (event: ToonyAgentWsEvent) => {
       if (event.type === "task.status" && event.task_id === taskId) {
         setTaskStatus(event.status);
+        if (event.session_id) {
+          setSessionId(event.session_id);
+        }
       } else if (event.type === "task.event" && event.task_id === taskId) {
         const newEvent: TaskEventItem = {
           id: `ws-${event.sequence}`,
@@ -132,7 +137,7 @@ export default function TaskViewPage() {
     [taskId]
   );
 
-  const { sendApproval, cancelTask: wsCancelTask } =
+  const { sendApproval, sendReply, cancelTask: wsCancelTask } =
     useToonyAgentWebSocket({
       agentId: agent?.id ?? null,
       onEvent: handleWsEvent,
@@ -157,9 +162,13 @@ export default function TaskViewPage() {
 
   const handleMessage = useCallback(
     (text: string) => {
-      sendApproval(taskId, "message", text);
+      if (taskStatus === "COMPLETED" && sessionId) {
+        sendReply(taskId, text);
+      } else {
+        sendApproval(taskId, "message", text);
+      }
     },
-    [taskId, sendApproval]
+    [taskId, taskStatus, sessionId, sendApproval, sendReply]
   );
 
   // Cancel task via REST API
@@ -192,6 +201,7 @@ export default function TaskViewPage() {
 
   const isActive =
     taskStatus === "RUNNING" || taskStatus === "AWAITING_APPROVAL";
+  const canReply = taskStatus === "COMPLETED" && !!sessionId;
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -244,6 +254,7 @@ export default function TaskViewPage() {
             onReject={handleReject}
             onMessage={handleMessage}
             approvedSequences={approvedSequencesSet}
+            canReply={canReply}
           />
         </div>
       </div>

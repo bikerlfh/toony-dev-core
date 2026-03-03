@@ -278,3 +278,15 @@ def extract_event_data(event: dict) -> dict[str, Any]:
 
     # Fallback: pass through a minimal representation.
     return {"raw_type": etype}
+
+
+# ---------------------------------------------------------------------------
+# Session ID extraction
+# ---------------------------------------------------------------------------
+
+def extract_session_id(event: dict) -> str | None:
+    """Extract session_id from a system/init event."""
+    if event.get("type") == "system" and event.get("subtype") == "init":
+        sid = event.get("session_id")
+        return str(sid) if sid else None
+    return None

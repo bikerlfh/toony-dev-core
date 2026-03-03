@@ -40,6 +40,7 @@ from .protocol import (
     TaskCompletedMessage,
     TaskEventMessage,
     TaskFailedMessage,
+    TaskReply,
     HeartbeatAck,
     parse_server_message,
 )
@@ -47,6 +48,7 @@ from .stream_parser import (
     classify_event,
     extract_approval_data,
     extract_event_data,
+    extract_session_id,
     is_approval_gate,
 )
 
@@ -182,6 +184,7 @@ async def execute_task(
     await conn.send(TaskAcceptedMessage(task_id).to_json())
 
     sequence = 0
+    session_id: str | None = None
     approval_future: asyncio.Future[dict[str, Any]] | None = None
 
     try:
@@ -240,6 +243,11 @@ async def execute_task(
                 stdin_text = response.get("response") or "yes"
                 await claude.send_input(stdin_text)
             else:
+                # Capture session_id from init event
+                sid = extract_session_id(event)
+                if sid:
+                    session_id = sid
+
                 event_type = classify_event(event)
                 data = extract_event_data(event)
                 await conn.send(
@@ -257,7 +265,96 @@ async def execute_task(
     exit_code = await claude.wait()
     if exit_code == 0:
         await conn.send(
-            TaskCompletedMessage(task_id, result="Task completed").to_json()
+            TaskCompletedMessage(
+                task_id, result="Task completed", session_id=session_id
+            ).to_json()
+        )
+    else:
+        await conn.send(
+            TaskFailedMessage(
+                task_id, error=f"Claude exited with code {exit_code}"
+            ).to_json()
+        )
+
+
+async def execute_task_reply(
+    task_id: str,
+    message: str,
+    session_id: str,
+    conn: BackendConnection,
+    config: RunnerConfig,
+    cancel_event: asyncio.Event,
+    sequence_offset: int = 0,
+) -> None:
+    """Resume a completed task conversation via ``--resume``.
+
+    Similar to ``execute_task()`` but resumes an existing Claude session.
+    """
+    claude = ClaudeProcess(
+        binary=config.claude.binary,
+        working_dir=config.claude.working_directory,
+        output_format=config.claude.output_format,
+    )
+
+    try:
+        await claude.start(message, session_id=session_id)
+    except Exception as exc:
+        logger.error("Failed to start Claude reply process: %s", exc)
+        await conn.send(
+            TaskFailedMessage(task_id, error=f"Failed to resume Claude: {exc}").to_json()
+        )
+        return
+
+    if not claude.is_running:
+        exit_code = await claude.wait()
+        logger.error(
+            "Claude reply process exited immediately with code %d", exit_code
+        )
+        await conn.send(
+            TaskFailedMessage(
+                task_id,
+                error=f"Claude reply process exited immediately (code {exit_code})",
+            ).to_json()
+        )
+        return
+
+    sequence = sequence_offset
+    new_session_id: str | None = None
+
+    try:
+        async for event in claude.stream_events():
+            if cancel_event.is_set():
+                logger.info("Task reply %s cancelled", task_id)
+                await claude.cancel()
+                return
+
+            sequence += 1
+
+            sid = extract_session_id(event)
+            if sid:
+                new_session_id = sid
+
+            event_type = classify_event(event)
+            data = extract_event_data(event)
+            await conn.send(
+                TaskEventMessage(task_id, event_type, data, sequence).to_json()
+            )
+
+    except Exception as exc:
+        logger.exception("Error streaming Claude reply events for task %s", task_id)
+        await conn.send(
+            TaskFailedMessage(task_id, error=str(exc)).to_json()
+        )
+        await claude.cancel()
+        return
+
+    exit_code = await claude.wait()
+    final_session_id = new_session_id or session_id
+    if exit_code == 0:
+        await conn.send(
+            TaskCompletedMessage(
+                task_id, result="Task completed", session_id=final_session_id
+            ).to_json()
         )
     else:
         await conn.send(
@@ -375,6 +472,31 @@ async def run(config: RunnerConfig) -> None:
             elif isinstance(msg, TaskCancel):
                 logger.info("Received task.cancel for %s", msg.task_id)
                 cancel_event.set()
+
+            elif isinstance(msg, TaskReply):
+                if current_task is not None and not current_task.done():
+                    logger.warning(
+                        "Received task.reply while busy, ignoring"
+                    )
+                    continue
+
+                logger.info(
+                    "Received task.reply for %s (session: %s)",
+                    msg.task_id,
+                    msg.session_id,
+                )
+                cancel_event.clear()
+                current_task = asyncio.create_task(
+                    execute_task_reply(
+                        msg.task_id,
+                        msg.message,
+                        msg.session_id,
+                        conn,
+                        config,
+                        cancel_event,
+                        sequence_offset=msg.sequence_offset,
+                    )
+                )
 
             elif isinstance(msg, ApprovalResponse):
                 logger.info(

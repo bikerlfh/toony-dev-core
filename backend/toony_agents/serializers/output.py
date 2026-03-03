@@ -69,7 +69,7 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
         model = AgentTask
         fields = [
             "id", "title", "prompt", "status", "toony_agent_slug",
-            "result", "error", "started_at", "completed_at",
+            "result", "error", "session_id", "started_at", "completed_at",
             "created_by", "created_at", "updated_at",
         ]
         read_only_fields = fields

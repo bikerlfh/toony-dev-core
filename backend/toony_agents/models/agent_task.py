@@ -36,6 +36,7 @@ class AgentTask(BaseModel):
     )
     result = models.TextField(null=True, blank=True)
     error = models.TextField(null=True, blank=True)
+    session_id = models.CharField(max_length=255, null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(

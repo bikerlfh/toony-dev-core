@@ -123,6 +123,26 @@ def _validate_task_org_member(task_id, user):
     ).exists()
 
 
+@database_sync_to_async
+def _update_task_session_id(task_id, session_id):
+    AgentTask.objects.filter(id=task_id).update(session_id=session_id)
+
+
+@database_sync_to_async
+def _get_task_session_info(task_id):
+    try:
+        return AgentTask.objects.values("session_id", "toony_agent_id").get(id=task_id)
+    except AgentTask.DoesNotExist:
+        return None
+
+
+@database_sync_to_async
+def _get_max_event_sequence(task_id):
+    from django.db.models import Max
+    result = TaskEvent.objects.filter(task_id=task_id).aggregate(Max("sequence"))
+    return result["sequence__max"] or 0
+
+
 _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
@@ -282,17 +302,20 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_json({"type": "error", "message": "Task not found for this agent"})
                 return
             result = content.get("result", "")
+            session_id = content.get("session_id")
             await _update_task_status(
                 task_id, AgentTaskStatus.COMPLETED,
                 result=result, toony_agent_id=self.agent_id,
             )
+            if session_id:
+                await _update_task_session_id(task_id, session_id)
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
+            status_data = {"task_id": task_id, "status": "COMPLETED"}
+            if session_id:
+                status_data["session_id"] = session_id
             await self.channel_layer.group_send(
                 self.frontend_group,
-                {
-                    "type": "task_status",
-                    "data": {"task_id": task_id, "status": "COMPLETED"},
-                },
+                {"type": "task_status", "data": status_data},
             )
             await self.channel_layer.group_send(
                 self.frontend_group,
@@ -354,6 +377,15 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             "task_id": event["data"]["task_id"],
             "prompt": event["data"]["prompt"],
             "title": event["data"]["title"],
+        })
+
+    async def task_reply(self, event):
+        await self.send_json({
+            "type": "task.reply",
+            "task_id": event["data"]["task_id"],
+            "message": event["data"]["message"],
+            "session_id": event["data"]["session_id"],
+            "sequence_offset": event["data"].get("sequence_offset", 0),
         })
 
 
@@ -437,6 +469,68 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_send(
                 runner_group,
                 {"type": "task_cancel", "data": {"task_id": task_id}},
+            )
+
+        elif msg_type == "task.reply":
+            task_id = content.get("task_id")
+            message = content.get("message", "")
+            if not task_id or not message:
+                await self.send_json({"type": "error", "message": "task_id and message are required"})
+                return
+            if not await _validate_task_org_member(task_id, self.user):
+                await self.send_json({"type": "error", "message": "Task not found"})
+                return
+            task_info = await _get_task_session_info(task_id)
+            if not task_info or not task_info.get("session_id"):
+                await self.send_json({"type": "error", "message": "No session to reply to"})
+                return
+            session_id = task_info["session_id"]
+            agent_id = str(task_info["toony_agent_id"])
+            # Query max sequence so reply events don't collide
+            max_seq = await _get_max_event_sequence(task_id)
+            reply_seq = max_seq + 1
+            # Create REPLY event
+            await _create_task_event(
+                task_id, TaskEventType.REPLY,
+                {"message": message},
+                reply_seq,
+            )
+            # Broadcast REPLY event to frontend
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "task_event",
+                    "data": {
+                        "task_id": task_id,
+                        "event_type": TaskEventType.REPLY,
+                        "data": {"message": message},
+                        "sequence": reply_seq,
+                    },
+                },
+            )
+            # Transition COMPLETED -> RUNNING
+            await _update_task_status(task_id, AgentTaskStatus.RUNNING)
+            # Notify frontend of status change
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "task_status",
+                    "data": {"task_id": task_id, "status": "RUNNING"},
+                },
+            )
+            # Forward to runner with sequence offset
+            target_runner_group = f"toony_agent_runner_{agent_id}"
+            await self.channel_layer.group_send(
+                target_runner_group,
+                {
+                    "type": "task_reply",
+                    "data": {
+                        "task_id": task_id,
+                        "message": message,
+                        "session_id": session_id,
+                        "sequence_offset": reply_seq,
+                    },
+                },
             )
 
         else:

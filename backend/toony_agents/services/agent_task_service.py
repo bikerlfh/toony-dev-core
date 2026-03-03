@@ -15,6 +15,11 @@ def create_agent_task(organization, toony_agent, created_by, title, prompt):
         f"toony_agent_{toony_agent.id}", "task_status",
         {"task_id": str(task.id), "status": task.status},
     )
+    # Notify runner so it picks up the task immediately
+    broadcast(
+        f"toony_agent_runner_{toony_agent.id}", "task_assign",
+        {"task_id": str(task.id), "prompt": task.prompt, "title": task.title},
+    )
     return task
 
 

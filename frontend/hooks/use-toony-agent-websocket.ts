@@ -18,6 +18,7 @@ export function useToonyAgentWebSocket({
 }: UseToonyAgentWebSocketOptions): {
   readyState: WsReadyState;
   sendApproval: (taskId: string, action: string, response: string) => void;
+  sendReply: (taskId: string, message: string) => void;
   cancelTask: (taskId: string) => void;
 } {
   const url = useMemo(() => {
@@ -54,6 +55,13 @@ export function useToonyAgentWebSocket({
     [send],
   );
 
+  const sendReply = useCallback(
+    (taskId: string, message: string) => {
+      send({ type: "task.reply", task_id: taskId, message });
+    },
+    [send],
+  );
+
   const cancelTask = useCallback(
     (taskId: string) => {
       send({ type: "task.cancel", task_id: taskId });
@@ -61,5 +69,5 @@ export function useToonyAgentWebSocket({
     [send],
   );
 
-  return { readyState, sendApproval, cancelTask };
+  return { readyState, sendApproval, sendReply, cancelTask };
 }

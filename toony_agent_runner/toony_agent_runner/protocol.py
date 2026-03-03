@@ -90,13 +90,17 @@ class TaskCompletedMessage:
 
     task_id: str
     result: str
+    session_id: str | None = None
 
     def to_json(self) -> dict:
-        return {
+        msg = {
             "type": "task.completed",
             "task_id": self.task_id,
             "result": self.result,
         }
+        if self.session_id:
+            msg["session_id"] = self.session_id
+        return msg
 
 
 @dataclass
@@ -144,6 +148,16 @@ class TaskCancel:
 
 
 @dataclass
+class TaskReply:
+    """Backend relays a user reply to continue a completed conversation."""
+
+    task_id: str
+    message: str
+    session_id: str
+    sequence_offset: int = 0
+
+
+@dataclass
 class HeartbeatAck:
     """Backend acknowledges a heartbeat."""
 
@@ -155,7 +169,7 @@ class HeartbeatAck:
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | HeartbeatAck
+IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -181,6 +195,14 @@ def parse_server_message(data: dict) -> IncomingMessage:
 
     if msg_type == "task.cancel":
         return TaskCancel(task_id=data["task_id"])
+
+    if msg_type == "task.reply":
+        return TaskReply(
+            task_id=data["task_id"],
+            message=data["message"],
+            session_id=data["session_id"],
+            sequence_offset=data.get("sequence_offset", 0),
+        )
 
     if msg_type == "heartbeat.ack":
         return HeartbeatAck()

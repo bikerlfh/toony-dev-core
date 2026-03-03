@@ -13,6 +13,7 @@ export type TaskEventType =
   | "TOOL_RESULT"
   | "APPROVAL_NEEDED"
   | "APPROVAL_RESPONSE"
+  | "REPLY"
   | "STATUS_CHANGE"
   | "ERROR";
 
@@ -74,6 +75,7 @@ export interface AgentTaskDetail extends AgentTaskList {
   prompt: string;
   result: string | null;
   error: string | null;
+  session_id: string | null;
   created_by: {
     id: string;
     email: string;
@@ -109,6 +111,7 @@ export interface TaskStatusWsEvent {
   task_id: string;
   status: AgentTaskStatus;
   error?: string;
+  session_id?: string | null;
 }
 
 export interface TaskEventWsEvent {

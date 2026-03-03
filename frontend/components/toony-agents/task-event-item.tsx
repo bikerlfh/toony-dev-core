@@ -114,6 +114,17 @@ export function TaskEventItem({
         </div>
       );
 
+    case "REPLY":
+      return (
+        <div className="py-1 flex justify-end">
+          <div className="rounded-lg bg-indigo-600/20 border border-indigo-500/30 px-3 py-2 max-w-[80%]">
+            <span className="text-sm text-indigo-200">
+              {String(event.data.message ?? "")}
+            </span>
+          </div>
+        </div>
+      );
+
     default:
       return (
         <div className="py-0.5">

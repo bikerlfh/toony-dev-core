@@ -15,6 +15,7 @@ interface TaskLiveOutputProps {
   onReject: (sequence: number) => void;
   onMessage: (text: string) => void;
   approvedSequences: Set<number>;
+  canReply?: boolean;
 }
 
 const INACTIVE_STATUSES: AgentTaskStatus[] = [
@@ -30,6 +31,7 @@ export function TaskLiveOutput({
   onReject,
   onMessage,
   approvedSequences,
+  canReply,
 }: TaskLiveOutputProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +40,7 @@ export function TaskLiveOutput({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [events.length]);
 
-  const inputDisabled = INACTIVE_STATUSES.includes(taskStatus);
+  const inputDisabled = INACTIVE_STATUSES.includes(taskStatus) && !canReply;
 
   return (
     <div className="flex flex-col h-full">
@@ -80,7 +82,11 @@ export function TaskLiveOutput({
       </div>
 
       {/* Input box */}
-      <TaskInputBox onSend={onMessage} disabled={inputDisabled} />
+      <TaskInputBox
+        onSend={onMessage}
+        disabled={inputDisabled}
+        placeholder={canReply ? "Reply to continue..." : undefined}
+      />
     </div>
   );
 }

@@ -59,26 +59,36 @@ class ClaudeProcess:
     # Lifecycle
     # ------------------------------------------------------------------
 
-    async def start(self, prompt: str) -> None:
+    async def start(self, prompt: str, *, session_id: str | None = None) -> None:
         """Spawn the Claude CLI with the given prompt.
 
         The process is started with stdin, stdout, and stderr as pipes so
         we can stream output and write approval responses.
+
+        Parameters
+        ----------
+        prompt:
+            The prompt text to send to Claude.
+        session_id:
+            If provided, resumes an existing conversation via ``--resume``.
         """
-        cmd = [
-            self._binary,
+        cmd = [self._binary]
+        if session_id:
+            cmd.extend(["--resume", session_id])
+        cmd.extend([
             "--output-format",
             self._output_format,
             "--verbose",
             "-p",
             prompt,
-        ]
+        ])
         resolved_binary = shutil.which(self._binary)
         logger.info(
-            "Starting Claude process: %s (binary: %s, cwd: %s)",
-            " ".join(cmd[:5]) + f' "{prompt}"',
+            "Starting Claude process: %s (binary: %s, cwd: %s, session_id: %s)",
+            " ".join(cmd[:7]) + " ...",
             resolved_binary or "NOT FOUND",
             self._working_dir,
+            session_id or "new",
         )
 
         self._process = await asyncio.create_subprocess_exec(
