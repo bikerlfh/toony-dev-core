@@ -70,7 +70,10 @@ HEARTBEAT_INTERVAL = 30  # seconds
 
 _DEFAULT_ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Bash", "Grep", "Glob",
-    "WebFetch", "WebSearch", "NotebookEdit", "AskUserQuestion",
+    "WebFetch", "WebSearch", "NotebookEdit",
+    # NOTE: AskUserQuestion is intentionally excluded so that the CLI sends
+    # a control_request to the SDK, which triggers our can_use_tool callback
+    # and lets us relay the question to the user via WebSocket.
 ]
 
 
@@ -186,6 +189,7 @@ def _build_sdk_options(
         can_use_tool=approval_handler,
         resume=session_id,
         env=env,
+        include_partial_messages=True,
     )
     return opts
 
@@ -366,6 +370,13 @@ async def execute_task(
                 )
                 return
 
+            else:
+                logger.debug(
+                    "Task %s: unhandled message type %s",
+                    task_id,
+                    type(message).__name__,
+                )
+
     except asyncio.CancelledError:
         logger.info("Task %s async-cancelled", task_id)
         try:
@@ -476,6 +487,13 @@ async def execute_task_reply(
                     ).to_json()
                 )
                 return
+
+            else:
+                logger.debug(
+                    "Task reply %s: unhandled message type %s",
+                    task_id,
+                    type(msg).__name__,
+                )
 
     except asyncio.CancelledError:
         logger.info("Task reply %s async-cancelled", task_id)

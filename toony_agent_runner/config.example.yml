@@ -17,7 +17,9 @@ claude:
   #   - WebFetch
   #   - WebSearch
   #   - NotebookEdit
-  #   - AskUserQuestion
+  # NOTE: AskUserQuestion is intentionally NOT in allowed_tools.
+  # This forces the SDK to route it through the can_use_tool callback,
+  # which relays the question to the user via the web UI.
 
 reconnect:
   max_retries: -1
