@@ -18,8 +18,8 @@ claude:
   #   - WebSearch
   #   - NotebookEdit
   # NOTE: AskUserQuestion is intentionally NOT in allowed_tools.
-  # This forces the SDK to route it through the can_use_tool callback,
-  # which relays the question to the user via the web UI.
+  # Approval gating is handled by a PreToolUse hook (not can_use_tool)
+  # which fires for ALL tool uses regardless of permission settings.
 
 reconnect:
   max_retries: -1

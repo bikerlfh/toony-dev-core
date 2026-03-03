@@ -43,15 +43,15 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, task execu
 
 1. Load YAML config -> connect WebSocket (API key via `?key=` query param) -> send `register` with host metadata
 2. Idle loop: send heartbeats every 30s, wait for `task.assign`
-3. On task: create `ClaudeSDKClient` with `can_use_tool` callback -> stream `StreamEvent` objects -> send `task.event` messages
-4. If `AskUserQuestion` tool called: SDK fires `can_use_tool` callback -> runner sends `approval.needed` to backend, awaits `approval.response`, returns `PermissionResultAllow`/`PermissionResultDeny`
+3. On task: create `ClaudeSDKClient` with `PreToolUse` hook -> stream `StreamEvent` objects -> send `task.event` messages
+4. If `AskUserQuestion` tool called: SDK fires `PreToolUse` hook -> runner sends `approval.needed` to backend, awaits `approval.response`, returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
 5. SDK finishes: `ResultMessage` received -> send `task.completed` or `task.failed`
 6. On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
 
 ### Key Design Decisions
 
 - **Claude Agent SDK**: Uses `ClaudeSDKClient` (streaming mode with interrupt support) for task execution and session resume via `ClaudeAgentOptions(resume=session_id)` for task replies.
-- **Approval gates via can_use_tool**: The SDK's `can_use_tool` callback fires when Claude calls `AskUserQuestion`. The callback bridges to the backend WebSocket, awaits user response, and returns the SDK's `PermissionResultAllow`/`PermissionResultDeny`.
+- **Approval gates via PreToolUse hook**: A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQuestion` call — regardless of permission mode. The hook bridges to the backend WebSocket, awaits the user's response, and always returns `permissionDecision: "deny"` with the answer as `permissionDecisionReason` (since there is no terminal for the CLI to render the question). A separate `can_use_tool` callback (`_auto_approve_tool`) always returns `PermissionResultAllow` to enable the bidirectional stdio control protocol required for hooks.
 - **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The SDK continues executing during disconnection.
 - **Single-task execution**: Runner processes one task at a time. A second `task.assign` while busy is logged and ignored.
 

@@ -186,9 +186,9 @@ Immutable, append-only event stream. Does NOT extend `BaseModel` (no `updated_at
 Transitions:
   QUEUED → ASSIGNED         Runner sends "task.accepted"
   ASSIGNED → RUNNING        First task event arrives (atomic, happens once)
-  RUNNING → AWAITING_APPROVAL   SDK fires can_use_tool for AskUserQuestion
-  AWAITING_APPROVAL → RUNNING   User approves (PermissionResultAllow)
-  AWAITING_APPROVAL → CANCELLED User rejects (PermissionResultDeny)
+  RUNNING → AWAITING_APPROVAL   PreToolUse hook fires for AskUserQuestion
+  AWAITING_APPROVAL → RUNNING   User approves (answer returned via permissionDecisionReason)
+  AWAITING_APPROVAL → CANCELLED User rejects
   RUNNING → COMPLETED      SDK emits ResultMessage (success)
   RUNNING → FAILED          SDK emits ResultMessage (error) or exception
   Any active → CANCELLED    User cancels from frontend
@@ -220,7 +220,7 @@ Frontend → FrontendConsumer → [save to DB] → group_send → RunnerConsumer
 | `heartbeat` | — | Keepalive every 30s. Backend updates `last_heartbeat`, replies with `heartbeat.ack` |
 | `task.accepted` | `task_id` | Runner acknowledges task receipt. Status: QUEUED → ASSIGNED |
 | `task.event` | `task_id`, `event_type`, `data`, `sequence` | Claude output event. Saved as TaskEvent, forwarded to frontend |
-| `approval.needed` | `task_id`, `data`, `sequence` | SDK fired can_use_tool for AskUserQuestion. Status: → AWAITING_APPROVAL |
+| `approval.needed` | `task_id`, `data`, `sequence` | PreToolUse hook fired for AskUserQuestion. Status: → AWAITING_APPROVAL |
 | `task.completed` | `task_id`, `result` | Claude exited successfully. Status: → COMPLETED |
 | `task.failed` | `task_id`, `error` | Claude failed. Status: → FAILED |
 
@@ -325,8 +325,8 @@ User                   Frontend              Backend                   Runner
   │                       │ {"task.status":     │                        │
   │                       │  "ASSIGNED"}        │                        │ Create SDK
   │                       │ <───────────────────│                        │ client with
-  │                       │                     │                        │ can_use_tool
-  │                       │                     │                        │ callback
+  │                       │                     │                        │ PreToolUse
+  │                       │                     │                        │ hook
   │                       │                     │                        │
   │                       │                     │ {"task.event":         │ Stream SDK
   │                       │                     │  "TOOL_USE",           │ events
@@ -356,13 +356,12 @@ User                   Frontend              Backend                   Runner
 
 ### 4. Approval Gate Flow
 
-This is the core interactive feature. When Claude calls the `AskUserQuestion` tool, the SDK fires the runner's `can_use_tool` callback, which bridges to the backend and awaits the user's response.
+This is the core interactive feature. When Claude calls the `AskUserQuestion` tool, the SDK fires the runner's `PreToolUse` hook (registered with `matcher="AskUserQuestion"`), which bridges to the backend and awaits the user's response.
 
 ```
 Runner                          Backend                         Frontend
   │                               │                               │
-  │  SDK fires can_use_tool       │                               │
-  │  callback for                 │                               │
+  │  PreToolUse hook fires for    │                               │
   │  AskUserQuestion tool call    │                               │
   │                               │                               │
   │ {"type":"approval.needed",    │                               │
@@ -388,7 +387,7 @@ Runner                          Backend                         Frontend
   │                               │                     with question +
   │                               │                     [Approve] [Reject]
   │                               │                               │
-  │  (can_use_tool callback       │                               │
+  │  (PreToolUse hook callback     │                               │
   │   awaits Future resolution)   │                    User clicks
   │                               │                    [Approve]  │
   │                               │                               │
@@ -408,8 +407,8 @@ Runner                          Backend                         Frontend
   │  "response":"option 1"}      │                               │
   │ <─────────────────────────────│                               │
   │                               │                               │
-  │ Callback returns              │                               │
-  │ PermissionResultAllow         │                               │
+  │ Hook returns deny with        │                               │
+  │ user's answer as reason       │                               │
   │                               │                               │
   │ SDK resumes execution...      │                               │
 ```

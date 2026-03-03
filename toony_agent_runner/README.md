@@ -166,17 +166,16 @@ START
   │    │
   │    ├─ On "task.assign":
   │    │    ├─ Send "task.accepted"
-  │    │    ├─ Create ClaudeSDKClient with can_use_tool callback
+  │    │    ├─ Create ClaudeSDKClient with PreToolUse hook
   │    │    │
   │    │    ├─ STREAM LOOP (receive SDK events):
   │    │    │    ├─ StreamEvent → classify, extract data, send "task.event"
   │    │    │    └─ ResultMessage → send "task.completed" or "task.failed"
   │    │    │
-  │    │    └─ If AskUserQuestion tool called (via can_use_tool):
+  │    │    └─ If AskUserQuestion tool called (via PreToolUse hook):
   │    │         ├─ Send "approval.needed" to backend
   │    │         ├─ Wait for "approval.response" from user
-  │    │         ├─ On approve: return PermissionResultAllow
-  │    │         └─ On reject: return PermissionResultDeny
+  │    │         └─ Return deny with user's answer as permissionDecisionReason
   │    │
   │    ├─ On "task.cancel": interrupt SDK client
   │    └─ On disconnect: reconnect with exponential backoff
@@ -207,15 +206,15 @@ This ensures no events are lost during transient network issues.
 
 ## Approval Gates
 
-The SDK's `can_use_tool` callback fires when Claude calls `AskUserQuestion`:
+A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQuestion` call — regardless of permission mode (unlike `can_use_tool`, which is skipped for auto-approved tools under `acceptEdits`):
 
 1. Runner sends `approval.needed` to the backend with the question and options
 2. Backend forwards this to the frontend WebSocket
-3. The web UI displays an approval card with Approve/Reject buttons
+3. The web UI displays an approval card with Approve/Reject buttons (and a text input)
 4. User responds → backend forwards `approval.response` to the runner
-5. Runner returns `PermissionResultAllow` → SDK continues execution
+5. Hook always returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
 
-If the user rejects, the runner returns `PermissionResultDeny(interrupt=True)` and reports the task as failed.
+The hook always denies because there is no terminal for the CLI to render the question. Claude receives the user's answer as the denial reason and uses it to continue normally.
 
 ## Dependencies
 
