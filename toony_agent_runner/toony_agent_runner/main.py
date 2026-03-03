@@ -150,7 +150,7 @@ def load_config(path: str) -> RunnerConfig:
 # SDK helpers
 # ---------------------------------------------------------------------------
 
-async def _prompt_to_stream(prompt: str, session_id: str = "default"):
+async def _prompt_to_stream(prompt: str, session_id: str | None = None):
     """Wrap a prompt string into an async iterable for SDK streaming mode.
 
     The ``ClaudeSDKClient.connect()`` requires an ``AsyncIterable`` (not a
@@ -245,6 +245,16 @@ def _make_approval_handler(
             "Approval needed for task %s: %s (seq=%d)",
             task_id, tool_name, sequence,
         )
+
+        # Guard against concurrent approvals (the SDK serializes tool calls,
+        # so this should never happen, but defend against it).
+        if conn.pending_approval is not None and not conn.pending_approval.done():
+            logger.error(
+                "New approval requested (seq=%d) while a previous approval is "
+                "still pending — this is a bug; rejecting",
+                sequence,
+            )
+            return PermissionResultDeny(message="Concurrent approval conflict")
 
         # Create a future for the main message loop to resolve.
         loop = asyncio.get_running_loop()
