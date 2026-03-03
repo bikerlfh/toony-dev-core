@@ -44,6 +44,8 @@ from .protocol import (
     parse_server_message,
 )
 from .stream_parser import (
+    EVENT_TYPE_LOG,
+    EVENT_TYPE_TOOL_USE,
     classify_event,
     extract_event_data,
     extract_session_id,
@@ -57,7 +59,7 @@ from claude_agent_sdk import (
     ResultMessage,
     ToolPermissionContext,
 )
-from claude_agent_sdk.types import StreamEvent
+from claude_agent_sdk.types import AssistantMessage, StreamEvent, SystemMessage
 
 logger = logging.getLogger("toony_agent_runner")
 
@@ -226,11 +228,21 @@ def _make_approval_handler(
         seq_counter[0] += 1
         sequence = seq_counter[0]
 
-        # Build approval data for the backend.
-        approval_data: dict[str, Any] = {
-            "tool_name": tool_name,
-            "input": tool_input,
-        }
+        # Build approval data in the format the frontend expects:
+        # { question: string, options?: [{label, description}], tool_name: string }
+        questions = tool_input.get("questions", [])
+        if questions:
+            first_q = questions[0]
+            approval_data: dict[str, Any] = {
+                "question": first_q.get("question", "Approval required"),
+                "options": first_q.get("options"),
+                "tool_name": tool_name,
+            }
+        else:
+            approval_data: dict[str, Any] = {
+                "question": str(tool_input) if tool_input else "Approval required",
+                "tool_name": tool_name,
+            }
 
         await conn.send(
             ApprovalNeededMessage(task_id, approval_data, sequence).to_json()
@@ -332,22 +344,56 @@ async def execute_task(
                 return
 
             if isinstance(message, StreamEvent):
-                sequence += 1
                 event = message.event
 
                 # Capture session_id from init event.
                 sid = extract_session_id(event)
                 if sid:
                     session_id = sid
-                # Also capture from StreamEvent directly.
                 if not session_id and message.session_id:
                     session_id = message.session_id
 
                 event_type = classify_event(event)
+                etype = event.get("type", "")
+
+                # Skip LOG events (text deltas are too fragmented for the
+                # frontend).  Complete text comes from AssistantMessage.
+                if event_type == EVENT_TYPE_LOG:
+                    continue
+                # Skip partial tool-input JSON deltas — only forward the
+                # content_block_start which carries the tool name.
+                if event_type == EVENT_TYPE_TOOL_USE and etype != "content_block_start":
+                    continue
+
+                sequence += 1
                 data = extract_event_data(event)
                 await conn.send(
                     TaskEventMessage(task_id, event_type, data, sequence).to_json()
                 )
+
+            elif isinstance(message, AssistantMessage):
+                # Send complete text as a single LOG event (avoids
+                # per-delta fragmentation).
+                text_parts = []
+                for block in message.content:
+                    if getattr(block, "type", "") == "text":
+                        text_parts.append(getattr(block, "text", ""))
+                if text_parts:
+                    sequence += 1
+                    await conn.send(
+                        TaskEventMessage(
+                            task_id, EVENT_TYPE_LOG,
+                            {"text": "".join(text_parts)},
+                            sequence,
+                        ).to_json()
+                    )
+
+            elif isinstance(message, SystemMessage):
+                # Capture session_id from system init.
+                if message.subtype == "init" and isinstance(message.data, dict):
+                    sid = message.data.get("session_id")
+                    if sid:
+                        session_id = str(sid)
 
             elif isinstance(message, ResultMessage):
                 # Capture session_id from result.
@@ -369,13 +415,6 @@ async def execute_task(
                     ).to_json()
                 )
                 return
-
-            else:
-                logger.debug(
-                    "Task %s: unhandled message type %s",
-                    task_id,
-                    type(message).__name__,
-                )
 
     except asyncio.CancelledError:
         logger.info("Task %s async-cancelled", task_id)
@@ -452,7 +491,6 @@ async def execute_task_reply(
                 return
 
             if isinstance(msg, StreamEvent):
-                sequence += 1
                 event = msg.event
 
                 sid = extract_session_id(event)
@@ -462,10 +500,39 @@ async def execute_task_reply(
                     new_session_id = msg.session_id
 
                 event_type = classify_event(event)
+                etype = event.get("type", "")
+
+                if event_type == EVENT_TYPE_LOG:
+                    continue
+                if event_type == EVENT_TYPE_TOOL_USE and etype != "content_block_start":
+                    continue
+
+                sequence += 1
                 data = extract_event_data(event)
                 await conn.send(
                     TaskEventMessage(task_id, event_type, data, sequence).to_json()
                 )
+
+            elif isinstance(msg, AssistantMessage):
+                text_parts = []
+                for block in msg.content:
+                    if getattr(block, "type", "") == "text":
+                        text_parts.append(getattr(block, "text", ""))
+                if text_parts:
+                    sequence += 1
+                    await conn.send(
+                        TaskEventMessage(
+                            task_id, EVENT_TYPE_LOG,
+                            {"text": "".join(text_parts)},
+                            sequence,
+                        ).to_json()
+                    )
+
+            elif isinstance(msg, SystemMessage):
+                if msg.subtype == "init" and isinstance(msg.data, dict):
+                    sid = msg.data.get("session_id")
+                    if sid:
+                        new_session_id = str(sid)
 
             elif isinstance(msg, ResultMessage):
                 if msg.session_id:
@@ -487,13 +554,6 @@ async def execute_task_reply(
                     ).to_json()
                 )
                 return
-
-            else:
-                logger.debug(
-                    "Task reply %s: unhandled message type %s",
-                    task_id,
-                    type(msg).__name__,
-                )
 
     except asyncio.CancelledError:
         logger.info("Task reply %s async-cancelled", task_id)
