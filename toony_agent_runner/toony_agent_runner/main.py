@@ -331,7 +331,7 @@ async def execute_task(
             # Check for cancellation.
             if cancel_event.is_set():
                 logger.info("Task %s cancelled, interrupting SDK client", task_id)
-                client.interrupt()
+                await client.interrupt()
                 await conn.send(
                     TaskFailedMessage(
                         task_id, error="Task cancelled by user"
@@ -381,7 +381,7 @@ async def execute_task(
     except asyncio.CancelledError:
         logger.info("Task %s async-cancelled", task_id)
         try:
-            client.interrupt()
+            await client.interrupt()
         except Exception:
             pass
         await conn.send(
@@ -398,7 +398,7 @@ async def execute_task(
 
     finally:
         try:
-            client.disconnect()
+            await client.disconnect()
         except Exception:
             pass
 
@@ -442,7 +442,7 @@ async def execute_task_reply(
         async for msg in client.receive_messages():
             if cancel_event.is_set():
                 logger.info("Task reply %s cancelled, interrupting", task_id)
-                client.interrupt()
+                await client.interrupt()
                 await conn.send(
                     TaskFailedMessage(
                         task_id, error="Task cancelled by user"
@@ -490,7 +490,7 @@ async def execute_task_reply(
     except asyncio.CancelledError:
         logger.info("Task reply %s async-cancelled", task_id)
         try:
-            client.interrupt()
+            await client.interrupt()
         except Exception:
             pass
         await conn.send(
@@ -507,7 +507,7 @@ async def execute_task_reply(
 
     finally:
         try:
-            client.disconnect()
+            await client.disconnect()
         except Exception:
             pass
 
