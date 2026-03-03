@@ -57,6 +57,7 @@ class BackendConnection:
         self._buffer: deque[dict] = deque()
         self._connected = False
         self._closing = False
+        self.pending_approval: asyncio.Future[dict[str, Any]] | None = None
 
     # ------------------------------------------------------------------
     # Properties
