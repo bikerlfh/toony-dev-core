@@ -127,3 +127,89 @@ class TestAgentTaskService:
         event = create_task_event(task, TaskEventType.LOG, {"msg": "hello"}, 1)
         assert event.event_type == TaskEventType.LOG
         assert event.sequence == 1
+
+
+def toony_agents_url(org_slug):
+    return f"/api/v1/organizations/{org_slug}/toony-agents/"
+
+
+def toony_agent_url(org_slug, agent_slug):
+    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/"
+
+
+def keys_url(org_slug, agent_slug):
+    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/keys/"
+
+
+def tasks_url(org_slug, agent_slug):
+    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/tasks/"
+
+
+class TestToonyAgentAPI:
+    def test_create_toony_agent(self, authenticated_client, organization):
+        url = toony_agents_url(organization.slug)
+        data = {"name": "My Bot", "slug": "my-bot"}
+        response = authenticated_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["name"] == "My Bot"
+        assert response.data["slug"] == "my-bot"
+
+    def test_list_toony_agents(self, authenticated_client, organization, user):
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="list-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        url = toony_agents_url(organization.slug)
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_get_toony_agent(self, authenticated_client, organization, user):
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="get-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        url = toony_agent_url(organization.slug, "get-bot")
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["slug"] == "get-bot"
+
+    def test_generate_api_key(self, authenticated_client, organization, user):
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="key-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        url = keys_url(organization.slug, "key-bot")
+        response = authenticated_client.post(url, {"name": "dev"}, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        assert "raw_key" in response.data
+        assert response.data["raw_key"].startswith("tok_ta_")
+
+    def test_create_task(self, authenticated_client, organization, user):
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="task-api-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        url = tasks_url(organization.slug, "task-api-bot")
+        data = {
+            "title": "Fix bug",
+            "prompt": "Fix the login bug",
+            "toony_agent_slug": "task-api-bot",
+        }
+        response = authenticated_client.post(url, data, format="json")
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["status"] == "QUEUED"
+
+    def test_unauthenticated(self, api_client, organization):
+        url = toony_agents_url(organization.slug)
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_nonmember_denied(self, api_client, organization, other_user):
+        api_client.force_authenticate(user=other_user)
+        url = toony_agents_url(organization.slug)
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
