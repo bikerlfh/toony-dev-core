@@ -232,7 +232,7 @@ export default function IssueDetailPage() {
     }
     setIsSavingDescription(true);
     try {
-      await updateIssue(orgSlug, projectSlug, identifier, { description: trimmed || null });
+      await updateIssue(orgSlug, projectSlug, identifier, { description: trimmed });
       await fetchIssue();
       setEditingDescription(false);
     } catch {
