@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
@@ -7,7 +8,25 @@ import { useOrg } from "@/contexts/org-context";
 import { OrgSwitcher } from "./org-switcher";
 import { SearchCommandPalette } from "./search-command-palette";
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string;
+  path: string;
+  icon: ReactNode;
+}
+
+interface NavGroup {
+  label: string;
+  icon: ReactNode;
+  children: NavItem[];
+}
+
+type SidebarItem = NavItem | NavGroup;
+
+function isGroup(item: SidebarItem): item is NavGroup {
+  return "children" in item;
+}
+
+const NAV_ITEMS: SidebarItem[] = [
   {
     label: "Dashboard",
     path: "",
@@ -55,22 +74,41 @@ const NAV_ITEMS = [
     ),
   },
   {
-    label: "Agents",
-    path: "/agents",
-    icon: (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Toony Agents",
-    path: "/toony-agents",
+    label: "AI Studio",
     icon: (
       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
       </svg>
     ),
+    children: [
+      {
+        label: "Sub-Agents",
+        path: "/subagents",
+        icon: (
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+          </svg>
+        ),
+      },
+      {
+        label: "Skills",
+        path: "/skills",
+        icon: (
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" />
+          </svg>
+        ),
+      },
+      {
+        label: "Toony Agents",
+        path: "/toony-agents",
+        icon: (
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+          </svg>
+        ),
+      },
+    ],
   },
   {
     label: "Imports",
@@ -106,10 +144,86 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { currentOrg } = useOrg();
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   if (!currentOrg) return null;
 
   const basePath = `/${currentOrg.slug}`;
+
+  function isChildActive(group: NavGroup): boolean {
+    return group.children.some((child) => {
+      const href = `${basePath}${child.path}`;
+      return pathname.startsWith(href);
+    });
+  }
+
+  function isGroupExpanded(group: NavGroup): boolean {
+    if (group.label in expandedGroups) return expandedGroups[group.label];
+    return isChildActive(group);
+  }
+
+  function toggleGroup(group: NavGroup) {
+    const currentlyExpanded = isGroupExpanded(group);
+    setExpandedGroups((prev) => ({ ...prev, [group.label]: !currentlyExpanded }));
+  }
+
+  function renderNavLink(item: NavItem) {
+    const href = `${basePath}${item.path}`;
+    const isActive =
+      item.path === ""
+        ? pathname === basePath || pathname === `${basePath}/`
+        : pathname.startsWith(href);
+
+    return (
+      <Link
+        key={item.path}
+        href={href}
+        className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          isActive
+            ? "bg-slate-900 text-white"
+            : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200"
+        }`}
+      >
+        {item.icon}
+        {item.label}
+      </Link>
+    );
+  }
+
+  function renderGroup(group: NavGroup) {
+    const expanded = isGroupExpanded(group);
+    const hasActive = isChildActive(group);
+
+    return (
+      <div key={group.label}>
+        <button
+          onClick={() => toggleGroup(group)}
+          className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            hasActive
+              ? "text-white"
+              : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200"
+          }`}
+        >
+          {group.icon}
+          <span className="flex-1 text-left">{group.label}</span>
+          <svg
+            className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-90" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        {expanded && (
+          <div className="ml-3 space-y-0.5 border-l border-slate-800/60 pl-2">
+            {group.children.map(renderNavLink)}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <aside className="flex w-64 flex-col border-r border-slate-800/60 bg-slate-950">
@@ -152,28 +266,9 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 p-4">
-        {NAV_ITEMS.map((item) => {
-          const href = `${basePath}${item.path}`;
-          const isActive =
-            item.path === ""
-              ? pathname === basePath || pathname === `${basePath}/`
-              : pathname.startsWith(href);
-
-          return (
-            <Link
-              key={item.path}
-              href={href}
-              className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-400 hover:bg-slate-900/60 hover:text-slate-200"
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          );
-        })}
+        {NAV_ITEMS.map((item) =>
+          isGroup(item) ? renderGroup(item) : renderNavLink(item)
+        )}
       </nav>
 
       {/* User info + logout */}
