@@ -3,34 +3,34 @@
 import { useCallback, useMemo } from "react";
 import { getAccessToken } from "@/lib/auth";
 import { useWebSocket } from "@/hooks/use-websocket";
-import type { AgentWsEvent, WsReadyState } from "@/types";
+import type { SubAgentWsEvent, WsReadyState } from "@/types";
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 
-interface UseAgentWebSocketOptions {
-  agentId: string | null;
-  onEvent: (event: AgentWsEvent) => void;
+interface UseSubAgentWebSocketOptions {
+  subAgentId: string | null;
+  onEvent: (event: SubAgentWsEvent) => void;
 }
 
-export function useAgentWebSocket({
-  agentId,
+export function useSubAgentWebSocket({
+  subAgentId,
   onEvent,
-}: UseAgentWebSocketOptions): {
+}: UseSubAgentWebSocketOptions): {
   readyState: WsReadyState;
   sendTaskResult: (taskId: string, output: unknown) => void;
   sendStatusUpdate: (status: string) => void;
   sendHeartbeat: () => void;
 } {
   const url = useMemo(() => {
-    if (!agentId) return null;
+    if (!subAgentId) return null;
     const token = getAccessToken();
     if (!token) return null;
-    return `${WS_BASE}/ws/agents/${agentId}/?token=${token}`;
-  }, [agentId]);
+    return `${WS_BASE}/ws/subagents/${subAgentId}/?token=${token}`;
+  }, [subAgentId]);
 
   const handleMessage = useCallback(
     (data: unknown) => {
-      const event = data as AgentWsEvent;
+      const event = data as SubAgentWsEvent;
       if (event?.type) {
         onEvent(event);
       }
