@@ -41,6 +41,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
     lead = UserDetailSerializer(read_only=True)
+    issue_count = serializers.SerializerMethodField()
+    member_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -59,10 +61,18 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             "sort_order",
             "icon",
             "color",
+            "issue_count",
+            "member_count",
             "created_at",
             "updated_at",
         ]
         read_only_fields = fields
+
+    def get_issue_count(self, obj):
+        return obj.issues.count()
+
+    def get_member_count(self, obj):
+        return obj.memberships.count()
 
 
 class ProjectMembershipSerializer(serializers.ModelSerializer):

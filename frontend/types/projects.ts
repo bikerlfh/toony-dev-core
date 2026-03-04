@@ -111,6 +111,8 @@ export interface ProjectDetail extends ProjectList {
   description: string;
   short_summary: string;
   completed_at: string | null;
+  issue_count: number;
+  member_count: number;
   updated_at: string;
 }
 
