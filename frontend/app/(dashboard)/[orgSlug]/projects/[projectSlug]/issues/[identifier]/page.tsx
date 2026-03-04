@@ -70,14 +70,6 @@ const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
   { value: "LOW", label: "Low" },
 ];
 
-function PencilIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className || "h-3.5 w-3.5"} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" />
-    </svg>
-  );
-}
-
 type DetailTab = "comments" | "activity";
 
 export default function IssueDetailPage() {
@@ -275,9 +267,9 @@ export default function IssueDetailPage() {
       <div className="mt-4 flex gap-6">
         {/* Left: main content */}
         <div className="min-w-0 flex-1">
-          {/* Title with inline edit */}
-          <div className="flex items-start gap-2">
-            {editingTitle ? (
+          {/* Title — click to edit */}
+          {editingTitle ? (
+            <div>
               <input
                 type="text"
                 value={titleDraft}
@@ -286,51 +278,93 @@ export default function IssueDetailPage() {
                   if (e.key === "Enter") saveTitle();
                   if (e.key === "Escape") setEditingTitle(false);
                 }}
-                onBlur={saveTitle}
                 disabled={isSavingTitle}
                 autoFocus
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xl font-medium text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xl font-medium text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
               />
-            ) : (
-              <>
-                <h1 className="text-xl font-medium text-white">{issue.title}</h1>
-                {canManage && isEditable && (
-                  <button onClick={startEditTitle} className="mt-1 shrink-0 text-slate-600 transition-colors hover:text-indigo-400" title="Edit title">
-                    <PencilIcon />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  onClick={saveTitle}
+                  disabled={isSavingTitle}
+                  className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {isSavingTitle ? "Saving..." : "Save"}
+                </button>
+                <button
+                  onClick={() => setEditingTitle(false)}
+                  disabled={isSavingTitle}
+                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white"
+                >
+                  Cancel
+                </button>
+                <span className="text-[10px] text-slate-600">Enter to save · Esc to cancel</span>
+              </div>
+            </div>
+          ) : (
+            <h1
+              onClick={canManage && isEditable ? startEditTitle : undefined}
+              className={`text-xl font-medium text-white ${
+                canManage && isEditable
+                  ? "cursor-text rounded-lg px-3 py-2 -mx-3 -my-2 transition-colors hover:bg-slate-800/40"
+                  : ""
+              }`}
+              title={canManage && isEditable ? "Click to edit title" : undefined}
+            >
+              {issue.title}
+            </h1>
+          )}
 
-          {/* Description with inline edit */}
-          <div className="mt-3 flex items-start gap-2">
+          {/* Description — click to edit */}
+          <div className="mt-3">
             {editingDescription ? (
-              <textarea
-                value={descriptionDraft}
-                onChange={(e) => setDescriptionDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setEditingDescription(false);
-                }}
-                onBlur={saveDescription}
-                disabled={isSavingDescription}
-                autoFocus
-                rows={4}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-              />
+              <div>
+                <textarea
+                  value={descriptionDraft}
+                  onChange={(e) => setDescriptionDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setEditingDescription(false);
+                  }}
+                  disabled={isSavingDescription}
+                  autoFocus
+                  rows={4}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    onClick={saveDescription}
+                    disabled={isSavingDescription}
+                    className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                  >
+                    {isSavingDescription ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setEditingDescription(false)}
+                    disabled={isSavingDescription}
+                    className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <span className="text-[10px] text-slate-600">Esc to cancel</span>
+                </div>
+              </div>
             ) : (
-              <>
+              <div
+                onClick={canManage && isEditable ? startEditDescription : undefined}
+                className={`${
+                  canManage && isEditable
+                    ? "cursor-text rounded-lg px-3 py-2 -mx-3 -my-2 transition-colors hover:bg-slate-800/40"
+                    : ""
+                }`}
+                title={canManage && isEditable ? "Click to edit description" : undefined}
+              >
                 {issue.description ? (
                   <p className="whitespace-pre-wrap text-sm text-slate-400">{issue.description}</p>
                 ) : (
-                  <p className="text-sm italic text-slate-600">No description</p>
+                  <p className="text-sm italic text-slate-600">
+                    {canManage && isEditable ? "Click to add a description..." : "No description"}
+                  </p>
                 )}
-                {canManage && isEditable && (
-                  <button onClick={startEditDescription} className="mt-0.5 shrink-0 text-slate-600 transition-colors hover:text-indigo-400" title="Edit description">
-                    <PencilIcon />
-                  </button>
-                )}
-              </>
+              </div>
             )}
           </div>
 
