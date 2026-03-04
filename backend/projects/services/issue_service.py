@@ -40,6 +40,15 @@ def create_issue(project, reporter, title, **kwargs):
 def update_issue(issue, user, **kwargs):
     label_ids = kwargs.pop("label_ids", None)
 
+    from rest_framework.exceptions import ValidationError as DRFValidationError
+    from projects.models.issue import IssueStatus
+
+    editable_statuses = {IssueStatus.BACKLOG, IssueStatus.TODO}
+    if ("title" in kwargs or "description" in kwargs) and issue.status not in editable_statuses:
+        raise DRFValidationError(
+            "Title and description can only be edited when the issue is in BACKLOG or TODO status."
+        )
+
     tracked_fields = {
         "title", "description", "status", "priority",
         "assignee", "milestone", "cycle", "parent",

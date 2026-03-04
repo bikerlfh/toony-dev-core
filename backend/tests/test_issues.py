@@ -105,6 +105,59 @@ class TestIssueDetail:
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    def test_update_title_allowed_in_backlog(
+        self, authenticated_client, organization, project, issue
+    ):
+        issue.status = "BACKLOG"
+        issue.save()
+        url = issue_url(organization.slug, project.slug, issue.identifier)
+        data = {"title": "New Title"}
+        response = authenticated_client.put(url, data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["title"] == "New Title"
+
+    def test_update_title_allowed_in_todo(
+        self, authenticated_client, organization, project, issue
+    ):
+        issue.status = "TODO"
+        issue.save()
+        url = issue_url(organization.slug, project.slug, issue.identifier)
+        data = {"title": "New Title"}
+        response = authenticated_client.put(url, data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["title"] == "New Title"
+
+    def test_update_title_rejected_in_progress(
+        self, authenticated_client, organization, project, issue
+    ):
+        issue.status = "IN_PROGRESS"
+        issue.save()
+        url = issue_url(organization.slug, project.slug, issue.identifier)
+        data = {"title": "Should Fail"}
+        response = authenticated_client.put(url, data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_description_rejected_in_done(
+        self, authenticated_client, organization, project, issue
+    ):
+        issue.status = "DONE"
+        issue.save()
+        url = issue_url(organization.slug, project.slug, issue.identifier)
+        data = {"description": "Should Fail"}
+        response = authenticated_client.put(url, data, format="json")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_status_still_works_in_progress(
+        self, authenticated_client, organization, project, issue
+    ):
+        issue.status = "IN_PROGRESS"
+        issue.save()
+        url = issue_url(organization.slug, project.slug, issue.identifier)
+        data = {"priority": "HIGH"}
+        response = authenticated_client.put(url, data, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["priority"] == "HIGH"
+
 
 class TestIssueComments:
     def test_list_comments(self, authenticated_client, organization, project, issue):
