@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from agents.models import Agent, AgentSkill, Skill, SkillVersion
+from agents.models import SubAgent, SubAgentSkill, Skill, SkillVersion
 
 
-@admin.register(Agent)
-class AgentAdmin(admin.ModelAdmin):
+@admin.register(SubAgent)
+class SubAgentAdmin(admin.ModelAdmin):
     list_display = ("name", "organization", "agent_type", "status", "version", "created_at")
     list_filter = ("status", "agent_type")
     search_fields = ("name", "slug", "organization__name")
@@ -20,12 +20,12 @@ class SkillAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
-@admin.register(AgentSkill)
-class AgentSkillAdmin(admin.ModelAdmin):
-    list_display = ("agent", "skill", "priority", "is_enabled", "created_at")
+@admin.register(SubAgentSkill)
+class SubAgentSkillAdmin(admin.ModelAdmin):
+    list_display = ("sub_agent", "skill", "priority", "is_enabled", "created_at")
     list_filter = ("is_enabled",)
-    search_fields = ("agent__name", "skill__name")
-    ordering = ("agent", "priority")
+    search_fields = ("sub_agent__name", "skill__name")
+    ordering = ("sub_agent", "priority")
 
 
 @admin.register(SkillVersion)

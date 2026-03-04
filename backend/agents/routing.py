@@ -1,7 +1,7 @@
 from django.urls import path
 
-from agents.consumers import AgentConsumer
+from agents.consumers import SubAgentConsumer
 
 websocket_urlpatterns = [
-    path("ws/agents/<uuid:agent_id>/", AgentConsumer.as_asgi()),
+    path("ws/subagents/<uuid:sub_agent_id>/", SubAgentConsumer.as_asgi()),
 ]

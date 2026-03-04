@@ -1,10 +1,10 @@
 from django.urls import path
 
 from agents.views import (
-    AgentDetailView,
-    AgentListCreateView,
-    AgentSkillDetailView,
-    AgentSkillListCreateView,
+    SubAgentDetailView,
+    SubAgentListCreateView,
+    SubAgentSkillDetailView,
+    SubAgentSkillListCreateView,
     SkillDetailView,
     SkillListCreateView,
     SkillVersionListView,
@@ -13,14 +13,14 @@ from agents.views import (
 app_name = "agents"
 
 urlpatterns = [
-    # Agents
-    path("agents/", AgentListCreateView.as_view(), name="agent-list-create"),
-    path("agents/<slug:agent_slug>/", AgentDetailView.as_view(), name="agent-detail"),
-    path("agents/<slug:agent_slug>/skills/", AgentSkillListCreateView.as_view(), name="agent-skill-list-create"),
+    # SubAgents
+    path("subagents/", SubAgentListCreateView.as_view(), name="sub-agent-list-create"),
+    path("subagents/<slug:sub_agent_slug>/", SubAgentDetailView.as_view(), name="sub-agent-detail"),
+    path("subagents/<slug:sub_agent_slug>/skills/", SubAgentSkillListCreateView.as_view(), name="sub-agent-skill-list-create"),
     path(
-        "agents/<slug:agent_slug>/skills/<uuid:agent_skill_id>/",
-        AgentSkillDetailView.as_view(),
-        name="agent-skill-detail",
+        "subagents/<slug:sub_agent_slug>/skills/<uuid:sub_agent_skill_id>/",
+        SubAgentSkillDetailView.as_view(),
+        name="sub-agent-skill-detail",
     ),
     # Skills
     path("skills/", SkillListCreateView.as_view(), name="skill-list-create"),
