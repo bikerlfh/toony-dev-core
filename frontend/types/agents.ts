@@ -1,5 +1,5 @@
-export type AgentStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "DEPRECATED";
-export type AgentType = "CODER" | "REVIEWER" | "TESTER" | "PLANNER" | "CUSTOM";
+export type SubAgentStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "DEPRECATED";
+export type SubAgentType = "CODER" | "REVIEWER" | "TESTER" | "PLANNER" | "CUSTOM";
 export type SkillStatus = "DRAFT" | "ACTIVE" | "INACTIVE" | "DEPRECATED";
 export type SkillCategory =
   | "CODING"
@@ -9,19 +9,19 @@ export type SkillCategory =
   | "DEPLOYMENT"
   | "CUSTOM";
 
-export interface AgentList {
+export interface SubAgentList {
   id: string;
   name: string;
   slug: string;
   organization: string | null;
-  status: AgentStatus;
-  agent_type: AgentType;
+  status: SubAgentStatus;
+  agent_type: SubAgentType;
   version: string;
   is_external: boolean;
   created_at: string;
 }
 
-export interface AgentDetail {
+export interface SubAgentDetail {
   id: string;
   name: string;
   slug: string;
@@ -29,8 +29,8 @@ export interface AgentDetail {
   description: string;
   markdown: string;
   version: string;
-  status: AgentStatus;
-  agent_type: AgentType;
+  status: SubAgentStatus;
+  agent_type: SubAgentType;
   capabilities: string[];
   is_external: boolean;
   external_command: string;
@@ -40,28 +40,28 @@ export interface AgentDetail {
   updated_at: string;
 }
 
-export interface CreateAgentPayload {
+export interface CreateSubAgentPayload {
   name: string;
   slug: string;
   organization?: string | null;
   description?: string;
   markdown?: string;
   version?: string;
-  status?: AgentStatus;
-  agent_type?: AgentType;
+  status?: SubAgentStatus;
+  agent_type?: SubAgentType;
   capabilities?: string[];
   is_external?: boolean;
   external_command?: string;
   tags?: string[];
 }
 
-export interface UpdateAgentPayload {
+export interface UpdateSubAgentPayload {
   name?: string;
   description?: string;
   markdown?: string;
   version?: string;
-  status?: AgentStatus;
-  agent_type?: AgentType;
+  status?: SubAgentStatus;
+  agent_type?: SubAgentType;
   capabilities?: string[];
   is_external?: boolean;
   external_command?: string;
@@ -135,7 +135,7 @@ export interface UpdateSkillPayload {
   changelog?: string;
 }
 
-export interface AgentSkill {
+export interface SubAgentSkill {
   id: string;
   skill: SkillList;
   priority: number;
@@ -144,13 +144,13 @@ export interface AgentSkill {
   created_at: string;
 }
 
-export interface CreateAgentSkillPayload {
+export interface CreateSubAgentSkillPayload {
   skill: string;
   priority?: number;
   custom_config?: Record<string, unknown> | null;
 }
 
-export interface UpdateAgentSkillPayload {
+export interface UpdateSubAgentSkillPayload {
   priority?: number;
   is_enabled?: boolean;
   custom_config?: Record<string, unknown> | null;

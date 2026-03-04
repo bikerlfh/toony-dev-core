@@ -40,7 +40,7 @@ export type ProjectWsEvent =
   | CommentUpdatedEvent
   | CommentDeletedEvent;
 
-// --- Agent WebSocket Events ---
+// --- SubAgent WebSocket Events ---
 
 export interface TaskAssignEvent {
   type: "task.assign";
@@ -51,7 +51,7 @@ export interface HeartbeatAckEvent {
   type: "heartbeat.ack";
 }
 
-export type AgentWsEvent = TaskAssignEvent | HeartbeatAckEvent;
+export type SubAgentWsEvent = TaskAssignEvent | HeartbeatAckEvent;
 
 // --- WebSocket State ---
 
