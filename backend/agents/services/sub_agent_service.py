@@ -1,19 +1,19 @@
 import json
 
 from common.exceptions import ConflictError
-from agents.models import Agent
-from agents.selectors import get_agent_by_slug
+from agents.models import SubAgent
+from agents.selectors import get_sub_agent_by_slug
 
 
-def create_agent(organization, created_by, name, slug, **kwargs):
-    if get_agent_by_slug(slug, organization=organization):
-        raise ConflictError("An agent with this slug already exists in this organization.")
+def create_sub_agent(organization, created_by, name, slug, **kwargs):
+    if get_sub_agent_by_slug(slug, organization=organization):
+        raise ConflictError("A sub-agent with this slug already exists in this organization.")
 
     encrypted_configuration = kwargs.pop("encrypted_configuration", "")
     if encrypted_configuration and not isinstance(encrypted_configuration, str):
         encrypted_configuration = json.dumps(encrypted_configuration)
 
-    return Agent.objects.create(
+    return SubAgent.objects.create(
         organization=organization,
         created_by=created_by,
         name=name,
@@ -23,7 +23,7 @@ def create_agent(organization, created_by, name, slug, **kwargs):
     )
 
 
-def update_agent(agent, **kwargs):
+def update_sub_agent(sub_agent, **kwargs):
     allowed_fields = {
         "name", "description", "markdown", "version", "status", "agent_type",
         "capabilities", "encrypted_configuration", "is_external", "external_command",
@@ -36,15 +36,15 @@ def update_agent(agent, **kwargs):
         if field in allowed_fields:
             if field == "encrypted_configuration" and not isinstance(value, str):
                 value = json.dumps(value)
-            setattr(agent, field, value)
+            setattr(sub_agent, field, value)
 
-    agent.save()
+    sub_agent.save()
 
     if assigned_projects is not None:
-        agent.assigned_projects.set(assigned_projects)
+        sub_agent.assigned_projects.set(assigned_projects)
 
-    return agent
+    return sub_agent
 
 
-def delete_agent(agent):
-    agent.delete()
+def delete_sub_agent(sub_agent):
+    sub_agent.delete()
