@@ -82,12 +82,12 @@ export {
   listActivities,
 } from "./issues";
 export {
-  listAgents,
-  createAgent,
-  getAgent,
-  updateAgent,
-  deleteAgent,
-} from "./agents";
+  listSubAgents,
+  createSubAgent,
+  getSubAgent,
+  updateSubAgent,
+  deleteSubAgent,
+} from "./sub-agents";
 export {
   listSkills,
   createSkill,
@@ -97,11 +97,11 @@ export {
   listSkillVersions,
 } from "./skills";
 export {
-  listAgentSkills,
+  listSubAgentSkills,
   assignSkill,
-  updateAgentSkill,
-  removeAgentSkill,
-} from "./agent-skills";
+  updateSubAgentSkill,
+  removeSubAgentSkill,
+} from "./sub-agent-skills";
 export {
   listImportJobs,
   startImport,
