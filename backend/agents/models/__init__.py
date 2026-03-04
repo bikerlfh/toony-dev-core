@@ -1,15 +1,15 @@
-from agents.models.agent import Agent, AgentStatus, AgentType
-from agents.models.agent_skill import AgentSkill
+from agents.models.sub_agent import SubAgent, SubAgentStatus, SubAgentType
+from agents.models.sub_agent_skill import SubAgentSkill
 from agents.models.skill import Skill, SkillCategory, SkillStatus
 from agents.models.skill_version import SkillVersion
 
 __all__ = [
-    "AgentStatus",
-    "AgentType",
-    "Agent",
+    "SubAgentStatus",
+    "SubAgentType",
+    "SubAgent",
     "SkillStatus",
     "SkillCategory",
     "Skill",
-    "AgentSkill",
+    "SubAgentSkill",
     "SkillVersion",
 ]

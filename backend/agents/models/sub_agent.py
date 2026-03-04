@@ -6,14 +6,14 @@ from encrypted_model_fields.fields import EncryptedTextField
 from common.models import BaseModel
 
 
-class AgentStatus(models.TextChoices):
+class SubAgentStatus(models.TextChoices):
     DRAFT = "DRAFT", "Draft"
     ACTIVE = "ACTIVE", "Active"
     INACTIVE = "INACTIVE", "Inactive"
     DEPRECATED = "DEPRECATED", "Deprecated"
 
 
-class AgentType(models.TextChoices):
+class SubAgentType(models.TextChoices):
     CODER = "CODER", "Coder"
     REVIEWER = "REVIEWER", "Reviewer"
     TESTER = "TESTER", "Tester"
@@ -21,11 +21,11 @@ class AgentType(models.TextChoices):
     CUSTOM = "CUSTOM", "Custom"
 
 
-class Agent(BaseModel):
+class SubAgent(BaseModel):
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,
-        related_name="agents",
+        related_name="sub_agents",
         null=True,
         blank=True,
     )
@@ -36,13 +36,13 @@ class Agent(BaseModel):
     version = models.CharField(max_length=50, default="0.1.0")
     status = models.CharField(
         max_length=20,
-        choices=AgentStatus.choices,
-        default=AgentStatus.DRAFT,
+        choices=SubAgentStatus.choices,
+        default=SubAgentStatus.DRAFT,
     )
     agent_type = models.CharField(
         max_length=20,
-        choices=AgentType.choices,
-        default=AgentType.CUSTOM,
+        choices=SubAgentType.choices,
+        default=SubAgentType.CUSTOM,
     )
     capabilities = models.JSONField(default=list, blank=True)
     encrypted_configuration = EncryptedTextField(blank=True, default="")
@@ -52,28 +52,28 @@ class Agent(BaseModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name="created_agents",
+        related_name="created_sub_agents",
     )
     tags = models.JSONField(default=list, blank=True)
     assigned_projects = models.ManyToManyField(
         "projects.Project",
         blank=True,
-        related_name="assigned_agents",
+        related_name="assigned_sub_agents",
     )
 
     class Meta:
-        db_table = "agents"
+        db_table = "sub_agents"
         ordering = ["name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["organization", "slug"],
                 condition=Q(organization__isnull=False),
-                name="unique_org_agent_slug",
+                name="unique_org_sub_agent_slug",
             ),
             models.UniqueConstraint(
                 fields=["slug"],
                 condition=Q(organization__isnull=True),
-                name="unique_global_agent_slug",
+                name="unique_global_sub_agent_slug",
             ),
         ]
 
