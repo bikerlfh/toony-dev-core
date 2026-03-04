@@ -37,7 +37,6 @@ import { FilterBar } from "@/components/issues/filter-bar";
 import { KanbanBoard } from "@/components/issues/kanban-board";
 import { IssuesList } from "@/components/issues/issues-list";
 import { CreateIssueModal } from "@/components/issues/create-issue-modal";
-import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
 import { Select } from "@/components/ui/select";
 import type {
   ProjectDetail,
@@ -1130,6 +1129,7 @@ function SettingsTab({ orgSlug, projectSlug, canManage, onDeleted }: { orgSlug: 
 type IssueViewMode = "board" | "list";
 
 function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: string; projectSlug: string; projectId: string; canManage: boolean }) {
+  const router = useRouter();
   const [issues, setIssues] = useState<IssueList[]>([]);
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -1139,8 +1139,6 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
   const [viewMode, setViewMode] = useState<IssueViewMode>("board");
   const [filters, setFilters] = useState<IssueFilters>({});
   const [showCreate, setShowCreate] = useState(false);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
-  const [latestWsEvent, setLatestWsEvent] = useState<ProjectWsEvent | null>(null);
 
   const handleWsEvent = useCallback((event: ProjectWsEvent) => {
     switch (event.type) {
@@ -1157,11 +1155,6 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
         break;
       case "issue.deleted":
         setIssues((prev) => prev.filter((i) => i.id !== event.data.id));
-        break;
-      case "comment.created":
-      case "comment.updated":
-      case "comment.deleted":
-        setLatestWsEvent(event);
         break;
     }
   }, []);
@@ -1262,13 +1255,13 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
         {viewMode === "board" ? (
           <KanbanBoard
             issues={issues}
-            onIssueClick={(issue) => setSelectedIssueId(issue.identifier)}
+            onIssueClick={(issue) => router.push(`/${orgSlug}/projects/${projectSlug}/issues/${issue.identifier}`)}
             onStatusChange={canManage ? handleStatusChange : undefined}
           />
         ) : (
           <IssuesList
             issues={issues}
-            onIssueClick={(issue) => setSelectedIssueId(issue.identifier)}
+            onIssueClick={(issue) => router.push(`/${orgSlug}/projects/${projectSlug}/issues/${issue.identifier}`)}
             onStatusChange={canManage ? handleStatusChange : undefined}
             onPriorityChange={canManage ? handlePriorityChange : undefined}
           />
@@ -1289,21 +1282,6 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
         />
       )}
 
-      {/* Detail modal */}
-      {selectedIssueId && (
-        <IssueDetailModal
-          orgSlug={orgSlug}
-          projectSlug={projectSlug}
-          identifier={selectedIssueId}
-          members={members}
-          milestones={milestones}
-          cycles={cycles}
-          labels={labels}
-          onClose={() => setSelectedIssueId(null)}
-          onUpdated={fetchIssues}
-          wsEvent={latestWsEvent}
-        />
-      )}
     </div>
   );
 }
