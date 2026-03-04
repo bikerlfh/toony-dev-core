@@ -1,16 +1,16 @@
 from rest_framework import serializers
 
 from accounts.serializers.output import UserDetailSerializer
-from agents.models import Agent, AgentSkill, Skill, SkillVersion
+from agents.models import SubAgent, SubAgentSkill, Skill, SkillVersion
 
 
-# --- Agent ---
+# --- SubAgent ---
 
-class AgentListSerializer(serializers.ModelSerializer):
+class SubAgentListSerializer(serializers.ModelSerializer):
     organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
 
     class Meta:
-        model = Agent
+        model = SubAgent
         fields = [
             "id",
             "name",
@@ -25,12 +25,12 @@ class AgentListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class AgentDetailSerializer(serializers.ModelSerializer):
+class SubAgentDetailSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)
     organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
 
     class Meta:
-        model = Agent
+        model = SubAgent
         fields = [
             "id",
             "name",
@@ -102,13 +102,13 @@ class SkillDetailSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-# --- AgentSkill ---
+# --- SubAgentSkill ---
 
-class AgentSkillSerializer(serializers.ModelSerializer):
+class SubAgentSkillSerializer(serializers.ModelSerializer):
     skill = SkillListSerializer(read_only=True)
 
     class Meta:
-        model = AgentSkill
+        model = SubAgentSkill
         fields = [
             "id",
             "skill",

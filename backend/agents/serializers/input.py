@@ -1,20 +1,20 @@
 from rest_framework import serializers
 
-from agents.models.agent import AgentStatus, AgentType
+from agents.models.sub_agent import SubAgentStatus, SubAgentType
 from agents.models.skill import SkillCategory, SkillStatus
 
 
-# --- Agent ---
+# --- SubAgent ---
 
-class CreateAgentSerializer(serializers.Serializer):
+class CreateSubAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=255)
     organization = serializers.SlugField(required=False, allow_null=True, allow_blank=True)
     description = serializers.CharField(max_length=250, required=False, default="", allow_blank=True)
     markdown = serializers.CharField(required=False, default="", allow_blank=True)
     version = serializers.CharField(max_length=50, required=False, default="0.1.0")
-    status = serializers.ChoiceField(choices=AgentStatus.choices, required=False, default=AgentStatus.DRAFT)
-    agent_type = serializers.ChoiceField(choices=AgentType.choices, required=False, default=AgentType.CUSTOM)
+    status = serializers.ChoiceField(choices=SubAgentStatus.choices, required=False, default=SubAgentStatus.DRAFT)
+    agent_type = serializers.ChoiceField(choices=SubAgentType.choices, required=False, default=SubAgentType.CUSTOM)
     capabilities = serializers.JSONField(required=False, default=list)
     encrypted_configuration = serializers.CharField(required=False, default="", allow_blank=True)
     is_external = serializers.BooleanField(required=False, default=False)
@@ -29,13 +29,13 @@ class CreateAgentSerializer(serializers.Serializer):
         return attrs
 
 
-class UpdateAgentSerializer(serializers.Serializer):
+class UpdateSubAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(max_length=250, required=False, allow_blank=True)
     markdown = serializers.CharField(required=False, allow_blank=True)
     version = serializers.CharField(max_length=50, required=False)
-    status = serializers.ChoiceField(choices=AgentStatus.choices, required=False)
-    agent_type = serializers.ChoiceField(choices=AgentType.choices, required=False)
+    status = serializers.ChoiceField(choices=SubAgentStatus.choices, required=False)
+    agent_type = serializers.ChoiceField(choices=SubAgentType.choices, required=False)
     capabilities = serializers.JSONField(required=False)
     encrypted_configuration = serializers.CharField(required=False, allow_blank=True)
     is_external = serializers.BooleanField(required=False)
@@ -102,15 +102,15 @@ class UpdateSkillSerializer(serializers.Serializer):
         return attrs
 
 
-# --- AgentSkill ---
+# --- SubAgentSkill ---
 
-class CreateAgentSkillSerializer(serializers.Serializer):
+class CreateSubAgentSkillSerializer(serializers.Serializer):
     skill = serializers.UUIDField()
     priority = serializers.IntegerField(required=False, default=0)
     custom_config = serializers.JSONField(required=False, allow_null=True, default=None)
 
 
-class UpdateAgentSkillSerializer(serializers.Serializer):
+class UpdateSubAgentSkillSerializer(serializers.Serializer):
     priority = serializers.IntegerField(required=False)
     is_enabled = serializers.BooleanField(required=False)
     custom_config = serializers.JSONField(required=False, allow_null=True)
