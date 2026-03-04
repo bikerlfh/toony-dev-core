@@ -2,12 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getAgent, updateAgent } from "@/lib/api/agents";
+import { getSubAgent, updateSubAgent } from "@/lib/api/sub-agents";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
-import type { AgentDetail, AgentStatus, AgentType } from "@/types";
+import type { SubAgentDetail, SubAgentStatus, SubAgentType } from "@/types";
 
-const AGENT_TYPES: { value: AgentType; label: string }[] = [
+const AGENT_TYPES: { value: SubAgentType; label: string }[] = [
   { value: "CODER", label: "Coder" },
   { value: "REVIEWER", label: "Reviewer" },
   { value: "TESTER", label: "Tester" },
@@ -15,25 +15,25 @@ const AGENT_TYPES: { value: AgentType; label: string }[] = [
   { value: "CUSTOM", label: "Custom" },
 ];
 
-const STATUSES: { value: AgentStatus; label: string }[] = [
+const STATUSES: { value: SubAgentStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
   { value: "ACTIVE", label: "Active" },
   { value: "INACTIVE", label: "Inactive" },
   { value: "DEPRECATED", label: "Deprecated" },
 ];
 
-export default function EditAgentPage() {
+export default function EditSubAgentPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
   const agentSlug = params.agentSlug as string;
 
-  const [agent, setAgent] = useState<AgentDetail | null>(null);
+  const [agent, setAgent] = useState<SubAgentDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [name, setName] = useState("");
-  const [agentType, setAgentType] = useState<AgentType>("CUSTOM");
-  const [statusVal, setStatusVal] = useState<AgentStatus>("DRAFT");
+  const [agentType, setAgentType] = useState<SubAgentType>("CUSTOM");
+  const [statusVal, setStatusVal] = useState<SubAgentStatus>("DRAFT");
   const [version, setVersion] = useState("");
   const [description, setDescription] = useState("");
   const [markdown, setMarkdown] = useState("");
@@ -45,7 +45,7 @@ export default function EditAgentPage() {
 
   const fetchAgent = useCallback(async () => {
     try {
-      const data = await getAgent(agentSlug);
+      const data = await getSubAgent(agentSlug);
       setAgent(data);
       setName(data.name);
       setAgentType(data.agent_type);
@@ -71,7 +71,7 @@ export default function EditAgentPage() {
     setIsSubmitting(true);
 
     try {
-      await updateAgent(agentSlug, {
+      await updateSubAgent(agentSlug, {
         name,
         agent_type: agentType,
         status: statusVal,
@@ -87,14 +87,14 @@ export default function EditAgentPage() {
               .filter(Boolean)
           : [],
       });
-      router.push(`/${orgSlug}/agents`);
+      router.push(`/${orgSlug}/subagents`);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })
         ?.response?.data;
       if (data) {
         setError(Object.values(data).flat().join(" "));
       } else {
-        setError("Failed to update agent.");
+        setError("Failed to update sub-agent.");
       }
     } finally {
       setIsSubmitting(false);
@@ -109,20 +109,20 @@ export default function EditAgentPage() {
             <div key={i} className="h-1 w-6 rounded-full bg-slate-700 animate-pulse" style={{ animationDelay: `${i * 150}ms` }} />
           ))}
         </div>
-        Loading agent...
+        Loading sub-agent...
       </div>
     );
   }
 
   if (!agent) {
-    return <p className="pt-12 text-slate-500">Agent not found.</p>;
+    return <p className="pt-12 text-slate-500">Sub-agent not found.</p>;
   }
 
   return (
     <div>
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push(`/${orgSlug}/agents`)}
+          onClick={() => router.push(`/${orgSlug}/subagents`)}
           className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
         >
           <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -150,7 +150,7 @@ export default function EditAgentPage() {
               label="Markdown"
               value={markdown}
               onChange={setMarkdown}
-              placeholder="# Agent instructions..."
+              placeholder="# Sub-agent instructions..."
               rows={28}
             />
           </div>
@@ -177,7 +177,7 @@ export default function EditAgentPage() {
                   <Select
                     options={AGENT_TYPES}
                     value={agentType}
-                    onChange={(v) => setAgentType(v as AgentType)}
+                    onChange={(v) => setAgentType(v as SubAgentType)}
                     className="mt-1.5"
                   />
                 </div>
@@ -187,7 +187,7 @@ export default function EditAgentPage() {
                   <Select
                     options={STATUSES}
                     value={statusVal}
-                    onChange={(v) => setStatusVal(v as AgentStatus)}
+                    onChange={(v) => setStatusVal(v as SubAgentStatus)}
                     className="mt-1.5"
                   />
                 </div>
@@ -262,7 +262,7 @@ export default function EditAgentPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => router.push(`/${orgSlug}/agents`)}
+                onClick={() => router.push(`/${orgSlug}/subagents`)}
                 className="flex-1 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
               >
                 Cancel
@@ -272,7 +272,7 @@ export default function EditAgentPage() {
                 disabled={isSubmitting}
                 className="flex-1 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
               >
-                {isSubmitting ? "Saving..." : "Save agent"}
+                {isSubmitting ? "Saving..." : "Save sub-agent"}
               </button>
             </div>
           </div>

@@ -2,12 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createAgent } from "@/lib/api/agents";
+import { createSubAgent } from "@/lib/api/sub-agents";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select } from "@/components/ui/select";
-import type { AgentType } from "@/types";
+import type { SubAgentType } from "@/types";
 
-const AGENT_TYPES: { value: AgentType; label: string }[] = [
+const AGENT_TYPES: { value: SubAgentType; label: string }[] = [
   { value: "CODER", label: "Coder" },
   { value: "REVIEWER", label: "Reviewer" },
   { value: "TESTER", label: "Tester" },
@@ -15,14 +15,14 @@ const AGENT_TYPES: { value: AgentType; label: string }[] = [
   { value: "CUSTOM", label: "Custom" },
 ];
 
-export default function NewAgentPage() {
+export default function NewSubAgentPage() {
   const params = useParams();
   const router = useRouter();
   const orgSlug = params.orgSlug as string;
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [agentType, setAgentType] = useState<AgentType>("CUSTOM");
+  const [agentType, setAgentType] = useState<SubAgentType>("CUSTOM");
   const [version, setVersion] = useState("0.1.0");
   const [description, setDescription] = useState("");
   const [markdown, setMarkdown] = useState("");
@@ -50,7 +50,7 @@ export default function NewAgentPage() {
     setIsSubmitting(true);
 
     try {
-      await createAgent({
+      await createSubAgent({
         name,
         slug,
         organization: isGlobal ? null : orgSlug,
@@ -67,14 +67,14 @@ export default function NewAgentPage() {
               .filter(Boolean)
           : [],
       });
-      router.push(`/${orgSlug}/agents`);
+      router.push(`/${orgSlug}/subagents`);
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })
         ?.response?.data;
       if (data) {
         setError(Object.values(data).flat().join(" "));
       } else {
-        setError("Failed to create agent.");
+        setError("Failed to create sub-agent.");
       }
     } finally {
       setIsSubmitting(false);
@@ -85,14 +85,14 @@ export default function NewAgentPage() {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push(`/${orgSlug}/agents`)}
+          onClick={() => router.push(`/${orgSlug}/subagents`)}
           className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
         >
           <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 3L5 8l5 5" />
           </svg>
         </button>
-        <h1 className="text-2xl font-medium tracking-tight text-white">Create agent</h1>
+        <h1 className="text-2xl font-medium tracking-tight text-white">Create sub-agent</h1>
       </div>
 
       {error && (
@@ -110,7 +110,7 @@ export default function NewAgentPage() {
               label="Markdown"
               value={markdown}
               onChange={setMarkdown}
-              placeholder={"# Agent instructions\n\nDescribe what this agent does, its capabilities, and how it should behave..."}
+              placeholder={"# Sub-agent instructions\n\nDescribe what this sub-agent does..."}
               rows={28}
             />
           </div>
@@ -138,7 +138,7 @@ export default function NewAgentPage() {
                   <Select
                     options={AGENT_TYPES}
                     value={agentType}
-                    onChange={(v) => setAgentType(v as AgentType)}
+                    onChange={(v) => setAgentType(v as SubAgentType)}
                     className="mt-1.5"
                   />
                 </div>
@@ -228,7 +228,7 @@ export default function NewAgentPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => router.push(`/${orgSlug}/agents`)}
+                onClick={() => router.push(`/${orgSlug}/subagents`)}
                 className="flex-1 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
               >
                 Cancel
@@ -238,7 +238,7 @@ export default function NewAgentPage() {
                 disabled={isSubmitting}
                 className="flex-1 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
               >
-                {isSubmitting ? "Creating..." : "Create agent"}
+                {isSubmitting ? "Creating..." : "Create sub-agent"}
               </button>
             </div>
           </div>
