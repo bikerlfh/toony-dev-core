@@ -35,7 +35,8 @@ app/
       labels/               — Labels CRUD
       members/              — Org members
       settings/             — Org settings
-      agents/               — Agents & Skills (tabbed)
+      subagents/            — Sub-Agents list, create, edit
+      skills/               — Skills list, create, edit
       credentials/          — Credentials & Integrations (tabbed)
       imports/              — Import wizard + history
 ```
@@ -45,7 +46,7 @@ app/
 - **`lib/api.ts`** — Axios instance, `baseURL` from `NEXT_PUBLIC_API_URL`. Request interceptor adds `Authorization: Bearer`. Response interceptor handles 401 with silent refresh + request queue.
 - **`lib/auth.ts`** — `setTokens()`/`clearTokens()` manage localStorage (`toony_access_token`, `toony_refresh_token`) + cookie signal (`toony_authenticated`).
 - **`lib/roles.ts`** — OWNER(0) > ADMIN(1) > MANAGER(2) > MEMBER(3) > VIEWER(4). Helpers: `canManageMembers` (ADMIN+), `canEditOrg` (ADMIN+), `canDeleteOrg` (OWNER), `canManageTeams` (ADMIN+), `canCreateProject` (MANAGER+), `canManageLabels` (ADMIN+).
-- **`lib/api/`** — Domain API modules (auth, organizations, members, settings, teams, projects, milestones, cycles, labels, issues, agents, skills, agent-skills, credentials, integrations, imports, search). All re-exported from `lib/api/index.ts`.
+- **`lib/api/`** — Domain API modules (auth, organizations, members, settings, teams, projects, milestones, cycles, labels, issues, sub-agents, skills, sub-agent-skills, credentials, integrations, imports, search). All re-exported from `lib/api/index.ts`.
 - **`contexts/auth-context.tsx`** — AuthProvider at root layout. Hydrates user from token on mount.
 - **`contexts/org-context.tsx`** — OrgProvider at `[orgSlug]/layout.tsx`. Derives `currentOrg` from URL param, fetches `currentMembership`.
 - **`middleware.ts`** — Reads `toony_authenticated` cookie. Redirects unauthenticated users to `/login?redirect=<path>`. Redirects authenticated users away from auth pages.
@@ -79,7 +80,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 
 - **`hooks/use-websocket.ts`** — Core hook. Exponential backoff reconnect (1s × 2^retries, cap 30s, max 10 retries). Auth close codes 4001/4003 stop reconnect.
 - **`hooks/use-project-websocket.ts`** — `ws/projects/{id}/?token=`. Handles issue + comment CRUD events.
-- **`hooks/use-agent-websocket.ts`** — `ws/agents/{id}/?token=`. Handles task + heartbeat events. Send helpers: `sendTaskResult`, `sendStatusUpdate`, `sendHeartbeat`.
+- **`hooks/use-agent-websocket.ts`** — `ws/subagents/{id}/?token=`. Handles task + heartbeat events. Send helpers: `sendTaskResult`, `sendStatusUpdate`, `sendHeartbeat`. Hook: `useSubAgentWebSocket`.
 
 ### Tech Stack
 
@@ -126,9 +127,9 @@ useEffect(() => { fetchData(); }, [fetchData]);
 - `IssueActivity` — `id`, `action`, `field_changed`, `old_value`, `new_value`, `user`, `created_at`
 
 **agents.ts:**
-- `AgentList` / `AgentDetail` — `id`, `name`, `slug`, `description`, `version`, `status`, `agent_type`, `capabilities`, `max_concurrent_tasks`, `tags`, `created_by`, `assigned_projects`, `skill_count`
+- `SubAgentList` / `SubAgentDetail` — `id`, `name`, `slug`, `description`, `version`, `status`, `agent_type`, `capabilities`, `max_concurrent_tasks`, `tags`, `created_by`, `assigned_projects`, `skill_count`
 - `SkillList` / `SkillDetail` — `id`, `name`, `slug`, `description`, `version`, `content`, `status`, `category`, `input_schema`, `output_schema`, `compatible_agent_types`, `tags`, `created_by`, `agent_count`
-- `AgentSkill` — `id`, `agent`, `skill`, `priority`, `is_enabled`, `custom_config`
+- `SubAgentSkill` — `id`, `sub_agent`, `skill`, `priority`, `is_enabled`, `custom_config`
 - `SkillVersion` — `id`, `version`, `content`, `changelog`, `created_by`, `created_at`
 
 **credentials.ts:**
@@ -142,7 +143,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 
 **websocket.ts:**
 - `ProjectWsEvent` — union of `issue.created`, `issue.updated`, `issue.deleted`, `comment.created`, `comment.updated`, `comment.deleted`
-- `AgentWsEvent` — union of `task.assign`, `heartbeat.ack`
+- `SubAgentWsEvent` — union of `task.assign`, `heartbeat.ack`
 
 **index.ts:**
 - `PaginatedResponse<T>` — `{ next, previous, results }`

@@ -99,9 +99,9 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 - **IssueActivity** — `issue` → Issue, `user` → User, `action`, `field_changed`, `old_value`, `new_value`, `created_at` (no updated_at)
 
 ### agents app
-- **Agent** — `organization` → Org, `name`, `slug`, `description`, `version`, `status` (DRAFT|ACTIVE|INACTIVE|DEPRECATED), `agent_type` (CODER|REVIEWER|TESTER|PLANNER|CUSTOM), `capabilities` (JSON), `encrypted_configuration`, `max_concurrent_tasks`, `tags` (JSON), `created_by` → User, `assigned_projects` → M2M Project
+- **SubAgent** — `organization` → Org, `name`, `slug`, `description`, `version`, `status` (DRAFT|ACTIVE|INACTIVE|DEPRECATED), `agent_type` (CODER|REVIEWER|TESTER|PLANNER|CUSTOM), `capabilities` (JSON), `encrypted_configuration`, `max_concurrent_tasks`, `tags` (JSON), `created_by` → User, `assigned_projects` → M2M Project
 - **Skill** — `organization` → Org, `name`, `slug`, `description`, `version`, `content`, `status`, `category` (CODING|TESTING|REVIEW|DOCUMENTATION|DEPLOYMENT|CUSTOM), `input_schema` (JSON), `output_schema` (JSON), `compatible_agent_types` (JSON), `tags` (JSON), `created_by` → User
-- **AgentSkill** — `agent` → Agent, `skill` → Skill, `priority`, `is_enabled`, `custom_config` (JSON)
+- **SubAgentSkill** — `sub_agent` → SubAgent, `skill` → Skill, `priority`, `is_enabled`, `custom_config` (JSON)
 - **SkillVersion** — `skill` → Skill, `version`, `content`, `changelog`, `created_by` → User
 
 ### importers app
@@ -130,7 +130,7 @@ api/v1/organizations/<org_slug>/              (GET, PUT, DELETE)
     /issues/, /issues/<identifier>/
       /comments/, /comments/<id>/
       /activities/
-  /agents/, /agents/<agent_slug>/
+  /subagents/, /subagents/<sub_agent_slug>/
     /skills/, /skills/<id>/
   /skills/, /skills/<skill_slug>/
     /versions/
@@ -139,5 +139,5 @@ api/v1/organizations/<org_slug>/              (GET, PUT, DELETE)
   /imports/external-projects/
 
 ws/projects/<uuid:project_id>/     (JWT via ?token=)
-ws/agents/<uuid:agent_id>/         (JWT via ?token=)
+ws/subagents/<uuid:sub_agent_id>/  (JWT via ?token=)
 ```
