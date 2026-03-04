@@ -18,7 +18,11 @@ export {
   addTeamMember,
   updateTeamMemberRole,
   removeTeamMember,
-} from "./teams";
+  listLabels,
+  createLabel,
+  updateLabel,
+  deleteLabel,
+} from "./workspace";
 export {
   listProjects,
   createProject,
@@ -47,11 +51,10 @@ export {
   deleteCycle,
 } from "./cycles";
 export {
-  listLabels,
-  createLabel,
-  updateLabel,
-  deleteLabel,
-} from "./labels";
+  listProjectTeams,
+  addProjectTeam,
+  removeProjectTeam,
+} from "./project-teams";
 export {
   listCredentials,
   createCredential,

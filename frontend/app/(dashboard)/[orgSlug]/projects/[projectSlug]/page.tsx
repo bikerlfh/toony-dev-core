@@ -26,7 +26,7 @@ import {
   updateCycle,
   deleteCycle,
 } from "@/lib/api/cycles";
-import { listLabels } from "@/lib/api/labels";
+import { listLabels } from "@/lib/api/workspace";
 import { listIssues, updateIssue } from "@/lib/api/issues";
 import { listResources, createResource, updateResource, deleteResource } from "@/lib/api/resources";
 import { canCreateProject, canManageIssues } from "@/lib/roles";
@@ -168,9 +168,6 @@ export default function ProjectDetailPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-medium tracking-tight text-white">{project.name}</h1>
-            <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
-              {project.team.identifier}
-            </span>
           </div>
           <div className="mt-2 flex items-center gap-2">
             <StatusBadge status={project.status} />
@@ -361,12 +358,7 @@ function OverviewTab({
         <p className="text-sm leading-relaxed text-slate-400">{project.description}</p>
       )}
 
-      <div className={`${project.description ? "mt-6" : ""} grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30`}>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Team</p>
-          <p className="mt-2 text-sm font-medium text-slate-200">{project.team.name}</p>
-          <span className="mt-1 inline-block rounded-md bg-slate-800 px-1.5 py-0.5 text-xs font-mono text-slate-500">{project.team.identifier}</span>
-        </div>
+      <div className={`${project.description ? "mt-6" : ""} grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30`}>
         <div className="bg-slate-950 p-5">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Lead</p>
           <p className="mt-2 text-sm font-medium text-slate-200">
@@ -1189,7 +1181,7 @@ function IssuesTab({ orgSlug, projectSlug, projectId, canManage }: { orgSlug: st
       listProjectMembers(orgSlug, projectSlug),
       listMilestones(orgSlug, projectSlug),
       listCycles(orgSlug, projectSlug),
-      listLabels(orgSlug),
+      listLabels(),
     ]);
     setMembers(m.results);
     setMilestones(ms.results);

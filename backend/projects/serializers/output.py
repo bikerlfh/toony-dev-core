@@ -6,83 +6,18 @@ from projects.models import (
     Issue,
     IssueActivity,
     IssueComment,
-    Label,
     Milestone,
     Project,
     ProjectMembership,
     ProjectResource,
     ProjectSettings,
-    Team,
-    TeamMembership,
 )
-
-
-# --- Team ---
-
-class TeamListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Team
-        fields = [
-            "id",
-            "name",
-            "slug",
-            "identifier",
-            "is_active",
-            "created_at",
-        ]
-        read_only_fields = fields
-
-
-class TeamDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Team
-        fields = [
-            "id",
-            "name",
-            "slug",
-            "description",
-            "identifier",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = fields
-
-
-class TeamMembershipSerializer(serializers.ModelSerializer):
-    user = UserDetailSerializer(read_only=True)
-
-    class Meta:
-        model = TeamMembership
-        fields = [
-            "id",
-            "user",
-            "role",
-            "joined_at",
-        ]
-        read_only_fields = fields
-
-
-# --- Label ---
-
-class LabelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Label
-        fields = [
-            "id",
-            "name",
-            "color",
-            "description",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = fields
+from workspace.serializers.output import LabelSerializer
 
 
 # --- Project ---
 
 class ProjectListSerializer(serializers.ModelSerializer):
-    team = TeamListSerializer(read_only=True)
     lead = UserDetailSerializer(read_only=True)
 
     class Meta:
@@ -93,7 +28,6 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "slug",
             "status",
             "priority",
-            "team",
             "lead",
             "start_date",
             "target_date",
@@ -106,7 +40,6 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
-    team = TeamListSerializer(read_only=True)
     lead = UserDetailSerializer(read_only=True)
 
     class Meta:
@@ -119,7 +52,6 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             "short_summary",
             "status",
             "priority",
-            "team",
             "lead",
             "start_date",
             "target_date",

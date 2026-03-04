@@ -10,10 +10,9 @@ from organizations.models import (
 )
 from projects.serializers.output import (
     IssueListSerializer,
-    LabelSerializer,
     ProjectListSerializer,
-    TeamListSerializer,
 )
+from workspace.serializers.output import LabelSerializer, TeamListSerializer
 
 
 class OrganizationListSerializer(serializers.ModelSerializer):

@@ -6,14 +6,16 @@ from accounts.models import User
 from accounts.services import create_user
 from organizations.services import create_organization
 from projects.services import (
-    add_team_member,
     create_cycle,
     create_issue,
-    create_label,
     create_milestone,
     create_project,
-    create_team,
     create_comment,
+)
+from workspace.services import (
+    add_team_member,
+    create_label,
+    create_team,
 )
 
 
@@ -30,11 +32,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["flush"]:
             self.stdout.write("Flushing existing data...")
-            from projects.models import Issue, Cycle, Milestone, Project, Team, Label
+            from projects.models import Issue, Cycle, Milestone, Project
+            from workspace.models import Team, Label, ProjectTeam
             from organizations.models import Organization
             Issue.objects.all().delete()
             Cycle.objects.all().delete()
             Milestone.objects.all().delete()
+            ProjectTeam.objects.all().delete()
             Project.objects.all().delete()
             Team.objects.all().delete()
             Label.objects.all().delete()
@@ -76,7 +80,6 @@ class Command(BaseCommand):
 
         self.stdout.write("Creating teams...")
         eng_team = create_team(
-            organization=org,
             name="Engineering",
             slug="engineering",
             identifier="ENG",
@@ -84,7 +87,6 @@ class Command(BaseCommand):
             description="Engineering team",
         )
         des_team = create_team(
-            organization=org,
             name="Design",
             slug="design",
             identifier="DES",
@@ -104,13 +106,12 @@ class Command(BaseCommand):
             ("Priority: Critical", "#dc2626", "Critical priority"),
         ]
         for name, color, description in label_data:
-            labels[name] = create_label(org, name, color=color, description=description)
+            labels[name] = create_label(name, color=color, description=description)
 
         self.stdout.write("Creating projects...")
         today = date.today()
         p1 = create_project(
             organization=org,
-            team=eng_team,
             name="Backend API",
             slug="backend-api",
             creator=admin,
@@ -122,7 +123,6 @@ class Command(BaseCommand):
         )
         p2 = create_project(
             organization=org,
-            team=eng_team,
             name="Frontend App",
             slug="frontend-app",
             creator=admin,
@@ -134,7 +134,6 @@ class Command(BaseCommand):
         )
         p3 = create_project(
             organization=org,
-            team=des_team,
             name="Design System",
             slug="design-system",
             creator=admin,
@@ -142,6 +141,12 @@ class Command(BaseCommand):
             status="PLANNED",
             priority="MEDIUM",
         )
+
+        # Associate projects with teams
+        from workspace.services import add_project_team
+        add_project_team(p1, eng_team)
+        add_project_team(p2, eng_team)
+        add_project_team(p3, des_team)
 
         # Add member to projects
         from projects.services import add_project_member

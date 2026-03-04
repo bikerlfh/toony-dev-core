@@ -74,7 +74,7 @@ class Issue(BaseModel):
         related_name="reported_issues",
     )
     labels = models.ManyToManyField(
-        "projects.Label",
+        "workspace.Label",
         blank=True,
         related_name="issues",
     )

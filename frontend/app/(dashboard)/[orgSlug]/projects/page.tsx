@@ -61,7 +61,6 @@ export default function ProjectsPage() {
             <thead className="bg-slate-900">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Project</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Team</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Priority</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Lead</th>
@@ -77,11 +76,6 @@ export default function ProjectsPage() {
                 >
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-slate-200">{project.name}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-mono text-slate-400">
-                      {project.team.identifier}
-                    </span>
                   </td>
                   <td className="px-6 py-4">
                     <StatusBadge status={project.status} />

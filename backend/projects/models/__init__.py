@@ -2,7 +2,6 @@ from projects.models.activity import IssueActivity
 from projects.models.comment import IssueComment
 from projects.models.cycle import Cycle, CycleStatus
 from projects.models.issue import Issue, IssuePriority, IssueStatus
-from projects.models.label import Label
 from projects.models.milestone import Milestone, MilestoneStatus
 from projects.models.project import (
     EstimationMethod,
@@ -14,13 +13,8 @@ from projects.models.project import (
     ProjectStatus,
 )
 from projects.models.resource import ProjectResource, ResourceType
-from projects.models.team import Team, TeamMembership, TeamRole
 
 __all__ = [
-    "Team",
-    "TeamMembership",
-    "TeamRole",
-    "Label",
     "Project",
     "ProjectStatus",
     "ProjectPriority",

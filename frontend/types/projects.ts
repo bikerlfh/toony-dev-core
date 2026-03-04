@@ -85,13 +85,19 @@ export type ProjectMemberRole = "LEAD" | "CONTRIBUTOR" | "REVIEWER";
 
 export type EstimationMethod = "STORY_POINTS" | "T_SHIRT" | "HOURS";
 
+export interface ProjectTeam {
+  id: string;
+  project: string;
+  team: Team;
+  created_at: string;
+}
+
 export interface ProjectList {
   id: string;
   name: string;
   slug: string;
   status: ProjectStatus;
   priority: ProjectPriority;
-  team: Team;
   lead: User | null;
   start_date: string | null;
   target_date: string | null;
@@ -128,7 +134,6 @@ export interface ProjectSettings {
 }
 
 export interface CreateProjectPayload {
-  team_slug: string;
   name: string;
   slug: string;
   description?: string;

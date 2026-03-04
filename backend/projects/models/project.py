@@ -39,11 +39,6 @@ class Project(BaseModel):
         on_delete=models.CASCADE,
         related_name="projects",
     )
-    team = models.ForeignKey(
-        "projects.Team",
-        on_delete=models.CASCADE,
-        related_name="projects",
-    )
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255)
     description = models.TextField(blank=True, default="")

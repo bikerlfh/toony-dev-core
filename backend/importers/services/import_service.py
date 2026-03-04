@@ -5,7 +5,7 @@ from django.utils import timezone
 from importers.models import ImportJob, ImportJobStatus, ImportMapping
 from importers.plugins.registry import get_plugin
 from organizations.models import IntegrationConfig
-from projects.models import Label
+from workspace.models import Label
 from projects.services.issue_service import create_issue
 
 
@@ -109,7 +109,6 @@ def _run_import(import_job, plugin, external_project_id, user):
             for label_name in ext_issue.labels:
                 if label_name not in label_cache:
                     label_obj, _ = Label.objects.get_or_create(
-                        organization=import_job.organization,
                         name=label_name,
                         defaults={"color": "#6b7280"},
                     )

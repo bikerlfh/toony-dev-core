@@ -10,7 +10,6 @@ from organizations.permissions import IsOrganizationAdmin, IsOrganizationManager
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
     get_project_settings,
-    get_team_by_slug,
     list_organization_projects,
     list_project_members,
     get_project_membership,
@@ -54,17 +53,10 @@ class ProjectListCreateView(PaginatedViewMixin, APIView):
         serializer = CreateProjectSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        data = serializer.validated_data
-        team_slug = data.pop("team_slug")
-        team = get_team_by_slug(request.organization, team_slug)
-        if team is None:
-            raise NotFound("Team not found.")
-
         project = create_project(
             organization=request.organization,
-            team=team,
             creator=request.user,
-            **data,
+            **serializer.validated_data,
         )
         output = ProjectDetailSerializer(project).data
         return Response(output, status=status.HTTP_201_CREATED)

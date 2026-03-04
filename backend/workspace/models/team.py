@@ -10,32 +10,17 @@ class TeamRole(models.TextChoices):
 
 
 class Team(BaseModel):
-    organization = models.ForeignKey(
-        "organizations.Organization",
-        on_delete=models.CASCADE,
-        related_name="teams",
-    )
     name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True, default="")
-    identifier = models.CharField(max_length=10)
+    identifier = models.CharField(max_length=10, unique=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = "teams"
+        db_table = "workspace_teams"
         ordering = ["-created_at"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["organization", "slug"],
-                name="unique_org_team_slug",
-            ),
-            models.UniqueConstraint(
-                fields=["organization", "identifier"],
-                name="unique_org_team_identifier",
-            ),
-        ]
         indexes = [
-            models.Index(fields=["organization", "name"]),
+            models.Index(fields=["name"]),
         ]
 
     def __str__(self):
@@ -51,7 +36,7 @@ class TeamMembership(BaseModel):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="team_memberships",
+        related_name="workspace_team_memberships",
     )
     role = models.CharField(
         max_length=20,
@@ -61,12 +46,12 @@ class TeamMembership(BaseModel):
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = "team_memberships"
+        db_table = "workspace_team_memberships"
         ordering = ["-joined_at"]
         constraints = [
             models.UniqueConstraint(
                 fields=["team", "user"],
-                name="unique_team_user",
+                name="unique_workspace_team_user",
             ),
         ]
 

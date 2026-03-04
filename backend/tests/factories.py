@@ -8,14 +8,12 @@ from projects.models import (
     Cycle,
     Issue,
     IssueComment,
-    Label,
     Milestone,
     Project,
     ProjectMembership,
     ProjectSettings,
-    Team,
-    TeamMembership,
 )
+from workspace.models import Label, Team, TeamMembership
 from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent, ToonyAgentKey
 
 
@@ -59,7 +57,6 @@ class TeamFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Team
 
-    organization = factory.SubFactory(OrganizationFactory)
     name = factory.Sequence(lambda n: f"Team {n}")
     slug = factory.Sequence(lambda n: f"team-{n}")
     identifier = factory.Sequence(lambda n: f"T{n}")
@@ -79,7 +76,6 @@ class LabelFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Label
 
-    organization = factory.SubFactory(OrganizationFactory)
     name = factory.Sequence(lambda n: f"Label {n}")
     color = "#6b7280"
 
@@ -89,7 +85,6 @@ class ProjectFactory(factory.django.DjangoModelFactory):
         model = Project
 
     organization = factory.SubFactory(OrganizationFactory)
-    team = factory.SubFactory(TeamFactory)
     name = factory.Sequence(lambda n: f"Project {n}")
     slug = factory.Sequence(lambda n: f"project-{n}")
     description = "Test project"

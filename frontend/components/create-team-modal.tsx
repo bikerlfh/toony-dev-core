@@ -1,11 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { createTeam } from "@/lib/api/teams";
+import { createTeam } from "@/lib/api/workspace";
 import type { TeamDetail } from "@/types";
 
 interface CreateTeamModalProps {
-  orgSlug: string;
   onClose: () => void;
   onCreated: (team: TeamDetail) => void;
 }
@@ -20,7 +19,7 @@ function slugify(text: string): string {
 const INPUT_CLASS =
   "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
 
-export function CreateTeamModal({ orgSlug, onClose, onCreated }: CreateTeamModalProps) {
+export function CreateTeamModal({ onClose, onCreated }: CreateTeamModalProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [identifier, setIdentifier] = useState("");
@@ -41,7 +40,7 @@ export function CreateTeamModal({ orgSlug, onClose, onCreated }: CreateTeamModal
     setIsSubmitting(true);
 
     try {
-      const team = await createTeam(orgSlug, { name, slug, identifier, description });
+      const team = await createTeam({ name, slug, identifier, description });
       onCreated(team);
       onClose();
     } catch (err: unknown) {

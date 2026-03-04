@@ -1,6 +1,7 @@
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 
-from projects.models import Issue, Label, Project, Team
+from projects.models import Issue, Project
+from workspace.models import Label, Team
 
 
 def global_search(organization, query, *, limit=5):
@@ -25,7 +26,7 @@ def global_search(organization, query, *, limit=5):
     # Projects
     project_qs = (
         Project.objects.filter(organization=organization)
-        .select_related("team", "lead")
+        .select_related("lead")
         .annotate(
             rank=SearchRank(
                 SearchVector("name", weight="A") + SearchVector("description", weight="B"),
@@ -38,7 +39,7 @@ def global_search(organization, query, *, limit=5):
 
     # Teams
     team_qs = (
-        Team.objects.filter(organization=organization, is_active=True)
+        Team.objects.filter(is_active=True)
         .annotate(
             rank=SearchRank(
                 SearchVector("name", weight="A") + SearchVector("description", weight="B"),
@@ -51,7 +52,7 @@ def global_search(organization, query, *, limit=5):
 
     # Labels — simple icontains since names are short
     label_qs = (
-        Label.objects.filter(organization=organization, name__icontains=query)
+        Label.objects.filter(name__icontains=query)
         .order_by("name")[:limit]
     )
 

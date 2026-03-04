@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useOrg } from "@/contexts/org-context";
-import { listLabels, createLabel, updateLabel, deleteLabel } from "@/lib/api/labels";
+import { listLabels, createLabel, updateLabel, deleteLabel } from "@/lib/api/workspace";
 import { canManageLabels } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import type { Label } from "@/types";
@@ -29,11 +29,11 @@ export default function LabelsPage() {
 
   const fetchLabels = useCallback(async () => {
     try {
-      setLabels((await listLabels(orgSlug)).results);
+      setLabels((await listLabels()).results);
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug]);
+  }, []);
 
   useEffect(() => {
     fetchLabels();
@@ -43,7 +43,7 @@ export default function LabelsPage() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await deleteLabel(orgSlug, deleteTarget.id);
+      await deleteLabel(deleteTarget.id);
       setDeleteTarget(null);
       fetchLabels();
     } finally {
@@ -110,11 +110,11 @@ export default function LabelsPage() {
       )}
 
       {showCreate && (
-        <LabelFormModal orgSlug={orgSlug} onClose={() => setShowCreate(false)} onSaved={fetchLabels} />
+        <LabelFormModal onClose={() => setShowCreate(false)} onSaved={fetchLabels} />
       )}
 
       {editTarget && (
-        <LabelFormModal orgSlug={orgSlug} label={editTarget} onClose={() => setEditTarget(null)} onSaved={fetchLabels} />
+        <LabelFormModal label={editTarget} onClose={() => setEditTarget(null)} onSaved={fetchLabels} />
       )}
 
       {deleteTarget && (
@@ -138,12 +138,10 @@ const LABEL_INPUT_CLASS =
   "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
 
 function LabelFormModal({
-  orgSlug,
   label,
   onClose,
   onSaved,
 }: {
-  orgSlug: string;
   label?: Label;
   onClose: () => void;
   onSaved: () => void;
@@ -162,9 +160,9 @@ function LabelFormModal({
 
     try {
       if (isEdit && label) {
-        await updateLabel(orgSlug, label.id, { name, color, description });
+        await updateLabel(label.id, { name, color, description });
       } else {
-        await createLabel(orgSlug, { name, color, description });
+        await createLabel({ name, color, description });
       }
       onSaved();
       onClose();

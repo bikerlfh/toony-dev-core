@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useOrg } from "@/contexts/org-context";
-import { listTeams, deleteTeam } from "@/lib/api/teams";
+import { listTeams, deleteTeam } from "@/lib/api/workspace";
 import { canManageTeams } from "@/lib/roles";
 import { CreateTeamModal } from "@/components/create-team-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -25,12 +25,12 @@ export default function TeamsPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const res = await listTeams(orgSlug);
+      const res = await listTeams();
       setTeams(res.results);
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug]);
+  }, []);
 
   useEffect(() => {
     fetchTeams();
@@ -40,7 +40,7 @@ export default function TeamsPage() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await deleteTeam(orgSlug, deleteTarget.slug);
+      await deleteTeam(deleteTarget.slug);
       setDeleteTarget(null);
       fetchTeams();
     } finally {
@@ -102,7 +102,6 @@ export default function TeamsPage() {
 
       {showCreate && (
         <CreateTeamModal
-          orgSlug={orgSlug}
           onClose={() => setShowCreate(false)}
           onCreated={() => fetchTeams()}
         />

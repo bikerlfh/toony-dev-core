@@ -11,7 +11,7 @@ import {
   addTeamMember,
   updateTeamMemberRole,
   removeTeamMember,
-} from "@/lib/api/teams";
+} from "@/lib/api/workspace";
 import { canManageTeams } from "@/lib/roles";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { Select } from "@/components/ui/select";
@@ -62,8 +62,8 @@ export default function TeamDetailPage() {
   const fetchTeam = useCallback(async () => {
     try {
       const [teamData, memberData] = await Promise.all([
-        getTeam(orgSlug, teamSlug),
-        listTeamMembers(orgSlug, teamSlug),
+        getTeam(teamSlug),
+        listTeamMembers(teamSlug),
       ]);
       setTeam(teamData);
       setMembers(memberData.results);
@@ -72,7 +72,7 @@ export default function TeamDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug, teamSlug]);
+  }, [teamSlug]);
 
   useEffect(() => {
     fetchTeam();
@@ -82,7 +82,7 @@ export default function TeamDetailPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const updated = await updateTeam(orgSlug, teamSlug, {
+      const updated = await updateTeam(teamSlug, {
         name: editName,
         description: editDescription,
       });
@@ -98,7 +98,7 @@ export default function TeamDetailPage() {
     setAddError("");
     setIsAdding(true);
     try {
-      await addTeamMember(orgSlug, teamSlug, {
+      await addTeamMember(teamSlug, {
         email: newMemberEmail,
         role: newMemberRole,
       });
@@ -120,7 +120,7 @@ export default function TeamDetailPage() {
   }
 
   async function handleChangeRole(member: TeamMember, newRole: TeamRole) {
-    await updateTeamMemberRole(orgSlug, teamSlug, member.user.id, { role: newRole });
+    await updateTeamMemberRole(teamSlug, member.user.id, { role: newRole });
     fetchTeam();
   }
 
@@ -128,7 +128,7 @@ export default function TeamDetailPage() {
     if (!removeTarget) return;
     setIsRemoving(true);
     try {
-      await removeTeamMember(orgSlug, teamSlug, removeTarget.user.id);
+      await removeTeamMember(teamSlug, removeTarget.user.id);
       setRemoveTarget(null);
       fetchTeam();
     } finally {
@@ -139,7 +139,7 @@ export default function TeamDetailPage() {
   async function handleDeleteTeam() {
     setIsDeleting(true);
     try {
-      await deleteTeam(orgSlug, teamSlug);
+      await deleteTeam(teamSlug);
       router.push(`/${orgSlug}/teams`);
     } finally {
       setIsDeleting(false);

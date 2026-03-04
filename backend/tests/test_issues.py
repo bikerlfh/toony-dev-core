@@ -38,7 +38,7 @@ class TestIssueList:
     def test_create_issue_with_labels(
         self, authenticated_client, organization, project
     ):
-        label = LabelFactory(organization=organization)
+        label = LabelFactory()
         url = issues_url(organization.slug, project.slug)
         data = {
             "title": "Labeled Issue",

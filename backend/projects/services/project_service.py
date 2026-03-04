@@ -10,7 +10,7 @@ from projects.models import (
 from projects.selectors import get_project_by_slug
 
 
-def create_project(organization, team, name, slug, creator, **kwargs):
+def create_project(organization, name, slug, creator, **kwargs):
     if get_project_by_slug(organization, slug):
         raise ConflictError(
             "A project with this slug already exists in the organization."
@@ -19,7 +19,6 @@ def create_project(organization, team, name, slug, creator, **kwargs):
     with transaction.atomic():
         project = Project.objects.create(
             organization=organization,
-            team=team,
             name=name,
             slug=slug,
             lead=creator,

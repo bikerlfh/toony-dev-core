@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "accounts",
     "organizations",
     "projects",
+    "workspace",
     "agents",
     "toony_agents",
     "importers",

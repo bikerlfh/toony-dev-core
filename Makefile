@@ -91,7 +91,7 @@ lint-frontend: ## Run Next.js linter
 
 reset-db: ## Drop and recreate the database (destructive!)
 	$(COMPOSE) down -v
-	$(COMPOSE) up -d db redis
+	$(COMPOSE) up -d postgres redis
 	@echo "Waiting for database..."
 	@sleep 3
 	$(COMPOSE) up -d backend
@@ -100,7 +100,7 @@ reset-db: ## Drop and recreate the database (destructive!)
 	@echo "Database reset complete."
 
 dbshell: ## Open psql shell
-	$(COMPOSE) exec db psql -U $${DB_USER:-postgres} -d $${DB_NAME:-toony_dev}
+	$(COMPOSE) exec postgres psql -U $${DB_USER:-postgres} -d $${DB_NAME:-toony_dev}
 
 # ──────────────────────────────────────────────
 # Production

@@ -6,7 +6,7 @@ from projects.models import Project, ProjectMembership, ProjectSettings
 def list_organization_projects(organization, *, search=None):
     qs = Project.objects.filter(
         organization=organization,
-    ).select_related("team", "lead")
+    ).select_related("lead")
 
     if search:
         vector = SearchVector("name", weight="A") + SearchVector("description", weight="B")
@@ -20,7 +20,7 @@ def get_project_by_slug(organization, project_slug):
     return Project.objects.filter(
         organization=organization,
         slug=project_slug,
-    ).select_related("team", "lead").first()
+    ).select_related("lead").first()
 
 
 def list_project_members(project):

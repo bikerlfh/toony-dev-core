@@ -68,20 +68,20 @@ def organization(user):
 
 
 @pytest.fixture()
-def team(organization, user):
-    t = TeamFactory(organization=organization)
+def team(user):
+    t = TeamFactory()
     TeamMembershipFactory(team=t, user=user, role="LEAD")
     return t
 
 
 @pytest.fixture()
-def label(organization):
-    return LabelFactory(organization=organization)
+def label():
+    return LabelFactory()
 
 
 @pytest.fixture()
-def project(organization, team, user):
-    p = ProjectFactory(organization=organization, team=team, lead=user)
+def project(organization, user):
+    p = ProjectFactory(organization=organization, lead=user)
     ProjectSettingsFactory(project=p)
     ProjectMembershipFactory(project=p, user=user, role="LEAD")
     return p

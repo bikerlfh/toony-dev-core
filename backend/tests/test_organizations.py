@@ -24,7 +24,7 @@ class TestOrganizationList:
     def test_list_organizations(self, authenticated_client, organization):
         response = authenticated_client.get(ORGS_URL)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["count"] >= 1
+        assert len(response.data["results"]) >= 1
 
     def test_create_organization(self, authenticated_client):
         data = {"name": "New Org", "slug": "new-org"}

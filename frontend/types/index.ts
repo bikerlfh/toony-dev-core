@@ -38,6 +38,7 @@ export type {
   ProjectPriority,
   ProjectMemberRole,
   EstimationMethod,
+  ProjectTeam,
   ProjectList,
   ProjectDetail,
   ProjectMember,

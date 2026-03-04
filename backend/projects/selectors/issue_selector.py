@@ -1,17 +1,25 @@
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from django.db.models import Max
 
 from projects.models import Issue, IssueActivity, IssueComment
 
 
 def get_next_identifier(project):
     """Generate the next issue identifier for a project, e.g. ENG-42."""
-    prefix = project.team.identifier
-    last_number = (
-        Issue.objects.filter(project=project)
-        .aggregate(max_num=Max("sort_order"))
-        .get("max_num")
-    )
+    # Use issue_prefix_override from settings, or project slug uppercased
+    prefix = None
+    try:
+        settings = project.settings
+        if settings.issue_prefix_override:
+            prefix = settings.issue_prefix_override
+    except project._meta.model.settings.RelatedObjectDoesNotExist:
+        pass
+    if not prefix:
+        # Fallback: first associated team's identifier, or project slug
+        first_team = project.project_teams.select_related("team").first()
+        if first_team:
+            prefix = first_team.team.identifier
+        else:
+            prefix = project.slug.upper()[:10]
     # Count existing issues to determine sequence number
     count = Issue.objects.filter(
         identifier__startswith=f"{prefix}-",

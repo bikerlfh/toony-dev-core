@@ -8,8 +8,6 @@ from projects.views import (
     IssueCommentListCreateView,
     IssueDetailView,
     IssueListCreateView,
-    LabelDetailView,
-    LabelListCreateView,
     MilestoneDetailView,
     MilestoneListCreateView,
     ProjectDetailView,
@@ -19,29 +17,21 @@ from projects.views import (
     ProjectSettingsView,
     ResourceDetailView,
     ResourceListCreateView,
-    TeamDetailView,
-    TeamListCreateView,
-    TeamMemberDetailView,
-    TeamMemberListCreateView,
 )
+from workspace.views import ProjectTeamListCreateView, ProjectTeamDetailView
 
 app_name = "projects"
 
 urlpatterns = [
-    # Teams
-    path("teams/", TeamListCreateView.as_view(), name="team-list-create"),
-    path("teams/<slug:team_slug>/", TeamDetailView.as_view(), name="team-detail"),
-    path("teams/<slug:team_slug>/members/", TeamMemberListCreateView.as_view(), name="team-member-list-create"),
-    path("teams/<slug:team_slug>/members/<uuid:user_id>/", TeamMemberDetailView.as_view(), name="team-member-detail"),
-    # Labels
-    path("labels/", LabelListCreateView.as_view(), name="label-list-create"),
-    path("labels/<uuid:label_id>/", LabelDetailView.as_view(), name="label-detail"),
     # Projects
     path("projects/", ProjectListCreateView.as_view(), name="project-list-create"),
     path("projects/<slug:project_slug>/", ProjectDetailView.as_view(), name="project-detail"),
     path("projects/<slug:project_slug>/members/", ProjectMemberListCreateView.as_view(), name="project-member-list-create"),
     path("projects/<slug:project_slug>/members/<uuid:user_id>/", ProjectMemberDetailView.as_view(), name="project-member-detail"),
     path("projects/<slug:project_slug>/settings/", ProjectSettingsView.as_view(), name="project-settings"),
+    # Project Teams
+    path("projects/<slug:project_slug>/teams/", ProjectTeamListCreateView.as_view(), name="project-team-list-create"),
+    path("projects/<slug:project_slug>/teams/<uuid:team_id>/", ProjectTeamDetailView.as_view(), name="project-team-detail"),
     # Resources
     path("projects/<slug:project_slug>/resources/", ResourceListCreateView.as_view(), name="resource-list-create"),
     path("projects/<slug:project_slug>/resources/<uuid:resource_id>/", ResourceDetailView.as_view(), name="resource-detail"),
