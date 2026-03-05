@@ -48,3 +48,18 @@ async def execute_command(
     except Exception as exc:
         logger.exception("Command %r failed", key)
         return CommandResult(success=False, error=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Register built-in commands
+# ---------------------------------------------------------------------------
+
+from .filesystem import create_dir, create_file, move_file, rename_file, copy_file  # noqa: E402
+
+COMMAND_REGISTRY.update({
+    "create_dir": create_dir,
+    "create_file": create_file,
+    "move_file": move_file,
+    "rename_file": rename_file,
+    "copy_file": copy_file,
+})
