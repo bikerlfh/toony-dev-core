@@ -8,7 +8,6 @@ def get_membership(user, org_id):
         user=user,
         organization_id=org_id,
         is_active=True,
-        organization__is_active=True,
     ).select_related("organization").first()
 
 
