@@ -18,6 +18,8 @@ class AgentTask(BaseModel):
     organization = models.ForeignKey(
         "organizations.Organization",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="agent_tasks",
     )
     toony_agent = models.ForeignKey(

@@ -23,6 +23,10 @@ class IsToonyAgentOrgMember(BasePermission):
         if agent is None:
             return False
 
+        if agent.registered_by == request.user:
+            request.toony_agent = agent
+            return True
+
         agent_org_ids = agent.organizations.values_list("id", flat=True)
         has_membership = OrganizationMembership.objects.filter(
             user=request.user,

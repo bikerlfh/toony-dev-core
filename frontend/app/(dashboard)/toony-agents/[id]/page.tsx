@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { getToonyAgent, listAgentTasks } from "@/lib/api/toony-agents";
-// Role checks removed — will be re-implemented when org context is rebuilt
 import { useToonyAgentWebSocket } from "@/hooks/use-toony-agent-websocket";
-import { ToonyAgentStatusBadge } from "@/components/toony-agents/toony-agent-status-badge";
 import { ManageKeysModal } from "@/components/toony-agents/manage-keys-modal";
 import { CreateTaskModal } from "@/components/toony-agents/create-task-modal";
 import type {
@@ -16,27 +15,60 @@ import type {
   ToonyAgentWsEvent,
 } from "@/types";
 
-const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
-  QUEUED: "bg-slate-500/15 text-slate-400",
-  ASSIGNED: "bg-blue-500/15 text-blue-400",
-  RUNNING: "bg-amber-500/15 text-amber-400",
-  AWAITING_APPROVAL: "bg-purple-500/15 text-purple-400",
-  COMPLETED: "bg-emerald-500/15 text-emerald-400",
-  FAILED: "bg-red-500/15 text-red-400",
-  CANCELLED: "bg-slate-500/15 text-slate-400",
+/* ── Status config ────────────────────────────────────── */
+
+const AGENT_STATUS_STYLES: Record<ToonyAgentStatus, { dot: string; border: string; text: string }> = {
+  ONLINE: { dot: "bg-emerald-400", border: "border-emerald-500/20 bg-emerald-500/10", text: "text-emerald-400" },
+  BUSY: { dot: "bg-blue-400", border: "border-blue-500/20 bg-blue-500/10", text: "text-blue-400" },
+  OFFLINE: { dot: "bg-slate-600", border: "border-slate-700 bg-slate-800", text: "text-slate-500" },
+};
+
+const TASK_STATUS_STYLES: Record<AgentTaskStatus, { dot: string; text: string; bg: string }> = {
+  QUEUED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
+  ASSIGNED: { dot: "bg-blue-400", text: "text-blue-400", bg: "bg-blue-500/15" },
+  RUNNING: { dot: "bg-amber-400", text: "text-amber-400", bg: "bg-amber-500/15" },
+  AWAITING_APPROVAL: { dot: "bg-purple-400", text: "text-purple-400", bg: "bg-purple-500/15" },
+  COMPLETED: { dot: "bg-emerald-400", text: "text-emerald-400", bg: "bg-emerald-500/15" },
+  FAILED: { dot: "bg-red-400", text: "text-red-400", bg: "bg-red-500/15" },
+  CANCELLED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
 };
 
 const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
-  AWAITING_APPROVAL: "Awaiting Approval",
+  AWAITING_APPROVAL: "Approval",
   COMPLETED: "Completed",
   FAILED: "Failed",
   CANCELLED: "Cancelled",
 };
 
-function formatDateTime(dateStr: string | null): string {
+type TaskFilter = "ALL" | "ACTIVE" | "COMPLETED" | "FAILED";
+
+const TASK_FILTER_OPTIONS: { value: TaskFilter; label: string }[] = [
+  { value: "ALL", label: "All" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "FAILED", label: "Failed" },
+];
+
+const ACTIVE_STATUSES: AgentTaskStatus[] = ["QUEUED", "ASSIGNED", "RUNNING", "AWAITING_APPROVAL"];
+
+/* ── Helpers ──────────────────────────────────────────── */
+
+function timeAgo(dateStr: string | null): string {
+  if (!dateStr) return "Never";
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diff = Math.floor((now - then) / 1000);
+
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function fmtDate(dateStr: string | null): string {
   if (!dateStr) return "-";
   return new Date(dateStr).toLocaleString("en-US", {
     month: "short",
@@ -46,17 +78,7 @@ function formatDateTime(dateStr: string | null): string {
   });
 }
 
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return "Never";
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diff = Math.floor((now - then) / 1000);
-
-  if (diff < 60) return "Just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
+/* ── Page ──────────────────────────────────────────────── */
 
 export default function ToonyAgentDetailPage() {
   const params = useParams();
@@ -68,18 +90,18 @@ export default function ToonyAgentDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showKeysModal, setShowKeysModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
-
-  // Role checks temporarily set to true — will be re-implemented when org context is rebuilt
-  const canManage = true;
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>("ALL");
 
   const fetchAgent = useCallback(async () => {
     try {
       const data = await getToonyAgent(agentId);
       setAgent(data);
+    } catch {
+      router.push("/toony-agents");
     } finally {
       setIsLoading(false);
     }
-  }, [agentId]);
+  }, [agentId, router]);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -94,7 +116,8 @@ export default function ToonyAgentDetailPage() {
     fetchTasks();
   }, [fetchAgent, fetchTasks]);
 
-  // WebSocket handler
+  /* ── WebSocket ────────────────────────────────────────── */
+
   const handleWsEvent = useCallback(
     (event: ToonyAgentWsEvent) => {
       if (event.type === "agent.status") {
@@ -117,44 +140,119 @@ export default function ToonyAgentDetailPage() {
     onEvent: handleWsEvent,
   });
 
+  /* ── Task stats ───────────────────────────────────────── */
+
+  const stats = useMemo(() => {
+    let active = 0, completed = 0, failed = 0;
+    tasks.forEach((t) => {
+      if (ACTIVE_STATUSES.includes(t.status)) active++;
+      else if (t.status === "COMPLETED") completed++;
+      else if (t.status === "FAILED") failed++;
+    });
+    return { total: tasks.length, active, completed, failed };
+  }, [tasks]);
+
+  /* ── Task filtering ───────────────────────────────────── */
+
+  const filteredTasks = useMemo(() => {
+    switch (taskFilter) {
+      case "ACTIVE":
+        return tasks.filter((t) => ACTIVE_STATUSES.includes(t.status));
+      case "COMPLETED":
+        return tasks.filter((t) => t.status === "COMPLETED");
+      case "FAILED":
+        return tasks.filter((t) => t.status === "FAILED");
+      default:
+        return tasks;
+    }
+  }, [tasks, taskFilter]);
+
+  const hasTaskFilter = taskFilter !== "ALL";
+
   function handleTaskCreated(taskId: string) {
     router.push(`/toony-agents/${agentId}/tasks/${taskId}`);
   }
 
+  /* ── Loading ──────────────────────────────────────────── */
+
   if (isLoading) {
-    return <p className="text-slate-500">Loading...</p>;
+    return (
+      <div>
+        <div className="h-4 w-32 animate-pulse rounded bg-slate-800" />
+        <div className="mt-6 h-[140px] animate-pulse rounded-xl border border-slate-800/60 bg-slate-900" />
+        <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-[88px] animate-pulse bg-slate-950" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  if (!agent) {
-    return <p className="text-slate-500">Agent not found.</p>;
-  }
+  if (!agent) return null;
+
+  const statusStyle = AGENT_STATUS_STYLES[agent.status];
 
   return (
     <div>
-      {/* Back link */}
-      <button
-        onClick={() => router.push(`/toony-agents`)}
-        className="mb-4 text-sm text-slate-500 transition-colors hover:text-slate-300"
-      >
-        &larr; Back to Toony Agents
-      </button>
+      {/* ── Breadcrumb ─────────────────────────────────────── */}
+      <div className="mb-4">
+        <Link
+          href="/toony-agents"
+          className="text-sm text-slate-500 transition-colors hover:text-slate-300"
+        >
+          &larr; Toony Agents
+        </Link>
+      </div>
 
-      {/* Agent header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-medium tracking-tight text-white">{agent.name}</h1>
-            <ToonyAgentStatusBadge status={agent.status} />
+      {/* ── Agent identity card ────────────────────────────── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            {/* Bot icon */}
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-800/60">
+              <svg
+                className="h-6 w-6 text-slate-400"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="10" height="8" rx="2" />
+                <circle cx="6" cy="8" r="0.75" fill="currentColor" stroke="none" />
+                <circle cx="10" cy="8" r="0.75" fill="currentColor" stroke="none" />
+                <path d="M8 1.5v2.5" />
+                <path d="M1 7.5v1" />
+                <path d="M15 7.5v1" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <h1 className="truncate text-lg font-medium text-white">{agent.name}</h1>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusStyle.border} ${statusStyle.text}`}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+                  {agent.status.charAt(0) + agent.status.slice(1).toLowerCase()}
+                </span>
+              </div>
+              <span className="mt-1 inline-block font-mono text-sm text-slate-500">{agent.slug}</span>
+              <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-3.5 w-3.5 text-slate-600" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1.5 8h2.25l1.5-3.5 2.5 7 2.5-7 1.5 3.5h2.75" />
+                  </svg>
+                  {timeAgo(agent.last_heartbeat)}
+                </span>
+                <span>
+                  Registered by {agent.registered_by.first_name} {agent.registered_by.last_name}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="mt-2 flex items-center gap-4 text-sm text-slate-500">
-            <span>Last connected: {timeAgo(agent.last_connected_at)}</span>
-            <span>
-              Registered by: {agent.registered_by.first_name} {agent.registered_by.last_name}
-            </span>
-          </div>
-        </div>
-        {canManage && (
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <button
               onClick={() => setShowTaskModal(true)}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
@@ -163,61 +261,149 @@ export default function ToonyAgentDetailPage() {
             </button>
             <button
               onClick={() => setShowKeysModal(true)}
-              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+              className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
             >
               Manage Keys
             </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Tasks table */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-200">Tasks</h2>
+      {/* ── Stats bento grid ───────────────────────────────── */}
+      <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Active</dt>
+          <dd className="mt-2 text-2xl font-medium tracking-tight text-white">
+            {stats.active}
+          </dd>
+          <p className="mt-1 text-xs text-slate-600">running / queued</p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Completed</dt>
+          <dd className="mt-2 text-2xl font-medium tracking-tight text-emerald-400">
+            {stats.completed}
+          </dd>
+          <p className="mt-1 text-xs text-slate-600">tasks finished</p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Failed</dt>
+          <dd className={`mt-2 text-2xl font-medium tracking-tight ${stats.failed > 0 ? "text-red-400" : "text-white"}`}>
+            {stats.failed}
+          </dd>
+          <p className="mt-1 text-xs text-slate-600">errors</p>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Last heartbeat</dt>
+          <dd className="mt-2 text-sm text-slate-300">{timeAgo(agent.last_heartbeat)}</dd>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Last connected</dt>
+          <dd className="mt-2 text-sm text-slate-300">{timeAgo(agent.last_connected_at)}</dd>
+        </div>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Total tasks</dt>
+          <dd className="mt-2 text-2xl font-medium tracking-tight text-white">{stats.total}</dd>
+        </div>
+      </div>
 
-        {tasks.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">No tasks yet.</p>
+      {/* ── Tasks section ──────────────────────────────────── */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium text-white">Tasks</h2>
+          <div className="flex items-center gap-0.5">
+            {TASK_FILTER_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setTaskFilter(opt.value)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  taskFilter === opt.value
+                    ? "bg-slate-800 text-slate-200"
+                    : "text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Count */}
+        <p className="mt-3 text-xs text-slate-600">
+          {filteredTasks.length} task{filteredTasks.length !== 1 && "s"}
+          {hasTaskFilter && ` of ${tasks.length}`}
+        </p>
+
+        {/* Task list */}
+        {filteredTasks.length === 0 ? (
+          <div className="mt-10 text-center">
+            {hasTaskFilter ? (
+              <>
+                <p className="text-sm text-slate-500">No tasks match this filter.</p>
+                <button
+                  onClick={() => setTaskFilter("ALL")}
+                  className="mt-2 text-sm text-indigo-400 transition-colors hover:text-indigo-300"
+                >
+                  Clear filter
+                </button>
+              </>
+            ) : (
+              <div>
+                <div className="font-mono text-sm text-slate-500">
+                  <span className="text-indigo-500">~</span>
+                  <span className="text-slate-600">/</span>
+                  <span> no tasks dispatched</span>
+                </div>
+                <p className="mt-2 text-xs text-slate-600">
+                  Send a task to get started.
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
-            <table className="min-w-full divide-y divide-slate-800/60">
-              <thead className="bg-slate-900">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Title</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Started</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">Completed</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {tasks.map((task) => (
-                  <tr
-                    key={task.id}
-                    onClick={() => router.push(`/toony-agents/${agentId}/tasks/${task.id}`)}
-                    className="cursor-pointer hover:bg-slate-900/60"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-200">
-                      {task.title}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TASK_STATUS_COLORS[task.status]}`}>
-                        {TASK_STATUS_LABELS[task.status]}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
-                      {formatDateTime(task.started_at)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-400">
-                      {formatDateTime(task.completed_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-3 space-y-2">
+            {filteredTasks.map((task) => {
+              const ts = TASK_STATUS_STYLES[task.status];
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => router.push(`/toony-agents/${agentId}/tasks/${task.id}`)}
+                  className="group flex cursor-pointer items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3 transition-all hover:border-slate-700/60"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${ts.bg}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${ts.dot}`} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-white">
+                        {task.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        {fmtDate(task.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-4 ml-4">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ts.bg} ${ts.text}`}>
+                      {TASK_STATUS_LABELS[task.status]}
+                    </span>
+                    <svg
+                      className="h-4 w-4 text-slate-700 transition-colors group-hover:text-slate-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ──────────────────────────────────────────── */}
       <ManageKeysModal
         isOpen={showKeysModal}
         onClose={() => setShowKeysModal(false)}
