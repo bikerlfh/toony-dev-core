@@ -26,29 +26,26 @@ Next.js 15 App Router. All pages are `"use client"` — no server components. Da
 
 ```
 app/
-  (auth)/         — Login, Register (centered card layout)
-  (dashboard)/
-    [orgSlug]/    — OrgProvider + Sidebar wrapper
-      page.tsx              — Org dashboard
-      teams/                — Teams list, [teamSlug] detail
-      projects/             — Projects list, [projectSlug] detail (largest page: issues, milestones, cycles, members, settings tabs)
-      labels/               — Labels CRUD
-      members/              — Org members
-      settings/             — Org settings
-      subagents/            — Sub-Agents list, create, edit
-      skills/               — Skills list, create, edit
-      credentials/          — Credentials & Integrations (tabbed)
-      imports/              — Import wizard + history
+  (auth)/           — Login, Register (centered card layout)
+  (dashboard)/      — Sidebar wrapper (flat routes, no org-scoping)
+    page.tsx                        — Dashboard home (redirects to /projects)
+    organizations/                  — Org list, [id] detail (6 tabs), new
+    projects/                       — Project list, [id] detail (issues, milestones, cycles, members, settings), new
+    projects/[id]/issues/[issueId]/ — Issue detail
+    teams/                          — Teams list, [id] detail
+    labels/                         — Labels CRUD
+    subagents/                      — Sub-Agents list, [id]/edit, new
+    skills/                         — Skills list, [id]/edit, new
+    toony-agents/                   — Toony Agents list, [id] detail, [id]/tasks/[taskId]
 ```
 
 ### Key Infrastructure
 
-- **`lib/api.ts`** — Axios instance, `baseURL` from `NEXT_PUBLIC_API_URL`. Request interceptor adds `Authorization: Bearer`. Response interceptor handles 401 with silent refresh + request queue.
+- **`lib/api.ts`** — Axios instance, `baseURL` from `NEXT_PUBLIC_API_URL` (default `/api`). Request interceptor adds `Authorization: Bearer`. Response interceptor handles 401 with silent refresh + request queue.
 - **`lib/auth.ts`** — `setTokens()`/`clearTokens()` manage localStorage (`toony_access_token`, `toony_refresh_token`) + cookie signal (`toony_authenticated`).
 - **`lib/roles.ts`** — OWNER(0) > ADMIN(1) > MANAGER(2) > MEMBER(3) > VIEWER(4). Helpers: `canManageMembers` (ADMIN+), `canEditOrg` (ADMIN+), `canDeleteOrg` (OWNER), `canManageTeams` (ADMIN+), `canCreateProject` (MANAGER+), `canManageLabels` (ADMIN+).
-- **`lib/api/`** — Domain API modules (auth, organizations, members, settings, teams, projects, milestones, cycles, labels, issues, sub-agents, skills, sub-agent-skills, credentials, integrations, imports, search). All re-exported from `lib/api/index.ts`.
+- **`lib/api/`** — Domain API modules (auth, organizations, members, settings, teams, projects, milestones, cycles, labels, issues, sub-agents, skills, sub-agent-skills, credentials, integrations, imports, search). All re-exported from `lib/api/index.ts`. All use UUIDs, no slugs.
 - **`contexts/auth-context.tsx`** — AuthProvider at root layout. Hydrates user from token on mount.
-- **`contexts/org-context.tsx`** — OrgProvider at `[orgSlug]/layout.tsx`. Derives `currentOrg` from URL param, fetches `currentMembership`.
 - **`middleware.ts`** — Reads `toony_authenticated` cookie. Redirects unauthenticated users to `/login?redirect=<path>`. Redirects authenticated users away from auth pages.
 
 ### Patterns
@@ -56,15 +53,15 @@ app/
 **Data fetching:**
 ```tsx
 const fetchData = useCallback(async () => {
-  try { setData((await listThings(orgSlug)).results); }
+  try { setData((await listThings()).results); }
   finally { setIsLoading(false); }
-}, [orgSlug]);
+}, []);
 useEffect(() => { fetchData(); }, [fetchData]);
 ```
 
 **Modals:** `fixed inset-0 z-50 bg-black/50` backdrop, `max-w-sm/md rounded-lg bg-white p-6 shadow-xl` content.
 
-**Role gating:** `const canDoX = canDoXFn(currentMembership?.role)` then conditional render.
+**Role gating:** Check user roles for conditional rendering.
 
 **API errors in modals:** `Object.values(err.response.data).flat().join(" ")`.
 
@@ -74,7 +71,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 
 **`updateProject` uses PUT**, `updateOrganization` uses PATCH — be aware of this inconsistency.
 
-**Issues use `identifier`** (e.g. "PROJ-1") as URL param, not UUID.
+**Issues use UUIDs** as URL params (previously used `identifier` like "PROJ-1").
 
 ### WebSocket Hooks
 
@@ -91,7 +88,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 
 ### Environment Variables
 
-- `NEXT_PUBLIC_API_URL` — default `http://localhost:8000/api/v1`
+- `NEXT_PUBLIC_API_URL` — default `http://localhost:8000/api`
 - `NEXT_PUBLIC_WS_URL` — default `ws://localhost:8000`
 
 ## Field Map

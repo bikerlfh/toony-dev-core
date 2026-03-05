@@ -70,16 +70,23 @@ All models extend `common.BaseModel` (UUID pk, created_at, updated_at) except `U
 
 App Router with two route groups:
 - `(auth)/` — Login, Register (centered card layout)
-- `(dashboard)/[orgSlug]/` — All org-scoped pages (OrgProvider + Sidebar)
+- `(dashboard)/` — Flat routes with Sidebar wrapper (no org-scoping in URLs)
 
 All pages are `"use client"` — no server components. Data fetching is client-side via `useEffect` + Axios.
 
+Route structure uses flat paths with UUIDs:
+- `/organizations`, `/organizations/[id]` — Org list, detail (6 tabs: general, members, settings, credentials, integrations, imports)
+- `/projects`, `/projects/[id]`, `/projects/new` — Project list, detail, create
+- `/projects/[id]/issues/[issueId]` — Issue detail
+- `/teams`, `/teams/[id]` — Team list, detail
+- `/labels` — Labels CRUD
+- `/subagents`, `/skills`, `/toony-agents` — AI Studio pages
+
 Key infrastructure:
-- `lib/api.ts` — Axios instance with JWT interceptor (silent 401 refresh + request queue)
+- `lib/api.ts` — Axios instance (`baseURL: /api`), JWT interceptor (silent 401 refresh + request queue)
 - `lib/auth.ts` — Tokens in localStorage, cookie signal (`toony_authenticated`) for middleware
 - `lib/roles.ts` — Client-side role hierarchy checks (OWNER > ADMIN > MANAGER > MEMBER > VIEWER)
 - `contexts/auth-context.tsx` — AuthProvider at root layout
-- `contexts/org-context.tsx` — OrgProvider at dashboard layout, derives org from URL param
 
 Path alias: `@/` maps to `frontend/` root (e.g., `@/lib/api`, `@/types`).
 
@@ -101,5 +108,5 @@ Defined in `.env` (see `.env.example`):
 - `SECRET_KEY`, `DEBUG`, `ENVIRONMENT`, `ALLOWED_HOSTS`
 - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
 - `REDIS_URL`, `CORS_ALLOWED_ORIGINS`, `FIELD_ENCRYPTION_KEY`
-- `NEXT_PUBLIC_API_URL` (default: `http://localhost:8000/api/v1`)
+- `NEXT_PUBLIC_API_URL` (default: `http://localhost:8000/api`)
 - `NEXT_PUBLIC_WS_URL` (default: `ws://localhost:8000`)

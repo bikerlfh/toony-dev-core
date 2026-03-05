@@ -110,34 +110,52 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 
 ## API Routes
 
+All endpoints use UUIDs. No `/v1/` prefix.
+
 ```
-api/v1/auth/{register,login,refresh,me}/
-api/v1/organizations/                         (GET, POST)
-api/v1/organizations/<org_slug>/              (GET, PUT, DELETE)
+api/auth/{register,login,refresh,me}/
+
+api/organizations/                                 (GET, POST)
+api/organizations/<org_id>/                        (GET, PATCH, DELETE)
   /members/, /members/<user_id>/
   /settings/
-  /credentials/, /credentials/<id>/
-  /integrations/, /integrations/<id>/
-  /search/
-  /teams/, /teams/<team_slug>/
-    /members/, /members/<user_id>/
-  /labels/, /labels/<id>/
-  /projects/, /projects/<project_slug>/
-    /members/, /members/<user_id>/
-    /settings/
-    /milestones/, /milestones/<id>/
-    /cycles/, /cycles/<id>/
-    /issues/, /issues/<identifier>/
-      /comments/, /comments/<id>/
-      /activities/
-  /subagents/, /subagents/<sub_agent_slug>/
-    /skills/, /skills/<id>/
-  /skills/, /skills/<skill_slug>/
-    /versions/
+  /credentials/, /credentials/<credential_id>/
+  /integrations/, /integrations/<integration_id>/
   /imports/, /imports/<job_id>/
     /mappings/
   /imports/external-projects/
 
-ws/projects/<uuid:project_id>/     (JWT via ?token=)
-ws/subagents/<uuid:sub_agent_id>/  (JWT via ?token=)
+api/search/<org_id>/                               (GET, ?q=)
+
+api/workspace/
+  /labels/, /labels/<label_id>/
+  /teams/, /teams/<team_id>/
+    /members/, /members/<user_id>/
+
+api/projects/                                      (GET, POST)
+api/projects/<project_id>/                         (GET, PUT, DELETE)
+  /members/, /members/<user_id>/
+  /settings/
+  /teams/, /teams/<team_id>/
+  /resources/, /resources/<resource_id>/
+  /milestones/, /milestones/<milestone_id>/
+  /cycles/, /cycles/<cycle_id>/
+  /issues/, /issues/<issue_id>/
+    /comments/, /comments/<comment_id>/
+    /activities/
+
+api/subagents/, /subagents/<sub_agent_id>/
+  /skills/, /skills/<sub_agent_skill_id>/
+api/skills/, /skills/<skill_id>/
+  /versions/
+
+api/toony-agents/, /toony-agents/<agent_id>/
+  /keys/, /keys/<key_id>/
+  /tasks/, /tasks/<task_id>/
+    /cancel/
+    /events/
+
+ws/projects/<project_id>/        (JWT via ?token=)
+ws/subagents/<sub_agent_id>/     (JWT via ?token=)
+ws/toony-agents/<agent_id>/      (JWT via ?token=)
 ```
