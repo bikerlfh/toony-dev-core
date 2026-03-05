@@ -25,3 +25,7 @@ export function clearTokens(): void {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   document.cookie = `${AUTH_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
+
+export function clearAuthCookie(): void {
+  document.cookie = `${AUTH_COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}

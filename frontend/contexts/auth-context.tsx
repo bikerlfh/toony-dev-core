@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { User, LoginCredentials, RegisterCredentials } from "@/types";
-import { setTokens, clearTokens, getAccessToken } from "@/lib/auth";
+import { setTokens, clearTokens, getAccessToken, clearAuthCookie } from "@/lib/auth";
 import * as authApi from "@/lib/api/auth";
 
 interface AuthState {
@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = await authApi.getMe();
       setState({ user, isLoading: false, isAuthenticated: true });
     } catch {
+      clearTokens();
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, []);
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (token) {
       refreshUser();
     } else {
+      clearAuthCookie();
       setState({ user: null, isLoading: false, isAuthenticated: false });
     }
   }, [refreshUser]);
