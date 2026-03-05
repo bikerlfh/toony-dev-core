@@ -16,17 +16,25 @@ from workspace.serializers.output import LabelSerializer, TeamListSerializer
 
 
 class OrganizationListSerializer(serializers.ModelSerializer):
+    member_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Organization
         fields = [
             "id",
             "name",
             "slug",
+            "description",
+            "industry",
             "logo",
             "is_active",
+            "member_count",
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_member_count(self, obj):
+        return obj.memberships.filter(is_active=True).count()
 
 
 class OrganizationDetailSerializer(serializers.ModelSerializer):

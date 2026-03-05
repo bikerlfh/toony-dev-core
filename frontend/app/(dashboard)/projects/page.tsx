@@ -465,13 +465,6 @@ export default function ProjectsPage() {
                   <PriorityIndicator priority={project.priority} />
                 </div>
 
-                {/* Summary */}
-                {project.short_summary && (
-                  <p className="mt-2.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
-                    {project.short_summary}
-                  </p>
-                )}
-
                 {/* Meta: status + lead + date */}
                 <div className="mt-4 flex items-center justify-between border-t border-slate-800/40 pt-3">
                   <div className="flex items-center gap-1.5">
