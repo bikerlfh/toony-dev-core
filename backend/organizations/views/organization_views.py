@@ -54,7 +54,7 @@ class OrganizationDetailView(APIView):
     def get_permissions(self):
         if self.request.method == "DELETE":
             return [IsAuthenticated(), IsOrganizationOwner()]
-        if self.request.method == "PUT":
+        if self.request.method in ("PUT", "PATCH"):
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationAdmin()]
 
@@ -73,6 +73,22 @@ class OrganizationDetailView(APIView):
     )
     def put(self, request, org_id):
         serializer = UpdateOrganizationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        organization = update_organization(
+            request.organization,
+            **serializer.validated_data,
+        )
+        output = OrganizationDetailSerializer(organization).data
+        return Response(output, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=["Organizations"],
+        request=UpdateOrganizationSerializer,
+        responses={200: OrganizationDetailSerializer},
+    )
+    def patch(self, request, org_id):
+        serializer = UpdateOrganizationSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         organization = update_organization(

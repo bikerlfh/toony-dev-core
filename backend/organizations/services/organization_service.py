@@ -27,7 +27,7 @@ def create_organization(name, slug, owner, **kwargs):
 
 
 def update_organization(organization, **kwargs):
-    allowed_fields = {"name", "description", "logo", "website", "industry"}
+    allowed_fields = {"name", "description", "logo", "website", "industry", "is_active"}
     for field, value in kwargs.items():
         if field in allowed_fields:
             setattr(organization, field, value)

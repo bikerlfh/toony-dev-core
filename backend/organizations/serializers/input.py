@@ -19,6 +19,7 @@ class UpdateOrganizationSerializer(serializers.Serializer):
     description = serializers.CharField(required=False)
     website = serializers.URLField(required=False, allow_blank=True)
     industry = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    is_active = serializers.BooleanField(required=False)
 
 
 class AddMemberSerializer(serializers.Serializer):

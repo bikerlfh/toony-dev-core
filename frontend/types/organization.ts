@@ -4,8 +4,11 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
+  description: string;
+  industry: string;
   logo: string;
   is_active: boolean;
+  member_count: number;
   created_at: string;
 }
 
@@ -29,6 +32,7 @@ export interface UpdateOrganizationPayload {
   description?: string;
   website?: string;
   industry?: string;
+  is_active?: boolean;
 }
 
 export type MembershipRole = "OWNER" | "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";

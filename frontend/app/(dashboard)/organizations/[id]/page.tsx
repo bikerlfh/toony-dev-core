@@ -108,6 +108,8 @@ function GeneralTab({
   const [industry, setIndustry] = useState(org.industry || "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
   useEffect(() => {
     setName(org.name);
@@ -131,35 +133,69 @@ function GeneralTab({
     }
   }
 
+  async function handleToggleStatus() {
+    setIsTogglingStatus(true);
+    try {
+      await updateOrganization(orgId, { is_active: !org.is_active });
+      setShowStatusConfirm(false);
+      onUpdated();
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
+      setError(data ? Object.values(data).flat().join(" ") : "Failed to update status.");
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  }
+
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  // ── Edit mode ──
   if (isEditing) {
     return (
-      <div className="max-w-xl space-y-4">
+      <div className="max-w-2xl space-y-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-medium text-white">Edit organization</h3>
+          <button
+            onClick={() => setIsEditing(false)}
+            className="text-sm text-slate-500 transition-colors hover:text-slate-300"
+          >
+            Cancel
+          </button>
+        </div>
+
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
             <span>{error}</span>
           </div>
         )}
-        <div>
-          <label className="block text-sm font-medium text-slate-400">Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={INPUT_CLASS} />
+
+        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={`${INPUT_CLASS} resize-none`} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Website</label>
+              <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" className={INPUT_CLASS} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Industry</label>
+              <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className={INPUT_CLASS} />
+            </div>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-400">Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={`${INPUT_CLASS} resize-none`} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-400">Website</label>
-          <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} className={INPUT_CLASS} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-400">Industry</label>
-          <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className={INPUT_CLASS} />
-        </div>
+
         <div className="flex gap-3">
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
           >
             {isSaving ? "Saving..." : "Save changes"}
           </button>
@@ -174,51 +210,134 @@ function GeneralTab({
     );
   }
 
+  // ── View mode ──
   return (
-    <div className="max-w-xl">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-medium text-white">Organization Info</h3>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="text-sm text-indigo-400 transition-colors hover:text-indigo-300"
-        >
-          Edit
-        </button>
+    <div className="max-w-2xl space-y-6">
+      {error && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* ── Identity card ── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-800/60 text-lg font-semibold text-slate-400">
+              {org.name[0]?.toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <h3 className="truncate text-lg font-medium text-white">{org.name}</h3>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    org.is_active
+                      ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                      : "border border-slate-700 bg-slate-800 text-slate-500"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      org.is_active ? "bg-emerald-400" : "bg-slate-600"
+                    }`}
+                  />
+                  {org.is_active ? "Active" : "Inactive"}
+                </span>
+              </div>
+              <span className="mt-1 inline-block font-mono text-sm text-slate-500">{org.slug}</span>
+              {org.description && (
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{org.description}</p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => setIsEditing(true)}
+            className="shrink-0 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            Edit
+          </button>
+        </div>
       </div>
-      <dl className="mt-4 space-y-4">
-        <div>
-          <dt className="text-sm text-slate-500">Name</dt>
-          <dd className="mt-0.5 text-sm text-slate-200">{org.name}</dd>
-        </div>
-        <div>
-          <dt className="text-sm text-slate-500">Slug</dt>
-          <dd className="mt-0.5 font-mono text-sm text-slate-400">{org.slug}</dd>
-        </div>
-        <div>
-          <dt className="text-sm text-slate-500">Description</dt>
-          <dd className="mt-0.5 text-sm text-slate-200">{org.description || "No description"}</dd>
-        </div>
-        <div>
-          <dt className="text-sm text-slate-500">Website</dt>
-          <dd className="mt-0.5 text-sm text-slate-200">
+
+      {/* ── Details bento grid ── */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Website</dt>
+          <dd className="mt-2 text-sm text-slate-200">
             {org.website ? (
-              <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">
-                {org.website}
+              <a
+                href={org.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 transition-colors hover:text-indigo-300"
+              >
+                {org.website.replace(/^https?:\/\//, "")}
               </a>
             ) : (
-              "Not set"
+              <span className="text-slate-600">Not set</span>
             )}
           </dd>
         </div>
-        <div>
-          <dt className="text-sm text-slate-500">Industry</dt>
-          <dd className="mt-0.5 text-sm text-slate-200">{org.industry || "Not set"}</dd>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Industry</dt>
+          <dd className="mt-2 text-sm text-slate-200">
+            {org.industry || <span className="text-slate-600">Not set</span>}
+          </dd>
         </div>
-        <div>
-          <dt className="text-sm text-slate-500">Created</dt>
-          <dd className="mt-0.5 text-sm text-slate-400">{new Date(org.created_at).toLocaleDateString()}</dd>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Created</dt>
+          <dd className="mt-2 text-sm text-slate-400">{fmtDate(org.created_at)}</dd>
         </div>
-      </dl>
+        <div className="bg-slate-950 p-5">
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Last updated</dt>
+          <dd className="mt-2 text-sm text-slate-400">{fmtDate(org.updated_at)}</dd>
+        </div>
+      </div>
+
+      {/* ── Status control ── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-medium text-white">Organization status</h4>
+            <p className="mt-1 text-sm text-slate-500">
+              {org.is_active
+                ? "This organization is active and fully operational."
+                : "This organization is deactivated. Members cannot access its resources."}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              if (org.is_active) {
+                setShowStatusConfirm(true);
+              } else {
+                handleToggleStatus();
+              }
+            }}
+            disabled={isTogglingStatus}
+            className={`shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+              org.is_active
+                ? "border border-red-500/30 text-red-400 hover:bg-red-500/10"
+                : "bg-emerald-600 text-white hover:bg-emerald-500"
+            }`}
+          >
+            {isTogglingStatus
+              ? org.is_active ? "Deactivating..." : "Activating..."
+              : org.is_active ? "Deactivate" : "Activate"}
+          </button>
+        </div>
+      </div>
+
+      {showStatusConfirm && (
+        <ConfirmModal
+          title="Deactivate organization"
+          message={`Deactivate "${org.name}"? Members will lose access to all resources under this organization. You can reactivate it later.`}
+          confirmLabel="Deactivate"
+          confirmVariant="danger"
+          isLoading={isTogglingStatus}
+          onConfirm={handleToggleStatus}
+          onCancel={() => setShowStatusConfirm(false)}
+        />
+      )}
     </div>
   );
 }
@@ -928,11 +1047,14 @@ export default function OrganizationDetailPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-medium tracking-tight text-white">{org.name}</h1>
-          <span className="mt-1 inline-block rounded-md bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-400">
-            {org.slug}
-          </span>
+          {!org.is_active && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />
+              Inactive
+            </span>
+          )}
         </div>
       </div>
 
