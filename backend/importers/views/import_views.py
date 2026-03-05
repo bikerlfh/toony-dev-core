@@ -24,11 +24,11 @@ from importers.services import list_external_projects, start_import
 class ImportJobListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         jobs = list_organization_import_jobs(request.organization)
         return self.paginate(jobs, ImportJobListSerializer, request)
 
-    def post(self, request, org_slug):
+    def post(self, request, org_id):
         serializer = StartImportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -55,7 +55,7 @@ class ImportJobListCreateView(PaginatedViewMixin, APIView):
 class ImportJobDetailView(APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
-    def get(self, request, org_slug, job_id):
+    def get(self, request, org_id, job_id):
         job = get_import_job_by_id(request.organization, job_id)
         if job is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -66,7 +66,7 @@ class ImportJobDetailView(APIView):
 class ImportJobMappingsView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
-    def get(self, request, org_slug, job_id):
+    def get(self, request, org_id, job_id):
         job = get_import_job_by_id(request.organization, job_id)
         if job is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -77,7 +77,7 @@ class ImportJobMappingsView(PaginatedViewMixin, APIView):
 class ExternalProjectsView(APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
-    def post(self, request, org_slug):
+    def post(self, request, org_id):
         serializer = ListExternalProjectsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
