@@ -13,5 +13,4 @@ def list_user_organizations(user):
     return Organization.objects.filter(
         memberships__user=user,
         memberships__is_active=True,
-        is_active=True,
-    ).distinct()
+    ).distinct().order_by("-is_active", "-created_at")

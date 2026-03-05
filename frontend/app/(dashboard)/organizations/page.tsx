@@ -42,7 +42,7 @@ export default function OrganizationsPage() {
   const router = useRouter();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ACTIVE");
 
   const fetchOrganizations = useCallback(async () => {
     try {
