@@ -31,6 +31,8 @@ from .connection import BackendConnection
 from .protocol import (
     ApprovalNeededMessage,
     ApprovalResponse,
+    CommandExecute,
+    CommandResultMessage,
     HeartbeatMessage,
     RegisterMessage,
     TaskAcceptedMessage,
@@ -43,6 +45,7 @@ from .protocol import (
     HeartbeatAck,
     parse_server_message,
 )
+from .commands import execute_command
 from .stream_parser import (
     EVENT_TYPE_ERROR,
     EVENT_TYPE_LOG,
@@ -681,6 +684,42 @@ async def execute_task_reply(
 
 
 # ---------------------------------------------------------------------------
+# Command execution
+# ---------------------------------------------------------------------------
+
+async def _handle_command(
+    msg: CommandExecute,
+    conn: BackendConnection,
+    config: RunnerConfig,
+) -> None:
+    """Execute a backend command and send the result back."""
+    working_dir = Path(config.claude.working_directory).resolve()
+
+    # Inject backend credentials for download_backend.
+    if msg.command_key == "download_backend":
+        msg.args.setdefault("api_key", config.api_key)
+        # Convert ws:// -> http:// for REST downloads.
+        backend_http = config.backend_url.replace("ws://", "http://").replace("wss://", "https://")
+        msg.args.setdefault("backend_http_url", backend_http)
+
+    logger.info("Executing command: %s (id=%s)", msg.command_key, msg.command_id)
+    result = await execute_command(msg.command_key, msg.args, working_dir)
+    logger.info(
+        "Command %s (id=%s) result: success=%s",
+        msg.command_key, msg.command_id, result.success,
+    )
+
+    await conn.send(
+        CommandResultMessage(
+            command_id=msg.command_id,
+            success=result.success,
+            output=result.output,
+            error=result.error,
+        ).to_json()
+    )
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 
@@ -829,6 +868,13 @@ async def run(config: RunnerConfig) -> None:
 
             elif isinstance(msg, HeartbeatAck):
                 logger.debug("Heartbeat acknowledged")
+
+            elif isinstance(msg, CommandExecute):
+                logger.info(
+                    "Received command.execute: %s (id=%s)",
+                    msg.command_key, msg.command_id,
+                )
+                asyncio.create_task(_handle_command(msg, conn, config))
 
     finally:
         # Shutdown: cancel any running task.
