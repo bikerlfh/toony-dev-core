@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from accounts.models import OrganizationMembership
 from toony_agents.models import ToonyAgent, ToonyAgentKey
 
@@ -7,7 +9,7 @@ def list_toony_agents_for_user(user):
         user=user, is_active=True,
     ).values_list("organization_id", flat=True)
     return ToonyAgent.objects.filter(
-        organizations__id__in=user_org_ids,
+        Q(organizations__id__in=user_org_ids) | Q(registered_by=user),
     ).distinct().prefetch_related("organizations")
 
 
