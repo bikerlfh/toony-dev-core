@@ -70,3 +70,9 @@ COMMAND_REGISTRY.update({
     "download_url": download_url,
     "download_backend": download_backend,
 })
+
+from .git import git_clone  # noqa: E402
+
+COMMAND_REGISTRY.update({
+    "git_clone": git_clone,
+})
