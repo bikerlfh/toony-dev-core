@@ -8,7 +8,7 @@ from accounts.selectors import get_user_by_email
 from common.mixins import PaginatedViewMixin
 from workspace.permissions import IsWorkspaceAdmin, IsWorkspaceMember
 from workspace.selectors import (
-    get_team_by_slug,
+    get_team_by_id,
     get_team_membership,
     list_team_members,
     list_teams,
@@ -60,19 +60,19 @@ class TeamDetailView(APIView):
             return [IsAuthenticated(), IsWorkspaceMember()]
         return [IsAuthenticated(), IsWorkspaceAdmin()]
 
-    def _get_team(self, team_slug):
-        team = get_team_by_slug(team_slug)
+    def _get_team(self, team_id):
+        team = get_team_by_id(team_id)
         if team is None:
             raise NotFound("Team not found.")
         return team
 
-    def get(self, request, team_slug):
-        team = self._get_team(team_slug)
+    def get(self, request, team_id):
+        team = self._get_team(team_id)
         output = TeamDetailSerializer(team).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, team_slug):
-        team = self._get_team(team_slug)
+    def put(self, request, team_id):
+        team = self._get_team(team_id)
         serializer = UpdateTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -80,8 +80,8 @@ class TeamDetailView(APIView):
         output = TeamDetailSerializer(team).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, team_slug):
-        team = self._get_team(team_slug)
+    def delete(self, request, team_id):
+        team = self._get_team(team_id)
         delete_team(team)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -92,19 +92,19 @@ class TeamMemberListCreateView(PaginatedViewMixin, APIView):
             return [IsAuthenticated(), IsWorkspaceAdmin()]
         return [IsAuthenticated(), IsWorkspaceMember()]
 
-    def _get_team(self, team_slug):
-        team = get_team_by_slug(team_slug)
+    def _get_team(self, team_id):
+        team = get_team_by_id(team_id)
         if team is None:
             raise NotFound("Team not found.")
         return team
 
-    def get(self, request, team_slug):
-        team = self._get_team(team_slug)
+    def get(self, request, team_id):
+        team = self._get_team(team_id)
         members = list_team_members(team)
         return self.paginate(members, TeamMembershipSerializer, request)
 
-    def post(self, request, team_slug):
-        team = self._get_team(team_slug)
+    def post(self, request, team_id):
+        team = self._get_team(team_id)
         serializer = AddTeamMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -124,10 +124,10 @@ class TeamMemberListCreateView(PaginatedViewMixin, APIView):
 class TeamMemberDetailView(APIView):
     permission_classes = [IsAuthenticated, IsWorkspaceAdmin]
 
-    def _get_team_and_membership(self, team_slug, user_id):
+    def _get_team_and_membership(self, team_id, user_id):
         from accounts.models import User
 
-        team = get_team_by_slug(team_slug)
+        team = get_team_by_id(team_id)
         if team is None:
             raise NotFound("Team not found.")
 
@@ -141,8 +141,8 @@ class TeamMemberDetailView(APIView):
             raise NotFound("Team membership not found.")
         return membership
 
-    def put(self, request, team_slug, user_id):
-        membership = self._get_team_and_membership(team_slug, user_id)
+    def put(self, request, team_id, user_id):
+        membership = self._get_team_and_membership(team_id, user_id)
         serializer = UpdateTeamMemberRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -152,7 +152,7 @@ class TeamMemberDetailView(APIView):
         output = TeamMembershipSerializer(membership).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, team_slug, user_id):
-        membership = self._get_team_and_membership(team_slug, user_id)
+    def delete(self, request, team_id, user_id):
+        membership = self._get_team_and_membership(team_id, user_id)
         remove_team_member(membership)
         return Response(status=status.HTTP_204_NO_CONTENT)

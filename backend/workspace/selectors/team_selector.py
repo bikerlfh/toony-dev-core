@@ -12,6 +12,10 @@ def list_teams(*, search=None):
     return qs
 
 
+def get_team_by_id(team_id):
+    return Team.objects.filter(id=team_id, is_active=True).first()
+
+
 def get_team_by_slug(team_slug):
     return Team.objects.filter(slug=team_slug, is_active=True).first()
 

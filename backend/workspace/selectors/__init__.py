@@ -3,6 +3,7 @@ from workspace.selectors.label_selector import (
     list_labels,
 )
 from workspace.selectors.team_selector import (
+    get_team_by_id,
     get_team_by_slug,
     get_team_membership,
     list_team_members,
@@ -16,6 +17,7 @@ from workspace.selectors.project_team_selector import (
 __all__ = [
     "get_label_by_id",
     "list_labels",
+    "get_team_by_id",
     "get_team_by_slug",
     "get_team_membership",
     "list_team_members",

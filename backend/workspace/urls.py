@@ -16,10 +16,10 @@ urlpatterns = [
 
     # Teams
     path("teams/", TeamListCreateView.as_view(), name="workspace-team-list"),
-    path("teams/<slug:team_slug>/", TeamDetailView.as_view(), name="workspace-team-detail"),
-    path("teams/<slug:team_slug>/members/", TeamMemberListCreateView.as_view(), name="workspace-team-member-list"),
+    path("teams/<uuid:team_id>/", TeamDetailView.as_view(), name="workspace-team-detail"),
+    path("teams/<uuid:team_id>/members/", TeamMemberListCreateView.as_view(), name="workspace-team-member-list"),
     path(
-        "teams/<slug:team_slug>/members/<uuid:user_id>/",
+        "teams/<uuid:team_id>/members/<uuid:user_id>/",
         TeamMemberDetailView.as_view(),
         name="workspace-team-member-detail",
     ),
