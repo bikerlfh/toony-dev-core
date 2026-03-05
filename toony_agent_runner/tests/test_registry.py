@@ -51,3 +51,30 @@ class TestExecuteCommand:
         result = asyncio.run(execute_command("nope", {}, tmp_path))
         assert result.success is False
         assert "Unknown command" in result.error
+
+    def test_dispatch_calls_handler(self, tmp_path: Path):
+        expected = CommandResult(success=True, output="ok")
+
+        async def mock_handler(args, working_dir):
+            mock_handler.called_with = (args, working_dir)
+            return expected
+
+        COMMAND_REGISTRY["_test_cmd"] = mock_handler
+        try:
+            result = asyncio.run(execute_command("_test_cmd", {"a": 1}, tmp_path))
+            assert result is expected
+            assert mock_handler.called_with == ({"a": 1}, tmp_path)
+        finally:
+            del COMMAND_REGISTRY["_test_cmd"]
+
+    def test_dispatch_handler_exception(self, tmp_path: Path):
+        async def failing_handler(args, working_dir):
+            raise RuntimeError("handler broke")
+
+        COMMAND_REGISTRY["_test_fail"] = failing_handler
+        try:
+            result = asyncio.run(execute_command("_test_fail", {}, tmp_path))
+            assert result.success is False
+            assert "handler broke" in result.error
+        finally:
+            del COMMAND_REGISTRY["_test_fail"]

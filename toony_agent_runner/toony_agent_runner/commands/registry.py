@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,4 +46,5 @@ async def execute_command(
     try:
         return await handler(args, working_dir)
     except Exception as exc:
+        logger.exception("Command %r failed", key)
         return CommandResult(success=False, error=str(exc))
