@@ -6,14 +6,15 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/health/", include("common.urls")),
-    path("api/v1/auth/", include("accounts.urls")),
-    path("api/v1/organizations/", include("organizations.urls")),
-    path("api/v1/workspace/", include("workspace.urls")),
-    path("api/v1/organizations/<slug:org_slug>/", include("projects.urls")),
-    path("api/v1/", include("agents.urls")),
-    path("api/v1/organizations/<slug:org_slug>/", include("importers.urls")),
-    path("api/v1/organizations/<slug:org_slug>/", include("toony_agents.urls")),
+    path("api/health/", include("common.urls")),
+    path("api/auth/", include("accounts.urls")),
+    path("api/organizations/", include("organizations.urls")),
+    path("api/workspace/", include("workspace.urls")),
+    path("api/projects/", include("projects.urls")),
+    path("api/", include("agents.urls")),
+    path("api/organizations/<uuid:org_id>/", include("importers.urls")),
+    path("api/", include("toony_agents.urls")),
+    path("api/search/", include("organizations.search_urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]

@@ -20,11 +20,11 @@ class MemberListCreateView(PaginatedViewMixin, APIView):
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         members = list_organization_members(request.organization)
         return self.paginate(members, MembershipSerializer, request)
 
-    def post(self, request, org_slug):
+    def post(self, request, org_id):
         serializer = AddMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -55,7 +55,7 @@ class MemberDetailView(APIView):
             raise NotFound("Membership not found.")
         return membership
 
-    def put(self, request, org_slug, user_id):
+    def put(self, request, org_id, user_id):
         membership = self._get_membership(request.organization, user_id)
         serializer = UpdateMemberRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -67,7 +67,7 @@ class MemberDetailView(APIView):
         output = MembershipSerializer(membership).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, user_id):
+    def delete(self, request, org_id, user_id):
         membership = self._get_membership(request.organization, user_id)
         remove_member(membership)
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -16,12 +16,12 @@ class OrganizationSettingsView(APIView):
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         settings = get_organization_settings(request.organization)
         output = OrganizationSettingsSerializer(settings).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug):
+    def put(self, request, org_id):
         serializer = UpdateOrganizationSettingsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

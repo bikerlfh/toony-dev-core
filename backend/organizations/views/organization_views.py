@@ -62,7 +62,7 @@ class OrganizationDetailView(APIView):
         tags=["Organizations"],
         responses={200: OrganizationDetailSerializer},
     )
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         output = OrganizationDetailSerializer(request.organization).data
         return Response(output, status=status.HTTP_200_OK)
 
@@ -71,7 +71,7 @@ class OrganizationDetailView(APIView):
         request=UpdateOrganizationSerializer,
         responses={200: OrganizationDetailSerializer},
     )
-    def put(self, request, org_slug):
+    def put(self, request, org_id):
         serializer = UpdateOrganizationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -86,6 +86,6 @@ class OrganizationDetailView(APIView):
         tags=["Organizations"],
         responses={204: None},
     )
-    def delete(self, request, org_slug):
+    def delete(self, request, org_id):
         delete_organization(request.organization)
         return Response(status=status.HTTP_204_NO_CONTENT)

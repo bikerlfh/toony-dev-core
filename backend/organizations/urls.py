@@ -3,7 +3,6 @@ from django.urls import path
 from organizations.views import (
     CredentialDetailView,
     CredentialListCreateView,
-    GlobalSearchView,
     IntegrationDetailView,
     IntegrationListCreateView,
     MemberDetailView,
@@ -17,13 +16,12 @@ app_name = "organizations"
 
 urlpatterns = [
     path("", OrganizationListCreateView.as_view(), name="list-create"),
-    path("<slug:org_slug>/", OrganizationDetailView.as_view(), name="detail"),
-    path("<slug:org_slug>/members/", MemberListCreateView.as_view(), name="members-list-create"),
-    path("<slug:org_slug>/members/<uuid:user_id>/", MemberDetailView.as_view(), name="member-detail"),
-    path("<slug:org_slug>/settings/", OrganizationSettingsView.as_view(), name="settings"),
-    path("<slug:org_slug>/credentials/", CredentialListCreateView.as_view(), name="credentials-list-create"),
-    path("<slug:org_slug>/credentials/<uuid:credential_id>/", CredentialDetailView.as_view(), name="credential-detail"),
-    path("<slug:org_slug>/integrations/", IntegrationListCreateView.as_view(), name="integrations-list-create"),
-    path("<slug:org_slug>/integrations/<uuid:integration_id>/", IntegrationDetailView.as_view(), name="integration-detail"),
-    path("<slug:org_slug>/search/", GlobalSearchView.as_view(), name="global-search"),
+    path("<uuid:org_id>/", OrganizationDetailView.as_view(), name="detail"),
+    path("<uuid:org_id>/members/", MemberListCreateView.as_view(), name="members-list-create"),
+    path("<uuid:org_id>/members/<uuid:user_id>/", MemberDetailView.as_view(), name="member-detail"),
+    path("<uuid:org_id>/settings/", OrganizationSettingsView.as_view(), name="settings"),
+    path("<uuid:org_id>/credentials/", CredentialListCreateView.as_view(), name="credentials-list-create"),
+    path("<uuid:org_id>/credentials/<uuid:credential_id>/", CredentialDetailView.as_view(), name="credential-detail"),
+    path("<uuid:org_id>/integrations/", IntegrationListCreateView.as_view(), name="integrations-list-create"),
+    path("<uuid:org_id>/integrations/<uuid:integration_id>/", IntegrationDetailView.as_view(), name="integration-detail"),
 ]

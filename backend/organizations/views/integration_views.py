@@ -21,11 +21,11 @@ from organizations.services import (
 class IntegrationListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         integrations = list_organization_integrations(request.organization)
         return self.paginate(integrations, IntegrationConfigSerializer, request)
 
-    def post(self, request, org_slug):
+    def post(self, request, org_id):
         serializer = CreateIntegrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -46,14 +46,14 @@ class IntegrationDetailView(APIView):
             return None
         return integration
 
-    def get(self, request, org_slug, integration_id):
+    def get(self, request, org_id, integration_id):
         integration = self.get_object(request, integration_id)
         if integration is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         output = IntegrationConfigSerializer(integration).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, integration_id):
+    def put(self, request, org_id, integration_id):
         integration = self.get_object(request, integration_id)
         if integration is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -65,7 +65,7 @@ class IntegrationDetailView(APIView):
         output = IntegrationConfigSerializer(integration).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, integration_id):
+    def delete(self, request, org_id, integration_id):
         integration = self.get_object(request, integration_id)
         if integration is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)

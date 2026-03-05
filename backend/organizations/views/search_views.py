@@ -11,7 +11,7 @@ from organizations.serializers.output import GlobalSearchResultSerializer
 class GlobalSearchView(APIView):
     permission_classes = [IsAuthenticated, IsOrganizationMember]
 
-    def get(self, request, org_slug):
+    def get(self, request, org_id):
         query = request.query_params.get("q", "").strip()
         if not query:
             return Response(
