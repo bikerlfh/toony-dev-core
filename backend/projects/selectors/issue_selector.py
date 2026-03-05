@@ -67,6 +67,15 @@ def get_issue_by_identifier(identifier):
     ).prefetch_related("labels").first()
 
 
+def get_issue_by_id(issue_id):
+    """Look up an issue by UUID with select_related and prefetch_related."""
+    return Issue.objects.filter(
+        id=issue_id,
+    ).select_related(
+        "assignee", "reporter", "milestone", "cycle", "parent",
+    ).prefetch_related("labels").first()
+
+
 def list_issue_comments(issue):
     return IssueComment.objects.filter(
         issue=issue,

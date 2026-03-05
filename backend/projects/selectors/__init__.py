@@ -4,6 +4,7 @@ from projects.selectors.cycle_selector import (
     list_project_cycles,
 )
 from projects.selectors.issue_selector import (
+    get_issue_by_id,
     get_issue_by_identifier,
     get_next_identifier,
     list_issue_activities,
@@ -19,16 +20,20 @@ from projects.selectors.resource_selector import (
     list_project_resources,
 )
 from projects.selectors.project_selector import (
+    get_project_by_id,
     get_project_by_slug,
     get_project_membership,
     get_project_settings,
     list_organization_projects,
     list_project_members,
+    list_user_projects,
 )
 
 __all__ = [
     "list_organization_projects",
     "get_project_by_slug",
+    "get_project_by_id",
+    "list_user_projects",
     "list_project_members",
     "get_project_membership",
     "get_project_settings",
@@ -39,6 +44,7 @@ __all__ = [
     "get_next_cycle_number",
     "get_next_identifier",
     "list_project_issues",
+    "get_issue_by_id",
     "get_issue_by_identifier",
     "list_issue_comments",
     "list_issue_activities",

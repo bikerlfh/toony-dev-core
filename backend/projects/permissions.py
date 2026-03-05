@@ -1,24 +1,25 @@
 from rest_framework.permissions import BasePermission
 
 from organizations.permissions import get_membership
-from projects.selectors import get_project_by_slug
+from projects.models import Project
 
 
 class IsProjectAccessible(BasePermission):
-    """Require org membership and resolve project from URL."""
+    """Require org membership and resolve project from URL by UUID."""
 
     def has_permission(self, request, view):
-        org_slug = view.kwargs.get("org_slug")
-        project_slug = view.kwargs.get("project_slug")
-        if not org_slug or not project_slug:
+        project_id = view.kwargs.get("project_id")
+        if not project_id:
             return False
 
-        membership = get_membership(request.user, org_slug)
-        if membership is None:
-            return False
-
-        project = get_project_by_slug(membership.organization, project_slug)
+        project = Project.objects.filter(
+            id=project_id,
+        ).select_related("lead", "organization").first()
         if project is None:
+            return False
+
+        membership = get_membership(request.user, project.organization_id)
+        if membership is None:
             return False
 
         request.membership = membership

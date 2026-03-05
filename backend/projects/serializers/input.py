@@ -16,6 +16,7 @@ from projects.models import (
 # --- Project ---
 
 class CreateProjectSerializer(serializers.Serializer):
+    organization_id = serializers.UUIDField()
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=255)
     description = serializers.CharField(required=False, default="")
