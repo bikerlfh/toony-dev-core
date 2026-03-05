@@ -7,11 +7,10 @@ import type { ToonyAgentKeyItem } from "@/types";
 interface ManageKeysModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orgSlug: string;
-  agentSlug: string;
+  agentId: string;
 }
 
-export function ManageKeysModal({ isOpen, onClose, orgSlug, agentSlug }: ManageKeysModalProps) {
+export function ManageKeysModal({ isOpen, onClose, agentId }: ManageKeysModalProps) {
   const [keys, setKeys] = useState<ToonyAgentKeyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -27,13 +26,13 @@ export function ManageKeysModal({ isOpen, onClose, orgSlug, agentSlug }: ManageK
 
   const fetchKeys = useCallback(async () => {
     try {
-      setKeys((await listAgentKeys(orgSlug, agentSlug)).results);
+      setKeys((await listAgentKeys(agentId)).results);
     } catch {
       setError("Failed to load keys.");
     } finally {
       setIsLoading(false);
     }
-  }, [orgSlug, agentSlug]);
+  }, [agentId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,7 +62,7 @@ export function ManageKeysModal({ isOpen, onClose, orgSlug, agentSlug }: ManageK
     setCopied(false);
 
     try {
-      const key = await generateAgentKey(orgSlug, agentSlug, keyName);
+      const key = await generateAgentKey(agentId, keyName);
       setNewRawKey(key.raw_key || null);
       setKeyName("");
       fetchKeys();
@@ -84,7 +83,7 @@ export function ManageKeysModal({ isOpen, onClose, orgSlug, agentSlug }: ManageK
     setRevokingId(keyId);
     setError("");
     try {
-      await revokeAgentKey(orgSlug, agentSlug, keyId);
+      await revokeAgentKey(agentId, keyId);
       fetchKeys();
     } catch {
       setError("Failed to revoke key.");

@@ -27,8 +27,7 @@ const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
 ];
 
 interface CreateIssueModalProps {
-  orgSlug: string;
-  projectSlug: string;
+  projectId: string;
   members: ProjectMember[];
   milestones: Milestone[];
   cycles: Cycle[];
@@ -38,8 +37,7 @@ interface CreateIssueModalProps {
 }
 
 export function CreateIssueModal({
-  orgSlug,
-  projectSlug,
+  projectId,
   members,
   milestones,
   cycles,
@@ -66,7 +64,7 @@ export function CreateIssueModal({
     setIsSubmitting(true);
 
     try {
-      await createIssue(orgSlug, projectSlug, {
+      await createIssue(projectId, {
         title,
         description,
         status,

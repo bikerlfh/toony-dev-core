@@ -88,7 +88,6 @@ export interface AgentTaskDetail extends AgentTaskList {
 export interface CreateAgentTaskPayload {
   title: string;
   prompt: string;
-  toony_agent_slug: string;
 }
 
 export interface TaskEventItem {

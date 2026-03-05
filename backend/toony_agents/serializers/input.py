@@ -23,4 +23,4 @@ class GenerateKeySerializer(serializers.Serializer):
 class CreateAgentTaskSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500)
     prompt = serializers.CharField()
-    toony_agent_slug = serializers.SlugField()
+    toony_agent_slug = serializers.SlugField(required=False)

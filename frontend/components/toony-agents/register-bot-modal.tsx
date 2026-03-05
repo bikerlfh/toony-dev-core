@@ -13,11 +13,10 @@ function slugify(text: string): string {
 interface RegisterBotModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orgSlug: string;
-  onSuccess: (slug: string) => void;
+  onSuccess: (agentId: string) => void;
 }
 
-export function RegisterBotModal({ isOpen, onClose, orgSlug, onSuccess }: RegisterBotModalProps) {
+export function RegisterBotModal({ isOpen, onClose, onSuccess }: RegisterBotModalProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [error, setError] = useState("");
@@ -60,8 +59,8 @@ export function RegisterBotModal({ isOpen, onClose, orgSlug, onSuccess }: Regist
     setIsSubmitting(true);
 
     try {
-      const agent = await createToonyAgent(orgSlug, { name, slug });
-      onSuccess(agent.slug);
+      const agent = await createToonyAgent({ name, slug });
+      onSuccess(agent.id);
       onClose();
     } catch (err: unknown) {
       const data = (err as { response?: { data?: Record<string, string[]> } })

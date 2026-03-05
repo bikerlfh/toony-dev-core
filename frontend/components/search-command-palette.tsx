@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useOrg } from "@/contexts/org-context";
 import { useDebounce } from "@/hooks/use-debounce";
 import { globalSearch } from "@/lib/api/search";
 import type { GlobalSearchResult } from "@/types";
 
 export function SearchCommandPalette() {
   const router = useRouter();
-  const { currentOrg } = useOrg();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GlobalSearchResult | null>(null);
@@ -48,25 +46,24 @@ export function SearchCommandPalette() {
 
   // Search on debounced query
   useEffect(() => {
-    if (!debouncedQuery.trim() || !currentOrg) {
+    if (!debouncedQuery.trim()) {
       setResults(null);
       return;
     }
     setIsLoading(true);
-    globalSearch(currentOrg.slug, debouncedQuery)
+    globalSearch(debouncedQuery)
       .then(setResults)
       .catch(() => setResults(null))
       .finally(() => setIsLoading(false));
-  }, [debouncedQuery, currentOrg]);
+  }, [debouncedQuery]);
 
   function navigate(path: string) {
     close();
     router.push(path);
   }
 
-  if (!isOpen || !currentOrg) return null;
+  if (!isOpen) return null;
 
-  const basePath = `/${currentOrg.slug}`;
   const hasResults =
     results &&
     (results.issues.length > 0 ||
@@ -135,7 +132,7 @@ export function SearchCommandPalette() {
                       key={issue.id}
                       onClick={() =>
                         navigate(
-                          `${basePath}/projects/${issue.identifier.split("-")[0].toLowerCase()}/${issue.identifier}`
+                          `/projects/${issue.project_id}/issues/${issue.id}`
                         )
                       }
                       className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
@@ -161,7 +158,7 @@ export function SearchCommandPalette() {
                     <button
                       key={project.id}
                       onClick={() =>
-                        navigate(`${basePath}/projects/${project.slug}`)
+                        navigate(`/projects/${project.id}`)
                       }
                       className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
@@ -186,7 +183,7 @@ export function SearchCommandPalette() {
                     <button
                       key={team.id}
                       onClick={() =>
-                        navigate(`${basePath}/teams/${team.slug}`)
+                        navigate(`/teams/${team.id}`)
                       }
                       className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
@@ -210,7 +207,7 @@ export function SearchCommandPalette() {
                   {results.labels.map((label) => (
                     <button
                       key={label.id}
-                      onClick={() => navigate(`${basePath}/labels`)}
+                      onClick={() => navigate(`/labels`)}
                       className="flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-800/60"
                     >
                       <span

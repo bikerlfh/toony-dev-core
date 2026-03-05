@@ -253,6 +253,7 @@ export type IssuePriority = "NONE" | "URGENT" | "HIGH" | "MEDIUM" | "LOW";
 
 export interface IssueList {
   id: string;
+  project_id: string;
   identifier: string;
   title: string;
   status: IssueStatus;

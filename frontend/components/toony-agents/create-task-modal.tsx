@@ -6,12 +6,11 @@ import { createAgentTask } from "@/lib/api/toony-agents";
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  orgSlug: string;
-  agentSlug: string;
+  agentId: string;
   onSuccess: (taskId: string) => void;
 }
 
-export function CreateTaskModal({ isOpen, onClose, orgSlug, agentSlug, onSuccess }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateTaskModalProps) {
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
@@ -52,10 +51,9 @@ export function CreateTaskModal({ isOpen, onClose, orgSlug, agentSlug, onSuccess
     setIsSubmitting(true);
 
     try {
-      const task = await createAgentTask(orgSlug, agentSlug, {
+      const task = await createAgentTask(agentId, {
         title,
         prompt,
-        toony_agent_slug: agentSlug,
       });
       onSuccess(task.id);
       onClose();

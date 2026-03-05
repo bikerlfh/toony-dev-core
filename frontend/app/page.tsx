@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
-import { listOrganizations } from "@/lib/api/organizations";
-import { CreateOrgModal } from "@/components/create-org-modal";
-import type { Organization } from "@/types";
 
-/* ── Loading pulse ──────────────────────────────────────────────── */
+/* -- Loading pulse -- */
 function LoadingScreen() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950">
@@ -35,7 +32,7 @@ function LoadingScreen() {
   );
 }
 
-/* ── Feature cards for the landing grid ─────────────────────────── */
+/* -- Feature cards for the landing grid -- */
 const FEATURES = [
   {
     label: "Issues",
@@ -79,7 +76,7 @@ const FEATURES = [
   },
 ];
 
-/* ── Unauthenticated landing ────────────────────────────────────── */
+/* -- Unauthenticated landing -- */
 function LandingPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-300">
@@ -178,92 +175,24 @@ function LandingPage() {
   );
 }
 
-/* ── Authenticated but no orgs (initialization state) ───────────── */
-function InitializeScreen({
-  onCreateOrg,
-}: {
-  onCreateOrg: () => void;
-}) {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950">
-      <div className="w-full max-w-sm px-6">
-        <div className="flex flex-col items-center text-center">
-          {/* Terminal-style prompt */}
-          <div className="mb-8 flex items-center gap-2 font-mono text-sm text-slate-500">
-            <span className="text-indigo-500">~</span>
-            <span className="text-slate-600">/</span>
-            <span>no workspace found</span>
-          </div>
-
-          <h1 className="text-2xl font-medium tracking-tight text-white">
-            Initialize workspace
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-500">
-            Create an organization to start managing your projects, teams, and issues.
-          </p>
-
-          <button
-            onClick={onCreateOrg}
-            className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M8 3v10M3 8h10" strokeLinecap="round" />
-            </svg>
-            Create organization
-          </button>
-
-          <div className="mt-6 flex items-center gap-2 text-xs text-slate-600">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" />
-              <circle cx="8" cy="8" r="6.25" />
-            </svg>
-            You can invite your team after setup
-          </div>
-        </div>
-      </div>
-    </main>
-  );
-}
-
-/* ── Root page ──────────────────────────────────────────────────── */
+/* -- Root page -- */
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
-  const [orgs, setOrgs] = useState<Organization[]>([]);
-  const [orgsLoading, setOrgsLoading] = useState(false);
-  const [showCreateOrg, setShowCreateOrg] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      setOrgsLoading(true);
-      listOrganizations()
-        .then((res) => {
-          setOrgs(res.results);
-          if (res.results.length > 0) {
-            router.replace(`/${res.results[0].slug}/`);
-          }
-        })
-        .finally(() => setOrgsLoading(false));
+      router.replace("/projects");
     }
   }, [isLoading, isAuthenticated, router]);
 
-  if (isLoading || orgsLoading) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated) {
-    return <LandingPage />;
+  if (isAuthenticated) {
+    return <LoadingScreen />;
   }
 
-  return (
-    <>
-      <InitializeScreen onCreateOrg={() => setShowCreateOrg(true)} />
-      {showCreateOrg && (
-        <CreateOrgModal
-          onClose={() => setShowCreateOrg(false)}
-          onCreated={(org) => router.push(`/${org.slug}/`)}
-        />
-      )}
-    </>
-  );
+  return <LandingPage />;
 }
