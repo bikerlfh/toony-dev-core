@@ -4,10 +4,10 @@ Protocol definitions for runner <-> backend WebSocket communication.
 Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
     TaskEventMessage, ApprovalNeededMessage, TaskCompletedMessage,
-    TaskFailedMessage
+    TaskFailedMessage, CommandResultMessage
 
 Incoming messages (backend -> runner):
-    TaskAssign, ApprovalResponse, TaskCancel, HeartbeatAck
+    TaskAssign, ApprovalResponse, TaskCancel, HeartbeatAck, CommandExecute
 """
 
 from __future__ import annotations
@@ -164,12 +164,40 @@ class HeartbeatAck:
     pass
 
 
+@dataclass
+class CommandExecute:
+    """Backend sends a command for the runner to execute directly."""
+
+    command_id: str
+    command_key: str
+    args: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class CommandResultMessage:
+    """Runner reports the result of a command execution."""
+
+    command_id: str
+    success: bool
+    output: str = ""
+    error: str = ""
+
+    def to_json(self) -> dict:
+        return {
+            "type": "command.result",
+            "command_id": self.command_id,
+            "success": self.success,
+            "output": self.output,
+            "error": self.error,
+        }
+
+
 # ---------------------------------------------------------------------------
 # Message parsing
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck
+IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -206,5 +234,12 @@ def parse_server_message(data: dict) -> IncomingMessage:
 
     if msg_type == "heartbeat.ack":
         return HeartbeatAck()
+
+    if msg_type == "command.execute":
+        return CommandExecute(
+            command_id=data["command_id"],
+            command_key=data["command_key"],
+            args=data.get("args", {}),
+        )
 
     raise ValueError(f"Unknown server message type: {msg_type!r}")
