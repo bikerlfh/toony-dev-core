@@ -104,6 +104,7 @@ export interface ProjectList {
   start_date: string | null;
   target_date: string | null;
   sort_order: number;
+  short_summary: string;
   icon: string;
   color: string;
   created_at: string;

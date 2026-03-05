@@ -50,6 +50,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "start_date",
             "target_date",
             "sort_order",
+            "short_summary",
             "icon",
             "color",
             "created_at",
