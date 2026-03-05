@@ -60,7 +60,7 @@ import type {
 } from "@/types";
 import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 
-type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "settings";
+type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "resources" | "settings";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "overview", label: "Overview" },
@@ -68,6 +68,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "milestones", label: "Milestones" },
   { key: "cycles", label: "Cycles" },
   { key: "members", label: "Members" },
+  { key: "resources", label: "Resources" },
   { key: "settings", label: "Settings" },
 ];
 
@@ -130,6 +131,16 @@ export default function ProjectDetailPage() {
   const canManage = true;
   const canEditIssues = true;
 
+  // Inline editing — title
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+
+  // Inline editing — short summary
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [summaryDraft, setSummaryDraft] = useState("");
+  const [isSavingSummary, setIsSavingSummary] = useState(false);
+
   const fetchProject = useCallback(async () => {
     try {
       const data = await getProject(projectId);
@@ -142,6 +153,58 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  function startEditTitle() {
+    if (!project) return;
+    setTitleDraft(project.name);
+    setEditingTitle(true);
+  }
+
+  async function saveTitle() {
+    if (!project || isSavingTitle) return;
+    const trimmed = titleDraft.trim();
+    if (!trimmed || trimmed === project.name) {
+      setEditingTitle(false);
+      return;
+    }
+    setIsSavingTitle(true);
+    try {
+      await updateProject(projectId, { name: trimmed });
+      await fetchProject();
+      setEditingTitle(false);
+    } catch {
+      setTitleDraft(project.name);
+      setEditingTitle(false);
+    } finally {
+      setIsSavingTitle(false);
+    }
+  }
+
+  function startEditSummary() {
+    if (!project) return;
+    setSummaryDraft(project.short_summary || "");
+    setEditingSummary(true);
+  }
+
+  async function saveSummary() {
+    if (!project || isSavingSummary) return;
+    const trimmed = summaryDraft.trim();
+    if (trimmed === (project.short_summary || "")) {
+      setEditingSummary(false);
+      return;
+    }
+    setIsSavingSummary(true);
+    try {
+      await updateProject(projectId, { short_summary: trimmed });
+      await fetchProject();
+      setEditingSummary(false);
+    } catch {
+      setSummaryDraft(project.short_summary || "");
+      setEditingSummary(false);
+    } finally {
+      setIsSavingSummary(false);
+    }
+  }
 
   if (isLoading) return <p className="text-slate-500">Loading project...</p>;
   if (!project) return <p className="text-red-400">Project not found.</p>;
@@ -161,10 +224,46 @@ export default function ProjectDetailPage() {
 
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-medium tracking-tight text-white">{project.name}</h1>
-          </div>
+        <div className="min-w-0 flex-1">
+          {/* Title — click to edit */}
+          {editingTitle ? (
+            <div>
+              <input
+                type="text"
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveTitle();
+                  if (e.key === "Escape") setEditingTitle(false);
+                }}
+                disabled={isSavingTitle}
+                autoFocus
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-2xl font-medium tracking-tight text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+              />
+              <div className="mt-2 flex items-center gap-2">
+                <button onClick={saveTitle} disabled={isSavingTitle}
+                  className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                  {isSavingTitle ? "Saving..." : "Save"}
+                </button>
+                <button onClick={() => setEditingTitle(false)} disabled={isSavingTitle}
+                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white">
+                  Cancel
+                </button>
+                <span className="text-[10px] text-slate-600">Enter to save · Esc to cancel</span>
+              </div>
+            </div>
+          ) : (
+            <h1
+              onClick={canManage ? startEditTitle : undefined}
+              className={`text-2xl font-medium tracking-tight text-white ${
+                canManage ? "cursor-text rounded-lg px-3 py-2 -mx-3 -my-2 transition-colors hover:bg-slate-800/40" : ""
+              }`}
+              title={canManage ? "Click to edit title" : undefined}
+            >
+              {project.name}
+            </h1>
+          )}
+
           <div className="mt-2 flex items-center gap-2">
             <StatusBadge status={project.status} />
             <PriorityBadge priority={project.priority} />
@@ -177,8 +276,46 @@ export default function ProjectDetailPage() {
               </>
             )}
           </div>
-          {project.short_summary && (
-            <p className="mt-2 text-sm text-slate-400">{project.short_summary}</p>
+
+          {/* Short summary — click to edit */}
+          {editingSummary ? (
+            <div className="mt-2">
+              <input
+                type="text"
+                value={summaryDraft}
+                onChange={(e) => setSummaryDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveSummary();
+                  if (e.key === "Escape") setEditingSummary(false);
+                }}
+                disabled={isSavingSummary}
+                autoFocus
+                maxLength={255}
+                placeholder="A brief tagline for the project"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-300 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+              />
+              <div className="mt-1.5 flex items-center gap-2">
+                <button onClick={saveSummary} disabled={isSavingSummary}
+                  className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                  {isSavingSummary ? "Saving..." : "Save"}
+                </button>
+                <button onClick={() => setEditingSummary(false)} disabled={isSavingSummary}
+                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white">
+                  Cancel
+                </button>
+                <span className="text-[10px] text-slate-600">Enter to save · Esc to cancel</span>
+              </div>
+            </div>
+          ) : (
+            <p
+              onClick={canManage ? startEditSummary : undefined}
+              className={`mt-2 text-sm ${
+                project.short_summary ? "text-slate-400" : "text-slate-600 italic"
+              } ${canManage ? "cursor-text rounded-lg px-3 py-1.5 -mx-3 transition-colors hover:bg-slate-800/40" : ""}`}
+              title={canManage ? "Click to edit summary" : undefined}
+            >
+              {project.short_summary || "Add a short summary..."}
+            </p>
           )}
         </div>
       </div>
@@ -224,6 +361,9 @@ export default function ProjectDetailPage() {
         {activeTab === "members" && (
           <MembersTab projectId={projectId} canManage={canManage} />
         )}
+        {activeTab === "resources" && (
+          <ResourcesTab projectId={projectId} canManage={canManage} />
+        )}
         {activeTab === "settings" && (
           <SettingsTab projectId={projectId} canManage={canManage} onDeleted={() => router.push(`/projects`)} />
         )}
@@ -246,8 +386,6 @@ function OverviewTab({
   onUpdated: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(project.name);
-  const [shortSummary, setShortSummary] = useState(project.short_summary);
   const [description, setDescription] = useState(project.description);
   const [status, setStatus] = useState(project.status);
   const [priority, setPriority] = useState(project.priority);
@@ -255,29 +393,11 @@ function OverviewTab({
   const [targetDate, setTargetDate] = useState(project.target_date || "");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Resources
-  const [resources, setResources] = useState<ProjectResource[]>([]);
-  // undefined = closed, null = creating, ProjectResource = editing
-  const [resourceModalTarget, setResourceModalTarget] = useState<ProjectResource | null | undefined>(undefined);
-  const [isDeletingResource, setIsDeletingResource] = useState<string | null>(null);
-
-  const fetchResources = useCallback(async () => {
-    try {
-      setResources((await listResources(projectId)).results);
-    } catch { /* ignore */ }
-  }, [projectId]);
-
-  useEffect(() => {
-    fetchResources();
-  }, [fetchResources]);
-
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setIsSaving(true);
     try {
       await updateProject(projectId, {
-        name,
-        short_summary: shortSummary,
         description,
         status,
         priority,
@@ -291,54 +411,60 @@ function OverviewTab({
     }
   }
 
+  function resetAndEdit() {
+    setDescription(project.description);
+    setStatus(project.status);
+    setPriority(project.priority);
+    setStartDate(project.start_date || "");
+    setTargetDate(project.target_date || "");
+    setIsEditing(true);
+  }
+
+  const INPUT_CLASS =
+    "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
+
   if (isEditing) {
     return (
-      <form onSubmit={handleSave} className="max-w-2xl space-y-4">
-        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-400">Name</label>
-            <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-400">Short summary</label>
-            <input type="text" value={shortSummary} onChange={(e) => setShortSummary(e.target.value)} maxLength={255} placeholder="A brief tagline for the project"
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-400">Description</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-              className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Status</label>
-              <Select options={PROJECT_STATUS_OPTIONS} value={status} onChange={(v) => setStatus(v as ProjectStatus)} className="mt-1.5" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Priority</label>
-              <Select options={PROJECT_PRIORITY_OPTIONS} value={priority} onChange={(v) => setPriority(v as ProjectPriority)} className="mt-1.5" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Start date</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Target date</label>
-              <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-            </div>
-          </div>
-          <div className="flex gap-3">
+      <form onSubmit={handleSave} className="flex gap-6">
+        {/* Left — description */}
+        <div className="min-w-0 flex-1">
+          <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={12}
+            placeholder="Describe the project goals, scope, and context..."
+            className={`${INPUT_CLASS} resize-y`}
+          />
+          <div className="mt-4 flex gap-3">
             <button type="submit" disabled={isSaving}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
               {isSaving ? "Saving..." : "Save"}
             </button>
             <button type="button" onClick={() => setIsEditing(false)}
-              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
+              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        {/* Right — properties */}
+        <div className="w-64 shrink-0 space-y-4">
+          <div>
+            <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Status</label>
+            <Select options={PROJECT_STATUS_OPTIONS} value={status} onChange={(v) => setStatus(v as ProjectStatus)} className="mt-1.5" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Priority</label>
+            <Select options={PROJECT_PRIORITY_OPTIONS} value={priority} onChange={(v) => setPriority(v as ProjectPriority)} className="mt-1.5" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Start date</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={INPUT_CLASS} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium uppercase tracking-wide text-slate-500">Target date</label>
+            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className={INPUT_CLASS} />
           </div>
         </div>
       </form>
@@ -346,103 +472,136 @@ function OverviewTab({
   }
 
   return (
-    <div className="max-w-3xl">
-      {project.description && (
-        <p className="text-sm leading-relaxed text-slate-400">{project.description}</p>
-      )}
+    <div className="flex gap-6">
+      {/* Left — description */}
+      <div className="min-w-0 flex-1">
+        {project.description ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-400">{project.description}</p>
+        ) : (
+          <p className="text-sm italic text-slate-600">No description yet.</p>
+        )}
 
-      <div className={`${project.description ? "mt-6" : ""} grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30`}>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Lead</p>
-          <p className="mt-2 text-sm font-medium text-slate-200">
-            {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "\u2014"}
-          </p>
-        </div>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Issues</p>
-          <p className="mt-2 text-lg font-medium tracking-tight text-slate-200">{project.issue_count}</p>
-        </div>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Start date</p>
-          <p className="mt-2 text-sm font-medium text-slate-200">
-            {project.start_date ? new Date(project.start_date).toLocaleDateString() : "\u2014"}
-          </p>
-        </div>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Target date</p>
-          <p className="mt-2 text-sm font-medium text-slate-200">
-            {project.target_date ? new Date(project.target_date).toLocaleDateString() : "\u2014"}
-          </p>
-        </div>
-        <div className="bg-slate-950 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Members</p>
-          <p className="mt-2 text-lg font-medium tracking-tight text-slate-200">{project.member_count}</p>
-        </div>
-      </div>
-
-      {canManage && (
-        <div className="mt-6">
-          <button onClick={() => setIsEditing(true)}
-            className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
+        {canManage && (
+          <button onClick={resetAndEdit}
+            className="mt-6 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
             Edit project
           </button>
-        </div>
-      )}
-
-      {/* Resources */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-slate-300">Resources</h3>
-          {canManage && (
-            <button onClick={() => setResourceModalTarget(null)}
-              className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300">
-              + Add resource
-            </button>
-          )}
-        </div>
-
-        {resources.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">No resources yet.</p>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {resources.map((res) => (
-              <div key={res.id} className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900/50 px-4 py-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                    res.type === "DOCUMENTATION" ? "bg-blue-500/15 text-blue-400" : "bg-emerald-500/15 text-emerald-400"
-                  }`}>
-                    {res.type === "DOCUMENTATION" ? "Docs" : "Web"}
-                  </span>
-                  <a href={res.url} target="_blank" rel="noopener noreferrer"
-                    className="truncate text-sm font-medium text-slate-200 transition-colors hover:text-indigo-400">
-                    {res.title}
-                  </a>
-                </div>
-                {canManage && (
-                  <div className="ml-3 flex shrink-0 items-center gap-2">
-                    <button onClick={() => setResourceModalTarget(res)}
-                      className="text-slate-600 transition-colors hover:text-indigo-400">
-                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" /></svg>
-                    </button>
-                    <button
-                      disabled={isDeletingResource === res.id}
-                      onClick={async () => {
-                        setIsDeletingResource(res.id);
-                        try {
-                          await deleteResource(projectId, res.id);
-                          fetchResources();
-                        } finally { setIsDeletingResource(null); }
-                      }}
-                      className="text-slate-600 transition-colors hover:text-red-400">
-                      <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" /></svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
         )}
       </div>
+
+      {/* Right — metadata sidebar */}
+      <div className="w-64 shrink-0">
+        <div className="rounded-xl border border-slate-800/60 bg-slate-900/50">
+          <div className="border-b border-slate-800/40 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Lead</p>
+            <p className="mt-1 text-sm font-medium text-slate-200">
+              {project.lead ? `${project.lead.first_name} ${project.lead.last_name}` : "\u2014"}
+            </p>
+          </div>
+          <div className="border-b border-slate-800/40 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Issues</p>
+            <p className="mt-1 text-sm font-medium text-slate-200">{project.issue_count}</p>
+          </div>
+          <div className="border-b border-slate-800/40 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Start date</p>
+            <p className="mt-1 text-sm font-medium text-slate-200">
+              {project.start_date
+                ? new Date(project.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "\u2014"}
+            </p>
+          </div>
+          <div className="border-b border-slate-800/40 px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Target date</p>
+            <p className="mt-1 text-sm font-medium text-slate-200">
+              {project.target_date
+                ? new Date(project.target_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "\u2014"}
+            </p>
+          </div>
+          <div className="px-4 py-3">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Members</p>
+            <p className="mt-1 text-sm font-medium text-slate-200">{project.member_count}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Resources Tab ---
+
+function ResourcesTab({ projectId, canManage }: { projectId: string; canManage: boolean }) {
+  const [resources, setResources] = useState<ProjectResource[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [resourceModalTarget, setResourceModalTarget] = useState<ProjectResource | null | undefined>(undefined);
+  const [isDeletingResource, setIsDeletingResource] = useState<string | null>(null);
+
+  const fetchResources = useCallback(async () => {
+    try {
+      setResources((await listResources(projectId)).results);
+    } catch { /* ignore */ }
+    finally { setIsLoading(false); }
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchResources();
+  }, [fetchResources]);
+
+  if (isLoading) return <p className="text-slate-500">Loading resources...</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-medium text-white">Resources</h2>
+        {canManage && (
+          <button onClick={() => setResourceModalTarget(null)}
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500">
+            + Add resource
+          </button>
+        )}
+      </div>
+
+      {resources.length === 0 ? (
+        <p className="mt-4 text-sm text-slate-500">No resources yet.</p>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {resources.map((res) => (
+            <div key={res.id} className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900/50 px-4 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                  res.type === "DOCUMENTATION" ? "bg-blue-500/15 text-blue-400" : "bg-emerald-500/15 text-emerald-400"
+                }`}>
+                  {res.type === "DOCUMENTATION" ? "Docs" : "Web"}
+                </span>
+                <a href={res.url} target="_blank" rel="noopener noreferrer"
+                  className="truncate text-sm font-medium text-slate-200 transition-colors hover:text-indigo-400">
+                  {res.title}
+                </a>
+              </div>
+              {canManage && (
+                <div className="ml-3 flex shrink-0 items-center gap-2">
+                  <button onClick={() => setResourceModalTarget(res)}
+                    className="text-slate-600 transition-colors hover:text-indigo-400">
+                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" /></svg>
+                  </button>
+                  <button
+                    disabled={isDeletingResource === res.id}
+                    onClick={async () => {
+                      setIsDeletingResource(res.id);
+                      try {
+                        await deleteResource(projectId, res.id);
+                        fetchResources();
+                      } finally { setIsDeletingResource(null); }
+                    }}
+                    className="text-slate-600 transition-colors hover:text-red-400">
+                    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" /></svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {resourceModalTarget !== undefined && (
         <ResourceModal
