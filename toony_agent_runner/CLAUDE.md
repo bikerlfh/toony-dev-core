@@ -35,8 +35,11 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, task execu
   |                         extracts event data with tool-specific key filtering
   |
   +-- protocol.py --- Dataclass message types with to_json() serialization
-                       Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, ApprovalNeeded, TaskCompleted, TaskFailed
-                       Incoming: TaskAssign, ApprovalResponse, TaskCancel, TaskReply, HeartbeatAck
+  |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, ApprovalNeeded, TaskCompleted, TaskFailed
+  |                    Incoming: TaskAssign, ApprovalResponse, TaskCancel, TaskReply, HeartbeatAck
+  |
+  +-- commands/         --- Command execution: registry of filesystem/download/git/script handlers,
+                             sandboxed to working_directory, dispatched independently of Claude tasks
 ```
 
 ### Lifecycle Flow
@@ -46,7 +49,8 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, task execu
 3. On task: create `ClaudeSDKClient` with `PreToolUse` hook -> stream `StreamEvent` objects -> send `task.event` messages
 4. If `AskUserQuestion` tool called: SDK fires `PreToolUse` hook -> runner sends `approval.needed` to backend, awaits `approval.response`, returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
 5. SDK finishes: `ResultMessage` received -> send `task.completed` or `task.failed`
-6. On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
+6. On `command.execute`: look up `command_key` in `COMMAND_REGISTRY`, execute handler with args (sandboxed to `working_dir`), send `command.result` with success/error
+7. On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
 
 ### Key Design Decisions
 
@@ -71,4 +75,6 @@ All messages are JSON with a `type` field. Authentication is via `?key=tok_ta_..
 | In | `task.cancel` | Request task cancellation |
 | In | `task.reply` | Resume conversation with session_id |
 | In | `approval.response` | User approve/reject decision |
+| In | `command.execute` | Backend sends a direct command (key + args) |
+| Out | `command.result` | Runner reports command execution result |
 | In | `heartbeat.ack` | Backend acknowledges heartbeat |

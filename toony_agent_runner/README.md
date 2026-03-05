@@ -178,6 +178,10 @@ START
   │    │         └─ Return deny with user's answer as permissionDecisionReason
   │    │
   │    ├─ On "task.cancel": interrupt SDK client
+  │    ├─ On "command.execute":
+  │    │    ├─ Look up command_key in COMMAND_REGISTRY
+  │    │    ├─ Execute handler with args (sandboxed to working_dir)
+  │    │    └─ Send "command.result" with success/error
   │    └─ On disconnect: reconnect with exponential backoff
   │
   └─ On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
@@ -192,6 +196,48 @@ START
 | Runner process killed | SDK subprocess dies. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
 | Backend unreachable at start | Retries connection with exponential backoff until successful |
 | Task exceeds timeout | Runner cancels Claude and sends `task.failed` |
+
+## Commands
+
+The runner can execute direct commands from the backend, independently of Claude tasks. Commands run in parallel — they don't block task execution or each other.
+
+### Available Commands
+
+| Key | Args | Description |
+|-----|------|-------------|
+| `create_dir` | `path` | Create directory with parents |
+| `create_file` | `path`, `content?` | Create file (empty or with content) |
+| `move_file` | `source`, `destination` | Move file or directory |
+| `rename_file` | `path`, `new_name` | Rename in same directory |
+| `copy_file` | `source`, `destination` | Copy file or directory |
+| `download_url` | `url`, `destination` | Download from external URL |
+| `download_backend` | `download_url`, `destination` | Download from backend (auth via API key) |
+| `git_clone` | `repo_url`, `destination?` | Clone a git repository |
+| `run_script` | `path`, `args?` | Execute .sh, .bash, or .py script |
+
+All paths are sandboxed to the configured `working_directory`. Path traversal attempts are rejected.
+
+### Protocol
+
+Request (backend → runner):
+```json
+{
+    "type": "command.execute",
+    "command_id": "uuid",
+    "command_key": "create_file",
+    "args": {"path": "src/main.py", "content": "print('hello')"}
+}
+```
+
+Response (runner → backend):
+```json
+{
+    "type": "command.result",
+    "command_id": "uuid",
+    "success": true,
+    "output": "File created: src/main.py"
+}
+```
 
 ### Message Buffering
 
