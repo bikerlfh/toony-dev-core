@@ -5,6 +5,7 @@ class CreateToonyAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=100)
     metadata = serializers.JSONField(required=False, default=dict)
+    organization_id = serializers.UUIDField(required=False)
 
 
 class UpdateToonyAgentSerializer(serializers.Serializer):

@@ -1,4 +1,14 @@
+from accounts.models import OrganizationMembership
 from toony_agents.models import ToonyAgent, ToonyAgentKey
+
+
+def list_toony_agents_for_user(user):
+    user_org_ids = OrganizationMembership.objects.filter(
+        user=user, is_active=True,
+    ).values_list("organization_id", flat=True)
+    return ToonyAgent.objects.filter(
+        organizations__id__in=user_org_ids,
+    ).distinct().prefetch_related("organizations")
 
 
 def list_toony_agents_for_organization(organization):

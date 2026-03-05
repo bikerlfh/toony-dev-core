@@ -4,12 +4,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import OrganizationMembership
 from common.mixins import PaginatedViewMixin
+from organizations.models import Organization
 from toony_agents.permissions import IsToonyAgentOrgMember
 from toony_agents.selectors import (
-    get_toony_agent_by_slug,
+    get_toony_agent_by_id,
     list_agent_keys,
     list_toony_agents_for_organization,
+    list_toony_agents_for_user,
 )
 from toony_agents.serializers.input import (
     CreateToonyAgentSerializer,
@@ -31,19 +34,55 @@ from toony_agents.services import (
 
 
 class ToonyAgentListCreateView(PaginatedViewMixin, APIView):
-    permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, org_slug):
-        agents = list_toony_agents_for_organization(request.organization)
+    def get(self, request):
+        org_id = request.query_params.get("organization")
+        if org_id:
+            organization = Organization.objects.filter(id=org_id).first()
+            if organization is None:
+                return Response(
+                    {"detail": "Organization not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if not OrganizationMembership.objects.filter(
+                user=request.user, organization=organization, is_active=True,
+            ).exists():
+                return Response(
+                    {"detail": "You are not a member of this organization."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            agents = list_toony_agents_for_organization(organization)
+        else:
+            agents = list_toony_agents_for_user(request.user)
         return self.paginate(agents, ToonyAgentListSerializer, request)
 
-    def post(self, request, org_slug):
+    def post(self, request):
         serializer = CreateToonyAgentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        org_id = serializer.validated_data.pop("organization_id", None)
+        organization = None
+        if org_id:
+            organization = Organization.objects.filter(id=org_id).first()
+            if organization is None:
+                return Response(
+                    {"detail": "Organization not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if not OrganizationMembership.objects.filter(
+                user=request.user, organization=organization, is_active=True,
+            ).exists():
+                return Response(
+                    {"detail": "You are not a member of this organization."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         agent = create_toony_agent(
             registered_by=request.user, **serializer.validated_data,
         )
-        agent.organizations.add(request.organization)
+        if organization:
+            agent.organizations.add(organization)
         output = ToonyAgentDetailSerializer(agent).data
         return Response(output, status=status.HTTP_201_CREATED)
 
@@ -51,27 +90,19 @@ class ToonyAgentListCreateView(PaginatedViewMixin, APIView):
 class ToonyAgentDetailView(APIView):
     permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
 
-    def _get_agent(self, organization, slug):
-        agent = get_toony_agent_by_slug(slug)
-        if agent is None or not agent.organizations.filter(
-            id=organization.id,
-        ).exists():
-            raise NotFound("ToonyAgent not found.")
-        return agent
-
-    def get(self, request, org_slug, agent_slug):
-        agent = self._get_agent(request.organization, agent_slug)
+    def get(self, request, agent_id):
+        agent = request.toony_agent
         return Response(ToonyAgentDetailSerializer(agent).data)
 
-    def put(self, request, org_slug, agent_slug):
-        agent = self._get_agent(request.organization, agent_slug)
+    def put(self, request, agent_id):
+        agent = request.toony_agent
         serializer = UpdateToonyAgentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         agent = update_toony_agent(agent, **serializer.validated_data)
         return Response(ToonyAgentDetailSerializer(agent).data)
 
-    def delete(self, request, org_slug, agent_slug):
-        agent = self._get_agent(request.organization, agent_slug)
+    def delete(self, request, agent_id):
+        agent = request.toony_agent
         delete_toony_agent(agent)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -79,21 +110,13 @@ class ToonyAgentDetailView(APIView):
 class ToonyAgentKeyListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
 
-    def _get_agent(self, organization, slug):
-        agent = get_toony_agent_by_slug(slug)
-        if agent is None or not agent.organizations.filter(
-            id=organization.id,
-        ).exists():
-            raise NotFound("ToonyAgent not found.")
-        return agent
-
-    def get(self, request, org_slug, agent_slug):
-        agent = self._get_agent(request.organization, agent_slug)
+    def get(self, request, agent_id):
+        agent = request.toony_agent
         keys = list_agent_keys(agent)
         return self.paginate(keys, ToonyAgentKeySerializer, request)
 
-    def post(self, request, org_slug, agent_slug):
-        agent = self._get_agent(request.organization, agent_slug)
+    def post(self, request, agent_id):
+        agent = request.toony_agent
         serializer = GenerateKeySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         key_obj, raw_key = generate_api_key(
@@ -107,12 +130,8 @@ class ToonyAgentKeyListCreateView(PaginatedViewMixin, APIView):
 class ToonyAgentKeyRevokeView(APIView):
     permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
 
-    def delete(self, request, org_slug, agent_slug, key_id):
-        agent = get_toony_agent_by_slug(agent_slug)
-        if agent is None or not agent.organizations.filter(
-            id=request.organization.id,
-        ).exists():
-            raise NotFound("ToonyAgent not found.")
+    def delete(self, request, agent_id, key_id):
+        agent = request.toony_agent
         try:
             key = agent.keys.get(id=key_id)
         except Exception:
