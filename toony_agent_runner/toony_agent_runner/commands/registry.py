@@ -76,3 +76,9 @@ from .git import git_clone  # noqa: E402
 COMMAND_REGISTRY.update({
     "git_clone": git_clone,
 })
+
+from .scripts import run_script  # noqa: E402
+
+COMMAND_REGISTRY.update({
+    "run_script": run_script,
+})
