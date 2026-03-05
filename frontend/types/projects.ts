@@ -1,4 +1,5 @@
 import type { User } from "./auth";
+import type { Organization } from "./organization";
 
 // --- Team ---
 
@@ -96,6 +97,7 @@ export interface ProjectList {
   id: string;
   name: string;
   slug: string;
+  organization: Organization;
   status: ProjectStatus;
   priority: ProjectPriority;
   lead: User | null;
@@ -136,6 +138,7 @@ export interface ProjectSettings {
 }
 
 export interface CreateProjectPayload {
+  organization_id: string;
   name: string;
   slug: string;
   description?: string;
