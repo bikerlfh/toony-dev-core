@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
-from agents.selectors import get_sub_agent_by_slug, get_sub_agent_skill_by_id, get_skill_by_id, list_sub_agent_skills
+from agents.selectors import get_sub_agent_by_id, get_sub_agent_skill_by_id, get_skill_by_id, list_sub_agent_skills
 from agents.serializers.input import CreateSubAgentSkillSerializer, UpdateSubAgentSkillSerializer
 from agents.serializers.output import SubAgentSkillSerializer
 from agents.services import assign_skill, remove_sub_agent_skill, update_sub_agent_skill
@@ -13,18 +13,18 @@ from agents.services import assign_skill, remove_sub_agent_skill, update_sub_age
 class SubAgentSkillListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_sub_agent(self, sub_agent_slug):
-        return get_sub_agent_by_slug(sub_agent_slug)
+    def get_sub_agent(self, sub_agent_id):
+        return get_sub_agent_by_id(sub_agent_id)
 
-    def get(self, request, sub_agent_slug):
-        sub_agent = self.get_sub_agent(sub_agent_slug)
+    def get(self, request, sub_agent_id):
+        sub_agent = self.get_sub_agent(sub_agent_id)
         if sub_agent is None:
             return Response({"detail": "Sub-agent not found."}, status=status.HTTP_404_NOT_FOUND)
         sub_agent_skills = list_sub_agent_skills(sub_agent)
         return self.paginate(sub_agent_skills, SubAgentSkillSerializer, request)
 
-    def post(self, request, sub_agent_slug):
-        sub_agent = self.get_sub_agent(sub_agent_slug)
+    def post(self, request, sub_agent_id):
+        sub_agent = self.get_sub_agent(sub_agent_id)
         if sub_agent is None:
             return Response({"detail": "Sub-agent not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -48,22 +48,22 @@ class SubAgentSkillListCreateView(PaginatedViewMixin, APIView):
 class SubAgentSkillDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_objects(self, sub_agent_slug, sub_agent_skill_id):
-        sub_agent = get_sub_agent_by_slug(sub_agent_slug)
+    def get_objects(self, sub_agent_id, sub_agent_skill_id):
+        sub_agent = get_sub_agent_by_id(sub_agent_id)
         if sub_agent is None:
             return None, None
         sub_agent_skill = get_sub_agent_skill_by_id(sub_agent, sub_agent_skill_id)
         return sub_agent, sub_agent_skill
 
-    def get(self, request, sub_agent_slug, sub_agent_skill_id):
-        _, sub_agent_skill = self.get_objects(sub_agent_slug, sub_agent_skill_id)
+    def get(self, request, sub_agent_id, sub_agent_skill_id):
+        _, sub_agent_skill = self.get_objects(sub_agent_id, sub_agent_skill_id)
         if sub_agent_skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         output = SubAgentSkillSerializer(sub_agent_skill).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, sub_agent_slug, sub_agent_skill_id):
-        _, sub_agent_skill = self.get_objects(sub_agent_slug, sub_agent_skill_id)
+    def put(self, request, sub_agent_id, sub_agent_skill_id):
+        _, sub_agent_skill = self.get_objects(sub_agent_id, sub_agent_skill_id)
         if sub_agent_skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -74,8 +74,8 @@ class SubAgentSkillDetailView(APIView):
         output = SubAgentSkillSerializer(sub_agent_skill).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, sub_agent_slug, sub_agent_skill_id):
-        _, sub_agent_skill = self.get_objects(sub_agent_slug, sub_agent_skill_id)
+    def delete(self, request, sub_agent_id, sub_agent_skill_id):
+        _, sub_agent_skill = self.get_objects(sub_agent_id, sub_agent_skill_id)
         if sub_agent_skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         remove_sub_agent_skill(sub_agent_skill)

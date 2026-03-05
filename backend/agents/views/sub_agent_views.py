@@ -7,7 +7,7 @@ from common.mixins import PaginatedViewMixin
 from accounts.models import OrganizationMembership
 from organizations.models import Organization
 from agents.selectors import (
-    get_sub_agent_by_slug,
+    get_sub_agent_by_id,
     list_sub_agents_for_organization,
     list_sub_agents_for_user,
 )
@@ -73,18 +73,18 @@ class SubAgentListCreateView(PaginatedViewMixin, APIView):
 class SubAgentDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, sub_agent_slug):
-        return get_sub_agent_by_slug(sub_agent_slug)
+    def get_object(self, sub_agent_id):
+        return get_sub_agent_by_id(sub_agent_id)
 
-    def get(self, request, sub_agent_slug):
-        sub_agent = self.get_object(sub_agent_slug)
+    def get(self, request, sub_agent_id):
+        sub_agent = self.get_object(sub_agent_id)
         if sub_agent is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         output = SubAgentDetailSerializer(sub_agent).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, sub_agent_slug):
-        sub_agent = self.get_object(sub_agent_slug)
+    def put(self, request, sub_agent_id):
+        sub_agent = self.get_object(sub_agent_id)
         if sub_agent is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -95,8 +95,8 @@ class SubAgentDetailView(APIView):
         output = SubAgentDetailSerializer(sub_agent).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, sub_agent_slug):
-        sub_agent = self.get_object(sub_agent_slug)
+    def delete(self, request, sub_agent_id):
+        sub_agent = self.get_object(sub_agent_id)
         if sub_agent is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         delete_sub_agent(sub_agent)

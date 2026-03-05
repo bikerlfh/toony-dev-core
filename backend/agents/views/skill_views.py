@@ -7,7 +7,7 @@ from common.mixins import PaginatedViewMixin
 from accounts.models import OrganizationMembership
 from organizations.models import Organization
 from agents.selectors import (
-    get_skill_by_slug,
+    get_skill_by_id,
     list_skills_for_organization,
     list_skills_for_user,
     list_skill_versions,
@@ -78,18 +78,18 @@ class SkillListCreateView(PaginatedViewMixin, APIView):
 class SkillDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, skill_slug):
-        return get_skill_by_slug(skill_slug)
+    def get_object(self, skill_id):
+        return get_skill_by_id(skill_id)
 
-    def get(self, request, skill_slug):
-        skill = self.get_object(skill_slug)
+    def get(self, request, skill_id):
+        skill = self.get_object(skill_id)
         if skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         output = SkillDetailSerializer(skill).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, skill_slug):
-        skill = self.get_object(skill_slug)
+    def put(self, request, skill_id):
+        skill = self.get_object(skill_id)
         if skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -104,8 +104,8 @@ class SkillDetailView(APIView):
         output = SkillDetailSerializer(skill).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, skill_slug):
-        skill = self.get_object(skill_slug)
+    def delete(self, request, skill_id):
+        skill = self.get_object(skill_id)
         if skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         delete_skill(skill)
@@ -115,8 +115,8 @@ class SkillDetailView(APIView):
 class SkillVersionListView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, skill_slug):
-        skill = get_skill_by_slug(skill_slug)
+    def get(self, request, skill_id):
+        skill = get_skill_by_id(skill_id)
         if skill is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         versions = list_skill_versions(skill)
