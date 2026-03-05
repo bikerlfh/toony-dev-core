@@ -7,54 +7,54 @@ import type {
 } from "@/types";
 
 export async function listCredentials(
-  orgSlug: string,
+  orgId: string,
   cursor?: string
 ): Promise<PaginatedResponse<RepositoryCredential>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<RepositoryCredential>>(
-    `/organizations/${orgSlug}/credentials/`,
+    `/organizations/${orgId}/credentials/`,
     { params }
   );
   return data;
 }
 
 export async function createCredential(
-  orgSlug: string,
+  orgId: string,
   payload: CreateCredentialPayload
 ): Promise<RepositoryCredential> {
   const { data } = await api.post<RepositoryCredential>(
-    `/organizations/${orgSlug}/credentials/`,
+    `/organizations/${orgId}/credentials/`,
     payload
   );
   return data;
 }
 
 export async function getCredential(
-  orgSlug: string,
+  orgId: string,
   credentialId: string
 ): Promise<RepositoryCredential> {
   const { data } = await api.get<RepositoryCredential>(
-    `/organizations/${orgSlug}/credentials/${credentialId}/`
+    `/organizations/${orgId}/credentials/${credentialId}/`
   );
   return data;
 }
 
 export async function updateCredential(
-  orgSlug: string,
+  orgId: string,
   credentialId: string,
   payload: UpdateCredentialPayload
 ): Promise<RepositoryCredential> {
   const { data } = await api.put<RepositoryCredential>(
-    `/organizations/${orgSlug}/credentials/${credentialId}/`,
+    `/organizations/${orgId}/credentials/${credentialId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteCredential(
-  orgSlug: string,
+  orgId: string,
   credentialId: string
 ): Promise<void> {
-  await api.delete(`/organizations/${orgSlug}/credentials/${credentialId}/`);
+  await api.delete(`/organizations/${orgId}/credentials/${credentialId}/`);
 }

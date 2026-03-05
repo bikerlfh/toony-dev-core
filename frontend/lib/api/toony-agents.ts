@@ -15,152 +15,139 @@ import type {
 // ── ToonyAgent CRUD ──
 
 export async function listToonyAgents(
-  orgSlug: string,
   cursor?: string
 ): Promise<PaginatedResponse<ToonyAgentList>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<ToonyAgentList>>(
-    `/organizations/${orgSlug}/toony-agents/`,
+    `/toony-agents/`,
     { params }
   );
   return data;
 }
 
 export async function createToonyAgent(
-  orgSlug: string,
   payload: CreateToonyAgentPayload
 ): Promise<ToonyAgentDetail> {
   const { data } = await api.post<ToonyAgentDetail>(
-    `/organizations/${orgSlug}/toony-agents/`,
+    `/toony-agents/`,
     payload
   );
   return data;
 }
 
 export async function getToonyAgent(
-  orgSlug: string,
-  agentSlug: string
+  agentId: string
 ): Promise<ToonyAgentDetail> {
   const { data } = await api.get<ToonyAgentDetail>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/`
+    `/toony-agents/${agentId}/`
   );
   return data;
 }
 
 export async function updateToonyAgent(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   payload: UpdateToonyAgentPayload
 ): Promise<ToonyAgentDetail> {
   const { data } = await api.put<ToonyAgentDetail>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/`,
+    `/toony-agents/${agentId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteToonyAgent(
-  orgSlug: string,
-  agentSlug: string
+  agentId: string
 ): Promise<void> {
-  await api.delete(`/organizations/${orgSlug}/toony-agents/${agentSlug}/`);
+  await api.delete(`/toony-agents/${agentId}/`);
 }
 
 // ── API Keys ──
 
 export async function listAgentKeys(
-  orgSlug: string,
-  agentSlug: string
+  agentId: string
 ): Promise<PaginatedResponse<ToonyAgentKeyItem>> {
   const { data } = await api.get<PaginatedResponse<ToonyAgentKeyItem>>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/keys/`
+    `/toony-agents/${agentId}/keys/`
   );
   return data;
 }
 
 export async function generateAgentKey(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   name: string
 ): Promise<ToonyAgentKeyItem> {
   const { data } = await api.post<ToonyAgentKeyItem>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/keys/`,
+    `/toony-agents/${agentId}/keys/`,
     { name }
   );
   return data;
 }
 
 export async function revokeAgentKey(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   keyId: string
 ): Promise<void> {
   await api.delete(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/keys/${keyId}/`
+    `/toony-agents/${agentId}/keys/${keyId}/`
   );
 }
 
 // ── Tasks ──
 
 export async function listAgentTasks(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   cursor?: string
 ): Promise<PaginatedResponse<AgentTaskList>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<AgentTaskList>>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/tasks/`,
+    `/toony-agents/${agentId}/tasks/`,
     { params }
   );
   return data;
 }
 
 export async function createAgentTask(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   payload: CreateAgentTaskPayload
 ): Promise<AgentTaskDetail> {
   const { data } = await api.post<AgentTaskDetail>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/tasks/`,
+    `/toony-agents/${agentId}/tasks/`,
     payload
   );
   return data;
 }
 
 export async function getAgentTask(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   taskId: string
 ): Promise<AgentTaskDetail> {
   const { data } = await api.get<AgentTaskDetail>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/tasks/${taskId}/`
+    `/toony-agents/${agentId}/tasks/${taskId}/`
   );
   return data;
 }
 
 export async function cancelAgentTask(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   taskId: string
 ): Promise<AgentTaskDetail> {
   const { data } = await api.post<AgentTaskDetail>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/tasks/${taskId}/cancel/`
+    `/toony-agents/${agentId}/tasks/${taskId}/cancel/`
   );
   return data;
 }
 
 export async function listTaskEvents(
-  orgSlug: string,
-  agentSlug: string,
+  agentId: string,
   taskId: string,
   afterSequence?: number
 ): Promise<PaginatedResponse<TaskEventItem>> {
   const params: Record<string, string> = {};
   if (afterSequence !== undefined) params.after_sequence = String(afterSequence);
   const { data } = await api.get<PaginatedResponse<TaskEventItem>>(
-    `/organizations/${orgSlug}/toony-agents/${agentSlug}/tasks/${taskId}/events/`,
+    `/toony-agents/${agentId}/tasks/${taskId}/events/`,
     { params }
   );
   return data;

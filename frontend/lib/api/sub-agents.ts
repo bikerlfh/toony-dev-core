@@ -8,11 +8,9 @@ import type {
 } from "@/types";
 
 export async function listSubAgents(
-  orgSlug?: string,
   cursor?: string
 ): Promise<PaginatedResponse<SubAgentList>> {
   const params: Record<string, string> = {};
-  if (orgSlug) params.organization = orgSlug;
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<SubAgentList>>(
     `/subagents/`,
@@ -32,27 +30,27 @@ export async function createSubAgent(
 }
 
 export async function getSubAgent(
-  subAgentSlug: string
+  subAgentId: string
 ): Promise<SubAgentDetail> {
   const { data } = await api.get<SubAgentDetail>(
-    `/subagents/${subAgentSlug}/`
+    `/subagents/${subAgentId}/`
   );
   return data;
 }
 
 export async function updateSubAgent(
-  subAgentSlug: string,
+  subAgentId: string,
   payload: UpdateSubAgentPayload
 ): Promise<SubAgentDetail> {
   const { data } = await api.put<SubAgentDetail>(
-    `/subagents/${subAgentSlug}/`,
+    `/subagents/${subAgentId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteSubAgent(
-  subAgentSlug: string
+  subAgentId: string
 ): Promise<void> {
-  await api.delete(`/subagents/${subAgentSlug}/`);
+  await api.delete(`/subagents/${subAgentId}/`);
 }

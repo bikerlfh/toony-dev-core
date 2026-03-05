@@ -13,124 +13,113 @@ import type {
 } from "@/types";
 
 export async function listProjects(
-  orgSlug: string,
   cursor?: string
 ): Promise<PaginatedResponse<ProjectList>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<ProjectList>>(
-    `/organizations/${orgSlug}/projects/`,
+    "/projects/",
     { params }
   );
   return data;
 }
 
 export async function createProject(
-  orgSlug: string,
   payload: CreateProjectPayload
 ): Promise<ProjectDetail> {
   const { data } = await api.post<ProjectDetail>(
-    `/organizations/${orgSlug}/projects/`,
+    "/projects/",
     payload
   );
   return data;
 }
 
 export async function getProject(
-  orgSlug: string,
-  projectSlug: string
+  projectId: string
 ): Promise<ProjectDetail> {
   const { data } = await api.get<ProjectDetail>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/`
+    `/projects/${projectId}/`
   );
   return data;
 }
 
 export async function updateProject(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   payload: UpdateProjectPayload
 ): Promise<ProjectDetail> {
   const { data } = await api.put<ProjectDetail>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/`,
+    `/projects/${projectId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteProject(
-  orgSlug: string,
-  projectSlug: string
+  projectId: string
 ): Promise<void> {
-  await api.delete(`/organizations/${orgSlug}/projects/${projectSlug}/`);
+  await api.delete(`/projects/${projectId}/`);
 }
 
 export async function listProjectMembers(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   cursor?: string
 ): Promise<PaginatedResponse<ProjectMember>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<ProjectMember>>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/members/`,
+    `/projects/${projectId}/members/`,
     { params }
   );
   return data;
 }
 
 export async function addProjectMember(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   payload: AddProjectMemberPayload
 ): Promise<ProjectMember> {
   const { data } = await api.post<ProjectMember>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/members/`,
+    `/projects/${projectId}/members/`,
     payload
   );
   return data;
 }
 
 export async function updateProjectMemberRole(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   userId: string,
   payload: UpdateProjectMemberRolePayload
 ): Promise<ProjectMember> {
   const { data } = await api.put<ProjectMember>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/members/${userId}/`,
+    `/projects/${projectId}/members/${userId}/`,
     payload
   );
   return data;
 }
 
 export async function removeProjectMember(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   userId: string
 ): Promise<void> {
   await api.delete(
-    `/organizations/${orgSlug}/projects/${projectSlug}/members/${userId}/`
+    `/projects/${projectId}/members/${userId}/`
   );
 }
 
 export async function getProjectSettings(
-  orgSlug: string,
-  projectSlug: string
+  projectId: string
 ): Promise<ProjectSettings> {
   const { data } = await api.get<ProjectSettings>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/settings/`
+    `/projects/${projectId}/settings/`
   );
   return data;
 }
 
 export async function updateProjectSettings(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   payload: UpdateProjectSettingsPayload
 ): Promise<ProjectSettings> {
   const { data } = await api.put<ProjectSettings>(
-    `/organizations/${orgSlug}/projects/${projectSlug}/settings/`,
+    `/projects/${projectId}/settings/`,
     payload
   );
   return data;

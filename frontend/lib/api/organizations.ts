@@ -26,22 +26,22 @@ export async function createOrganization(
   return data;
 }
 
-export async function getOrganization(slug: string): Promise<OrganizationDetail> {
-  const { data } = await api.get<OrganizationDetail>(`/organizations/${slug}/`);
+export async function getOrganization(id: string): Promise<OrganizationDetail> {
+  const { data } = await api.get<OrganizationDetail>(`/organizations/${id}/`);
   return data;
 }
 
 export async function updateOrganization(
-  slug: string,
+  id: string,
   payload: UpdateOrganizationPayload
 ): Promise<OrganizationDetail> {
   const { data } = await api.patch<OrganizationDetail>(
-    `/organizations/${slug}/`,
+    `/organizations/${id}/`,
     payload
   );
   return data;
 }
 
-export async function deleteOrganization(slug: string): Promise<void> {
-  await api.delete(`/organizations/${slug}/`);
+export async function deleteOrganization(id: string): Promise<void> {
+  await api.delete(`/organizations/${id}/`);
 }

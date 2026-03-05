@@ -9,11 +9,9 @@ import type {
 } from "@/types";
 
 export async function listSkills(
-  orgSlug?: string,
   cursor?: string
 ): Promise<PaginatedResponse<SkillList>> {
   const params: Record<string, string> = {};
-  if (orgSlug) params.organization = orgSlug;
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<SkillList>>(
     `/skills/`,
@@ -33,39 +31,39 @@ export async function createSkill(
 }
 
 export async function getSkill(
-  skillSlug: string
+  skillId: string
 ): Promise<SkillDetail> {
   const { data } = await api.get<SkillDetail>(
-    `/skills/${skillSlug}/`
+    `/skills/${skillId}/`
   );
   return data;
 }
 
 export async function updateSkill(
-  skillSlug: string,
+  skillId: string,
   payload: UpdateSkillPayload
 ): Promise<SkillDetail> {
   const { data } = await api.put<SkillDetail>(
-    `/skills/${skillSlug}/`,
+    `/skills/${skillId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteSkill(
-  skillSlug: string
+  skillId: string
 ): Promise<void> {
-  await api.delete(`/skills/${skillSlug}/`);
+  await api.delete(`/skills/${skillId}/`);
 }
 
 export async function listSkillVersions(
-  skillSlug: string,
+  skillId: string,
   cursor?: string
 ): Promise<PaginatedResponse<SkillVersion>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<SkillVersion>>(
-    `/skills/${skillSlug}/versions/`,
+    `/skills/${skillId}/versions/`,
     { params }
   );
   return data;

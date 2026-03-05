@@ -7,46 +7,46 @@ import type {
 } from "@/types";
 
 export async function listSubAgentSkills(
-  subAgentSlug: string,
+  subAgentId: string,
   cursor?: string
 ): Promise<PaginatedResponse<SubAgentSkill>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<SubAgentSkill>>(
-    `/subagents/${subAgentSlug}/skills/`,
+    `/subagents/${subAgentId}/skills/`,
     { params }
   );
   return data;
 }
 
 export async function assignSkill(
-  subAgentSlug: string,
+  subAgentId: string,
   payload: CreateSubAgentSkillPayload
 ): Promise<SubAgentSkill> {
   const { data } = await api.post<SubAgentSkill>(
-    `/subagents/${subAgentSlug}/skills/`,
+    `/subagents/${subAgentId}/skills/`,
     payload
   );
   return data;
 }
 
 export async function updateSubAgentSkill(
-  subAgentSlug: string,
+  subAgentId: string,
   subAgentSkillId: string,
   payload: UpdateSubAgentSkillPayload
 ): Promise<SubAgentSkill> {
   const { data } = await api.put<SubAgentSkill>(
-    `/subagents/${subAgentSlug}/skills/${subAgentSkillId}/`,
+    `/subagents/${subAgentId}/skills/${subAgentSkillId}/`,
     payload
   );
   return data;
 }
 
 export async function removeSubAgentSkill(
-  subAgentSlug: string,
+  subAgentId: string,
   subAgentSkillId: string
 ): Promise<void> {
   await api.delete(
-    `/subagents/${subAgentSlug}/skills/${subAgentSkillId}/`
+    `/subagents/${subAgentId}/skills/${subAgentSkillId}/`
   );
 }

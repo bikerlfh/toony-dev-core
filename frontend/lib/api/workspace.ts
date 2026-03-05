@@ -70,67 +70,67 @@ export async function createTeam(
   return data;
 }
 
-export async function getTeam(teamSlug: string): Promise<TeamDetail> {
+export async function getTeam(teamId: string): Promise<TeamDetail> {
   const { data } = await api.get<TeamDetail>(
-    `/workspace/teams/${teamSlug}/`
+    `/workspace/teams/${teamId}/`
   );
   return data;
 }
 
 export async function updateTeam(
-  teamSlug: string,
+  teamId: string,
   payload: UpdateTeamPayload
 ): Promise<TeamDetail> {
   const { data } = await api.put<TeamDetail>(
-    `/workspace/teams/${teamSlug}/`,
+    `/workspace/teams/${teamId}/`,
     payload
   );
   return data;
 }
 
-export async function deleteTeam(teamSlug: string): Promise<void> {
-  await api.delete(`/workspace/teams/${teamSlug}/`);
+export async function deleteTeam(teamId: string): Promise<void> {
+  await api.delete(`/workspace/teams/${teamId}/`);
 }
 
 export async function listTeamMembers(
-  teamSlug: string,
+  teamId: string,
   cursor?: string
 ): Promise<PaginatedResponse<TeamMember>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<TeamMember>>(
-    `/workspace/teams/${teamSlug}/members/`,
+    `/workspace/teams/${teamId}/members/`,
     { params }
   );
   return data;
 }
 
 export async function addTeamMember(
-  teamSlug: string,
+  teamId: string,
   payload: AddTeamMemberPayload
 ): Promise<TeamMember> {
   const { data } = await api.post<TeamMember>(
-    `/workspace/teams/${teamSlug}/members/`,
+    `/workspace/teams/${teamId}/members/`,
     payload
   );
   return data;
 }
 
 export async function updateTeamMemberRole(
-  teamSlug: string,
+  teamId: string,
   userId: string,
   payload: UpdateTeamMemberRolePayload
 ): Promise<TeamMember> {
   const { data } = await api.put<TeamMember>(
-    `/workspace/teams/${teamSlug}/members/${userId}/`,
+    `/workspace/teams/${teamId}/members/${userId}/`,
     payload
   );
   return data;
 }
 
 export async function removeTeamMember(
-  teamSlug: string,
+  teamId: string,
   userId: string
 ): Promise<void> {
-  await api.delete(`/workspace/teams/${teamSlug}/members/${userId}/`);
+  await api.delete(`/workspace/teams/${teamId}/members/${userId}/`);
 }

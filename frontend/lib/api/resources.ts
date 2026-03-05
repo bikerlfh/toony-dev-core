@@ -6,52 +6,48 @@ import type {
   PaginatedResponse,
 } from "@/types";
 
-const base = (orgSlug: string, projectSlug: string) =>
-  `/organizations/${orgSlug}/projects/${projectSlug}/resources`;
+const base = (projectId: string) =>
+  `/projects/${projectId}/resources`;
 
 export async function listResources(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   cursor?: string
 ): Promise<PaginatedResponse<ProjectResource>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
   const { data } = await api.get<PaginatedResponse<ProjectResource>>(
-    `${base(orgSlug, projectSlug)}/`,
+    `${base(projectId)}/`,
     { params }
   );
   return data;
 }
 
 export async function createResource(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   payload: CreateProjectResourcePayload
 ): Promise<ProjectResource> {
   const { data } = await api.post<ProjectResource>(
-    `${base(orgSlug, projectSlug)}/`,
+    `${base(projectId)}/`,
     payload
   );
   return data;
 }
 
 export async function updateResource(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   resourceId: string,
   payload: UpdateProjectResourcePayload
 ): Promise<ProjectResource> {
   const { data } = await api.put<ProjectResource>(
-    `${base(orgSlug, projectSlug)}/${resourceId}/`,
+    `${base(projectId)}/${resourceId}/`,
     payload
   );
   return data;
 }
 
 export async function deleteResource(
-  orgSlug: string,
-  projectSlug: string,
+  projectId: string,
   resourceId: string
 ): Promise<void> {
-  await api.delete(`${base(orgSlug, projectSlug)}/${resourceId}/`);
+  await api.delete(`${base(projectId)}/${resourceId}/`);
 }
