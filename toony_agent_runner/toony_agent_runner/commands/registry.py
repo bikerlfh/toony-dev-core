@@ -63,3 +63,10 @@ COMMAND_REGISTRY.update({
     "rename_file": rename_file,
     "copy_file": copy_file,
 })
+
+from .download import download_url, download_backend  # noqa: E402
+
+COMMAND_REGISTRY.update({
+    "download_url": download_url,
+    "download_backend": download_backend,
+})
