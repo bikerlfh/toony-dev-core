@@ -1,17 +1,17 @@
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.selectors import get_user_by_email
 from common.mixins import PaginatedViewMixin
-from organizations.permissions import IsOrganizationAdmin, IsOrganizationManager, IsOrganizationMember
+from organizations.permissions import get_membership, MANAGER_ROLES
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
     get_project_settings,
-    list_organization_projects,
     list_project_members,
+    list_user_projects,
     get_project_membership,
 )
 from projects.serializers.input import (
@@ -39,22 +39,24 @@ from projects.services import (
 
 
 class ProjectListCreateView(PaginatedViewMixin, APIView):
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsAuthenticated(), IsOrganizationManager()]
-        return [IsAuthenticated(), IsOrganizationMember()]
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, org_slug):
+    def get(self, request):
         search = request.query_params.get("q")
-        projects = list_organization_projects(request.organization, search=search)
+        projects = list_user_projects(request.user, search=search)
         return self.paginate(projects, ProjectListSerializer, request)
 
-    def post(self, request, org_slug):
+    def post(self, request):
         serializer = CreateProjectSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        org_id = serializer.validated_data.pop("organization_id")
+        membership = get_membership(request.user, org_id)
+        if membership is None or membership.role not in MANAGER_ROLES:
+            raise PermissionDenied("You must be a manager or above in this organization.")
+
         project = create_project(
-            organization=request.organization,
+            organization=membership.organization,
             creator=request.user,
             **serializer.validated_data,
         )
@@ -70,11 +72,11 @@ class ProjectDetailView(APIView):
             return [IsAuthenticated(), IsProjectAccessible()]
         return [IsAuthenticated(), IsProjectAccessible()]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         output = ProjectDetailSerializer(request.project).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, project_slug):
+    def put(self, request, project_id):
         serializer = UpdateProjectSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -82,7 +84,7 @@ class ProjectDetailView(APIView):
         output = ProjectDetailSerializer(project).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug):
+    def delete(self, request, project_id):
         delete_project(request.project)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -91,11 +93,11 @@ class ProjectMemberListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         return [IsAuthenticated(), IsProjectAccessible()]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         members = list_project_members(request.project)
         return self.paginate(members, ProjectMembershipSerializer, request)
 
-    def post(self, request, org_slug, project_slug):
+    def post(self, request, project_id):
         serializer = AddProjectMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -128,7 +130,7 @@ class ProjectMemberDetailView(APIView):
             raise NotFound("Project membership not found.")
         return membership
 
-    def put(self, request, org_slug, project_slug, user_id):
+    def put(self, request, project_id, user_id):
         membership = self._get_membership(request.project, user_id)
         serializer = UpdateProjectMemberRoleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -139,7 +141,7 @@ class ProjectMemberDetailView(APIView):
         output = ProjectMembershipSerializer(membership).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug, user_id):
+    def delete(self, request, project_id, user_id):
         membership = self._get_membership(request.project, user_id)
         remove_project_member(membership)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -151,14 +153,14 @@ class ProjectSettingsView(APIView):
             return [IsAuthenticated(), IsProjectAccessible()]
         return [IsAuthenticated(), IsProjectAccessible()]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         settings_obj = get_project_settings(request.project)
         if settings_obj is None:
             raise NotFound("Project settings not found.")
         output = ProjectSettingsSerializer(settings_obj).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, project_slug):
+    def put(self, request, project_id):
         settings_obj = get_project_settings(request.project)
         if settings_obj is None:
             raise NotFound("Project settings not found.")

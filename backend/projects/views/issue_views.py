@@ -9,6 +9,7 @@ from common.mixins import PaginatedViewMixin
 from projects.models import Milestone, Cycle
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
+    get_issue_by_id,
     get_issue_by_identifier,
     list_issue_activities,
     list_issue_comments,
@@ -39,7 +40,7 @@ from projects.services import (
 class IssueListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         search = request.query_params.get("q")
         filters = {}
         for key in ("status", "priority", "assignee_id", "milestone_id", "cycle_id"):
@@ -58,7 +59,7 @@ class IssueListCreateView(PaginatedViewMixin, APIView):
         issues = list_project_issues(request.project, filters=filters or None, search=search)
         return self.paginate(issues, IssueListSerializer, request)
 
-    def post(self, request, org_slug, project_slug):
+    def post(self, request, project_id):
         serializer = CreateIssueSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -117,19 +118,19 @@ class IssueListCreateView(PaginatedViewMixin, APIView):
 class IssueDetailView(APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def _get_issue(self, project, identifier):
-        issue = get_issue_by_identifier(identifier)
+    def _get_issue(self, project, issue_id):
+        issue = get_issue_by_id(issue_id)
         if issue is None or issue.project_id != project.id:
             raise NotFound("Issue not found.")
         return issue
 
-    def get(self, request, org_slug, project_slug, identifier):
-        issue = self._get_issue(request.project, identifier)
+    def get(self, request, project_id, issue_id):
+        issue = self._get_issue(request.project, issue_id)
         output = IssueDetailSerializer(issue).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, project_slug, identifier):
-        issue = self._get_issue(request.project, identifier)
+    def put(self, request, project_id, issue_id):
+        issue = self._get_issue(request.project, issue_id)
         serializer = UpdateIssueSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -199,8 +200,8 @@ class IssueDetailView(APIView):
         output = IssueDetailSerializer(issue).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug, identifier):
-        issue = self._get_issue(request.project, identifier)
+    def delete(self, request, project_id, issue_id):
+        issue = self._get_issue(request.project, issue_id)
         delete_issue(issue)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -208,19 +209,19 @@ class IssueDetailView(APIView):
 class IssueCommentListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def _get_issue(self, project, identifier):
-        issue = get_issue_by_identifier(identifier)
+    def _get_issue(self, project, issue_id):
+        issue = get_issue_by_id(issue_id)
         if issue is None or issue.project_id != project.id:
             raise NotFound("Issue not found.")
         return issue
 
-    def get(self, request, org_slug, project_slug, identifier):
-        issue = self._get_issue(request.project, identifier)
+    def get(self, request, project_id, issue_id):
+        issue = self._get_issue(request.project, issue_id)
         comments = list_issue_comments(issue)
         return self.paginate(comments, IssueCommentSerializer, request)
 
-    def post(self, request, org_slug, project_slug, identifier):
-        issue = self._get_issue(request.project, identifier)
+    def post(self, request, project_id, issue_id):
+        issue = self._get_issue(request.project, issue_id)
         serializer = CreateCommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -236,8 +237,8 @@ class IssueCommentListCreateView(PaginatedViewMixin, APIView):
 class IssueCommentDetailView(APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def _get_comment(self, project, identifier, comment_id):
-        issue = get_issue_by_identifier(identifier)
+    def _get_comment(self, project, issue_id, comment_id):
+        issue = get_issue_by_id(issue_id)
         if issue is None or issue.project_id != project.id:
             raise NotFound("Issue not found.")
 
@@ -249,8 +250,8 @@ class IssueCommentDetailView(APIView):
         except IssueComment.DoesNotExist:
             raise NotFound("Comment not found.")
 
-    def put(self, request, org_slug, project_slug, identifier, comment_id):
-        comment = self._get_comment(request.project, identifier, comment_id)
+    def put(self, request, project_id, issue_id, comment_id):
+        comment = self._get_comment(request.project, issue_id, comment_id)
         serializer = UpdateCommentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -258,8 +259,8 @@ class IssueCommentDetailView(APIView):
         output = IssueCommentSerializer(comment).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug, identifier, comment_id):
-        comment = self._get_comment(request.project, identifier, comment_id)
+    def delete(self, request, project_id, issue_id, comment_id):
+        comment = self._get_comment(request.project, issue_id, comment_id)
         delete_comment(comment)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -267,8 +268,8 @@ class IssueCommentDetailView(APIView):
 class IssueActivityListView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def get(self, request, org_slug, project_slug, identifier):
-        issue = get_issue_by_identifier(identifier)
+    def get(self, request, project_id, issue_id):
+        issue = get_issue_by_id(issue_id)
         if issue is None or issue.project_id != request.project.id:
             raise NotFound("Issue not found.")
 

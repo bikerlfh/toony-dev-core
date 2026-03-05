@@ -17,11 +17,11 @@ class ProjectTeamListCreateView(PaginatedViewMixin, APIView):
     def get_permissions(self):
         return [IsAuthenticated(), IsProjectAccessible()]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         project_teams = list_project_teams(request.project)
         return self.paginate(project_teams, ProjectTeamSerializer, request)
 
-    def post(self, request, org_slug, project_slug):
+    def post(self, request, project_id):
         serializer = AddProjectTeamSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -40,7 +40,7 @@ class ProjectTeamListCreateView(PaginatedViewMixin, APIView):
 class ProjectTeamDetailView(APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def delete(self, request, org_slug, project_slug, team_id):
+    def delete(self, request, project_id, team_id):
         try:
             team = Team.objects.get(id=team_id, is_active=True)
         except Team.DoesNotExist:

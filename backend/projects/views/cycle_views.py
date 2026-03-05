@@ -15,11 +15,11 @@ from projects.services import create_cycle, delete_cycle, update_cycle
 class CycleListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         cycles = list_project_cycles(request.project)
         return self.paginate(cycles, CycleSerializer, request)
 
-    def post(self, request, org_slug, project_slug):
+    def post(self, request, project_id):
         serializer = CreateCycleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -39,12 +39,12 @@ class CycleDetailView(APIView):
             raise NotFound("Cycle not found.")
         return cycle
 
-    def get(self, request, org_slug, project_slug, cycle_id):
+    def get(self, request, project_id, cycle_id):
         cycle = self._get_cycle(request.project, cycle_id)
         output = CycleSerializer(cycle).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, project_slug, cycle_id):
+    def put(self, request, project_id, cycle_id):
         cycle = self._get_cycle(request.project, cycle_id)
         serializer = UpdateCycleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -53,7 +53,7 @@ class CycleDetailView(APIView):
         output = CycleSerializer(cycle).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug, cycle_id):
+    def delete(self, request, project_id, cycle_id):
         cycle = self._get_cycle(request.project, cycle_id)
         delete_cycle(cycle)
         return Response(status=status.HTTP_204_NO_CONTENT)

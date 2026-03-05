@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from accounts.serializers.output import UserDetailSerializer
+from organizations.models import Organization
 from projects.models import (
     Cycle,
     Issue,
@@ -15,15 +16,32 @@ from projects.models import (
 from workspace.serializers.output import LabelSerializer
 
 
+# Inline org serializer to avoid circular import with organizations.serializers.output
+class _OrganizationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "logo",
+            "is_active",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
 # --- Project ---
 
 class ProjectListSerializer(serializers.ModelSerializer):
     lead = UserDetailSerializer(read_only=True)
+    organization = _OrganizationSerializer(read_only=True)
 
     class Meta:
         model = Project
         fields = [
             "id",
+            "organization",
             "name",
             "slug",
             "status",
@@ -41,6 +59,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
     lead = UserDetailSerializer(read_only=True)
+    organization = _OrganizationSerializer(read_only=True)
     issue_count = serializers.SerializerMethodField()
     member_count = serializers.SerializerMethodField()
 
@@ -48,6 +67,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         model = Project
         fields = [
             "id",
+            "organization",
             "name",
             "slug",
             "description",

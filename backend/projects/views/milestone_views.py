@@ -15,11 +15,11 @@ from projects.services import create_milestone, delete_milestone, update_milesto
 class MilestoneListCreateView(PaginatedViewMixin, APIView):
     permission_classes = [IsAuthenticated, IsProjectAccessible]
 
-    def get(self, request, org_slug, project_slug):
+    def get(self, request, project_id):
         milestones = list_project_milestones(request.project)
         return self.paginate(milestones, MilestoneSerializer, request)
 
-    def post(self, request, org_slug, project_slug):
+    def post(self, request, project_id):
         serializer = CreateMilestoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -39,12 +39,12 @@ class MilestoneDetailView(APIView):
             raise NotFound("Milestone not found.")
         return milestone
 
-    def get(self, request, org_slug, project_slug, milestone_id):
+    def get(self, request, project_id, milestone_id):
         milestone = self._get_milestone(request.project, milestone_id)
         output = MilestoneSerializer(milestone).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def put(self, request, org_slug, project_slug, milestone_id):
+    def put(self, request, project_id, milestone_id):
         milestone = self._get_milestone(request.project, milestone_id)
         serializer = UpdateMilestoneSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -53,7 +53,7 @@ class MilestoneDetailView(APIView):
         output = MilestoneSerializer(milestone).data
         return Response(output, status=status.HTTP_200_OK)
 
-    def delete(self, request, org_slug, project_slug, milestone_id):
+    def delete(self, request, project_id, milestone_id):
         milestone = self._get_milestone(request.project, milestone_id)
         delete_milestone(milestone)
         return Response(status=status.HTTP_204_NO_CONTENT)
