@@ -5,10 +5,10 @@ from tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
-REGISTER_URL = "/api/v1/auth/register/"
-LOGIN_URL = "/api/v1/auth/login/"
-REFRESH_URL = "/api/v1/auth/refresh/"
-ME_URL = "/api/v1/auth/me/"
+REGISTER_URL = "/api/auth/register/"
+LOGIN_URL = "/api/auth/login/"
+REFRESH_URL = "/api/auth/refresh/"
+ME_URL = "/api/auth/me/"
 
 
 class TestRegister:

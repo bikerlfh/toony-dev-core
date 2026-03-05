@@ -5,31 +5,33 @@ from tests.factories import IssueCommentFactory, LabelFactory
 
 pytestmark = pytest.mark.django_db
 
-
-def issues_url(org_slug, project_slug):
-    return f"/api/v1/organizations/{org_slug}/projects/{project_slug}/issues/"
+FAKE_UUID = "00000000-0000-0000-0000-000000000000"
 
 
-def issue_url(org_slug, project_slug, identifier):
-    return f"/api/v1/organizations/{org_slug}/projects/{project_slug}/issues/{identifier}/"
+def issues_url(project_id):
+    return f"/api/projects/{project_id}/issues/"
 
 
-def comments_url(org_slug, project_slug, identifier):
-    return f"/api/v1/organizations/{org_slug}/projects/{project_slug}/issues/{identifier}/comments/"
+def issue_url(project_id, issue_id):
+    return f"/api/projects/{project_id}/issues/{issue_id}/"
 
 
-def comment_url(org_slug, project_slug, identifier, comment_id):
-    return f"/api/v1/organizations/{org_slug}/projects/{project_slug}/issues/{identifier}/comments/{comment_id}/"
+def comments_url(project_id, issue_id):
+    return f"/api/projects/{project_id}/issues/{issue_id}/comments/"
+
+
+def comment_url(project_id, issue_id, comment_id):
+    return f"/api/projects/{project_id}/issues/{issue_id}/comments/{comment_id}/"
 
 
 class TestIssueList:
     def test_list_issues(self, authenticated_client, organization, project, issue):
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
     def test_create_issue(self, authenticated_client, organization, project):
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         data = {"title": "New Issue", "description": "A test issue"}
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
@@ -39,7 +41,7 @@ class TestIssueList:
         self, authenticated_client, organization, project
     ):
         label = LabelFactory()
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         data = {
             "title": "Labeled Issue",
             "label_ids": [str(label.id)],
@@ -51,13 +53,13 @@ class TestIssueList:
     def test_create_issue_missing_title(
         self, authenticated_client, organization, project
     ):
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         data = {"description": "No title"}
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_create_issue_unauthenticated(self, api_client, organization, project):
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         data = {"title": "Unauth Issue"}
         response = api_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -65,7 +67,7 @@ class TestIssueList:
     def test_auto_increment_identifier(
         self, authenticated_client, organization, project
     ):
-        url = issues_url(organization.slug, project.slug)
+        url = issues_url(project.id)
         r1 = authenticated_client.post(url, {"title": "First"}, format="json")
         r2 = authenticated_client.post(url, {"title": "Second"}, format="json")
         assert r1.status_code == status.HTTP_201_CREATED
@@ -83,25 +85,25 @@ class TestIssueList:
 
 class TestIssueDetail:
     def test_get_issue(self, authenticated_client, organization, project, issue):
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert response.data["identifier"] == issue.identifier
 
     def test_update_issue(self, authenticated_client, organization, project, issue):
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"title": "Updated Issue Title"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["title"] == "Updated Issue Title"
 
     def test_delete_issue(self, authenticated_client, organization, project, issue):
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         response = authenticated_client.delete(url)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_issue_not_found(self, authenticated_client, organization, project):
-        url = issue_url(organization.slug, project.slug, "FAKE-999")
+        url = issue_url(project.id, FAKE_UUID)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -110,7 +112,7 @@ class TestIssueDetail:
     ):
         issue.status = "BACKLOG"
         issue.save()
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"title": "New Title"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -121,7 +123,7 @@ class TestIssueDetail:
     ):
         issue.status = "TODO"
         issue.save()
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"title": "New Title"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -132,7 +134,7 @@ class TestIssueDetail:
     ):
         issue.status = "IN_PROGRESS"
         issue.save()
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"title": "Should Fail"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -142,7 +144,7 @@ class TestIssueDetail:
     ):
         issue.status = "DONE"
         issue.save()
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"description": "Should Fail"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -152,7 +154,7 @@ class TestIssueDetail:
     ):
         issue.status = "IN_PROGRESS"
         issue.save()
-        url = issue_url(organization.slug, project.slug, issue.identifier)
+        url = issue_url(project.id, issue.id)
         data = {"priority": "HIGH"}
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_200_OK
@@ -162,12 +164,12 @@ class TestIssueDetail:
 class TestIssueComments:
     def test_list_comments(self, authenticated_client, organization, project, issue):
         IssueCommentFactory(issue=issue, author=issue.reporter)
-        url = comments_url(organization.slug, project.slug, issue.identifier)
+        url = comments_url(project.id, issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
     def test_create_comment(self, authenticated_client, organization, project, issue):
-        url = comments_url(organization.slug, project.slug, issue.identifier)
+        url = comments_url(project.id, issue.id)
         data = {"body": "A new comment"}
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
@@ -176,15 +178,13 @@ class TestIssueComments:
     def test_create_comment_empty_body(
         self, authenticated_client, organization, project, issue
     ):
-        url = comments_url(organization.slug, project.slug, issue.identifier)
+        url = comments_url(project.id, issue.id)
         data = {"body": ""}
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_delete_comment(self, authenticated_client, organization, project, issue):
         comment = IssueCommentFactory(issue=issue, author=issue.reporter)
-        url = comment_url(
-            organization.slug, project.slug, issue.identifier, comment.id
-        )
+        url = comment_url(project.id, issue.id, comment.id)
         response = authenticated_client.delete(url)
         assert response.status_code == status.HTTP_204_NO_CONTENT

@@ -5,20 +5,20 @@ from tests.factories import LabelFactory, TeamFactory, TeamMembershipFactory
 
 pytestmark = pytest.mark.django_db
 
-LABELS_URL = "/api/v1/workspace/labels/"
-TEAMS_URL = "/api/v1/workspace/teams/"
+LABELS_URL = "/api/workspace/labels/"
+TEAMS_URL = "/api/workspace/teams/"
 
 
 def label_url(label_id):
-    return f"/api/v1/workspace/labels/{label_id}/"
+    return f"/api/workspace/labels/{label_id}/"
 
 
-def team_url(team_slug):
-    return f"/api/v1/workspace/teams/{team_slug}/"
+def team_url(team_id):
+    return f"/api/workspace/teams/{team_id}/"
 
 
-def team_members_url(team_slug):
-    return f"/api/v1/workspace/teams/{team_slug}/members/"
+def team_members_url(team_id):
+    return f"/api/workspace/teams/{team_id}/members/"
 
 
 class TestWorkspaceLabels:
@@ -68,25 +68,25 @@ class TestWorkspaceTeams:
 
     def test_get_team(self, authenticated_client, organization):
         team = TeamFactory()
-        response = authenticated_client.get(team_url(team.slug))
+        response = authenticated_client.get(team_url(team.id))
         assert response.status_code == status.HTTP_200_OK
 
     def test_update_team(self, authenticated_client, organization):
         team = TeamFactory()
         data = {"name": "Updated Team"}
-        response = authenticated_client.put(team_url(team.slug), data, format="json")
+        response = authenticated_client.put(team_url(team.id), data, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["name"] == "Updated Team"
 
     def test_delete_team(self, authenticated_client, organization):
         team = TeamFactory()
-        response = authenticated_client.delete(team_url(team.slug))
+        response = authenticated_client.delete(team_url(team.id))
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_list_team_members(self, authenticated_client, organization):
         team = TeamFactory()
         TeamMembershipFactory(team=team)
-        response = authenticated_client.get(team_members_url(team.slug))
+        response = authenticated_client.get(team_members_url(team.id))
         assert response.status_code == status.HTTP_200_OK
 
     def test_unauthenticated(self, api_client):

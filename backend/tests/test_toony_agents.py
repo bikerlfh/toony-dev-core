@@ -129,26 +129,30 @@ class TestAgentTaskService:
         assert event.sequence == 1
 
 
-def toony_agents_url(org_slug):
-    return f"/api/v1/organizations/{org_slug}/toony-agents/"
+def toony_agents_url():
+    return "/api/toony-agents/"
 
 
-def toony_agent_url(org_slug, agent_slug):
-    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/"
+def toony_agent_url(agent_id):
+    return f"/api/toony-agents/{agent_id}/"
 
 
-def keys_url(org_slug, agent_slug):
-    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/keys/"
+def keys_url(agent_id):
+    return f"/api/toony-agents/{agent_id}/keys/"
 
 
-def tasks_url(org_slug, agent_slug):
-    return f"/api/v1/organizations/{org_slug}/toony-agents/{agent_slug}/tasks/"
+def tasks_url(agent_id):
+    return f"/api/toony-agents/{agent_id}/tasks/"
 
 
 class TestToonyAgentAPI:
     def test_create_toony_agent(self, authenticated_client, organization):
-        url = toony_agents_url(organization.slug)
-        data = {"name": "My Bot", "slug": "my-bot"}
+        url = toony_agents_url()
+        data = {
+            "name": "My Bot",
+            "slug": "my-bot",
+            "organization_id": str(organization.id),
+        }
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["name"] == "My Bot"
@@ -160,7 +164,7 @@ class TestToonyAgentAPI:
             name="Bot", slug="list-bot", registered_by=user,
         )
         agent.organizations.add(organization)
-        url = toony_agents_url(organization.slug)
+        url = toony_agents_url()
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
 
@@ -170,7 +174,7 @@ class TestToonyAgentAPI:
             name="Bot", slug="get-bot", registered_by=user,
         )
         agent.organizations.add(organization)
-        url = toony_agent_url(organization.slug, "get-bot")
+        url = toony_agent_url(agent.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert response.data["slug"] == "get-bot"
@@ -181,7 +185,7 @@ class TestToonyAgentAPI:
             name="Bot", slug="key-bot", registered_by=user,
         )
         agent.organizations.add(organization)
-        url = keys_url(organization.slug, "key-bot")
+        url = keys_url(agent.id)
         response = authenticated_client.post(url, {"name": "dev"}, format="json")
         assert response.status_code == status.HTTP_201_CREATED
         assert "raw_key" in response.data
@@ -193,7 +197,7 @@ class TestToonyAgentAPI:
             name="Bot", slug="task-api-bot", registered_by=user,
         )
         agent.organizations.add(organization)
-        url = tasks_url(organization.slug, "task-api-bot")
+        url = tasks_url(agent.id)
         data = {
             "title": "Fix bug",
             "prompt": "Fix the login bug",
@@ -203,13 +207,27 @@ class TestToonyAgentAPI:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["status"] == "QUEUED"
 
-    def test_unauthenticated(self, api_client, organization):
-        url = toony_agents_url(organization.slug)
+    def test_unauthenticated(self, api_client):
+        url = toony_agents_url()
         response = api_client.get(url)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_nonmember_denied(self, api_client, organization, other_user):
+    def test_nonmember_list_returns_empty(self, api_client, organization, other_user):
+        """Non-member listing toony agents gets 200 with empty results (no org in URL)."""
         api_client.force_authenticate(user=other_user)
-        url = toony_agents_url(organization.slug)
+        url = toony_agents_url()
+        response = api_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 0
+
+    def test_nonmember_denied_detail(self, api_client, organization, other_user, user):
+        """Non-member accessing a specific agent gets 403."""
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="deny-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        api_client.force_authenticate(user=other_user)
+        url = toony_agent_url(agent.id)
         response = api_client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
