@@ -3,6 +3,10 @@ from projects.services.artifact_service import (
     delete_artifact,
     update_artifact,
 )
+from projects.services.document_service import (
+    create_issue_document,
+    delete_issue_document,
+)
 from projects.services.cycle_service import create_cycle, delete_cycle, update_cycle
 from projects.services.issue_service import (
     create_comment,
@@ -58,4 +62,6 @@ __all__ = [
     "create_artifact",
     "update_artifact",
     "delete_artifact",
+    "create_issue_document",
+    "delete_issue_document",
 ]
