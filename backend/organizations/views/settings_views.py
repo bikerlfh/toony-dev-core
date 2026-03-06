@@ -12,7 +12,7 @@ from organizations.services import update_organization_settings
 
 class OrganizationSettingsView(APIView):
     def get_permissions(self):
-        if self.request.method == "PUT":
+        if self.request.method in ("PUT", "PATCH"):
             return [IsAuthenticated(), IsOrganizationAdmin()]
         return [IsAuthenticated(), IsOrganizationMember()]
 
@@ -22,6 +22,17 @@ class OrganizationSettingsView(APIView):
         return Response(output, status=status.HTTP_200_OK)
 
     def put(self, request, org_id):
+        serializer = UpdateOrganizationSettingsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        settings = update_organization_settings(
+            request.organization,
+            **serializer.validated_data,
+        )
+        output = OrganizationSettingsSerializer(settings).data
+        return Response(output, status=status.HTTP_200_OK)
+
+    def patch(self, request, org_id):
         serializer = UpdateOrganizationSettingsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
