@@ -98,7 +98,7 @@ function LandingPage() {
             Sign in
           </Link>
           <Link
-            href="/register"
+            href="/login"
             className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
             Get started
@@ -127,7 +127,7 @@ function LandingPage() {
 
           <div className="mt-10 flex items-center gap-4">
             <Link
-              href="/register"
+              href="/login"
               className="group relative rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-indigo-500"
             >
               Start building

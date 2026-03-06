@@ -5,7 +5,8 @@ export type {
   AuthTokens,
   AuthResponse,
   LoginCredentials,
-  RegisterCredentials,
+  UpdateProfilePayload,
+  ChangePasswordPayload,
 } from "./auth";
 
 export type {

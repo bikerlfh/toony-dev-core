@@ -2,7 +2,6 @@
 
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 
 function LoginForm() {
@@ -11,7 +10,7 @@ function LoginForm() {
   const redirect = searchParams.get("redirect") || "/";
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +21,7 @@ function LoginForm() {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
+      await login({ username, password });
       router.push(redirect);
     } catch (err: unknown) {
       const message =
@@ -59,15 +58,15 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-400">
-            Email
+          <label htmlFor="username" className="block text-sm font-medium text-slate-400">
+            Username
           </label>
           <input
-            id="email"
-            type="email"
+            id="username"
+            type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
           />
         </div>
@@ -101,13 +100,6 @@ function LoginForm() {
           )}
         </button>
       </form>
-
-      <p className="mt-5 text-center text-sm text-slate-500">
-        Don&apos;t have an account?{" "}
-        <Link href="/register" className="text-indigo-400 transition-colors hover:text-indigo-300">
-          Sign up
-        </Link>
-      </p>
     </>
   );
 }
