@@ -15,6 +15,9 @@ from toony_agents.models import (
 from toony_agents.services.toony_agent_service import (
     verify_api_key as _sync_verify_api_key,
 )
+from toony_agents.selectors.workspace_config_selector import (
+    get_agent_workspace_config as _sync_get_workspace_config,
+)
 
 
 # -- Async DB helpers ----------------------------------------------------------
@@ -23,6 +26,11 @@ from toony_agents.services.toony_agent_service import (
 @database_sync_to_async
 def _verify_api_key(raw_key):
     return _sync_verify_api_key(raw_key)
+
+
+@database_sync_to_async
+def _get_workspace_config(agent_id):
+    return _sync_get_workspace_config(agent_id)
 
 
 @database_sync_to_async
@@ -84,7 +92,7 @@ def _get_queued_tasks(agent_id):
         AgentTask.objects.filter(
             toony_agent_id=agent_id,
             status=AgentTaskStatus.QUEUED,
-        ).values("id", "title", "prompt")
+        ).values("id", "title", "prompt", "project_id")
     )
 
 
@@ -199,15 +207,24 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                     "data": {"status": "ONLINE", "metadata": metadata},
                 },
             )
+            # Send workspace config sync.
+            workspace_config = await _get_workspace_config(self.agent_id)
+            await self.send_json({
+                "type": "config.sync",
+                "organizations": workspace_config,
+            })
             # Send any queued tasks
             queued = await _get_queued_tasks(self.agent_id)
             for task in queued:
-                await self.send_json({
+                msg = {
                     "type": "task.assign",
                     "task_id": str(task["id"]),
                     "prompt": task["prompt"],
                     "title": task["title"],
-                })
+                }
+                if task.get("project_id"):
+                    msg["project_id"] = str(task["project_id"])
+                await self.send_json(msg)
 
         elif msg_type == "heartbeat":
             await _set_agent_status(self.agent_id, None, last_heartbeat=True)
@@ -352,6 +369,21 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 {"type": "agent_status", "data": {"status": "ONLINE"}},
             )
 
+        elif msg_type == "config.sync.ack":
+            success = content.get("success", False)
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {
+                    "type": "config_sync_status",
+                    "data": {
+                        "success": success,
+                        "org_count": content.get("org_count", 0),
+                        "project_count": content.get("project_count", 0),
+                        "error": content.get("error", ""),
+                    },
+                },
+            )
+
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
@@ -372,12 +404,15 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def task_assign(self, event):
-        await self.send_json({
+        msg = {
             "type": "task.assign",
             "task_id": event["data"]["task_id"],
             "prompt": event["data"]["prompt"],
             "title": event["data"]["title"],
-        })
+        }
+        if event["data"].get("project_id"):
+            msg["project_id"] = event["data"]["project_id"]
+        await self.send_json(msg)
 
     async def task_reply(self, event):
         await self.send_json({
@@ -386,6 +421,14 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             "message": event["data"]["message"],
             "session_id": event["data"]["session_id"],
             "sequence_offset": event["data"].get("sequence_offset", 0),
+        })
+
+    async def config_sync_request(self, event):
+        """Frontend requested config sync — query fresh data and send to runner."""
+        workspace_config = await _get_workspace_config(self.agent_id)
+        await self.send_json({
+            "type": "config.sync",
+            "organizations": workspace_config,
         })
 
 
@@ -549,3 +592,6 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
     async def approval_needed(self, event):
         await self.send_json({"type": "approval.needed", **event["data"]})
+
+    async def config_sync_status(self, event):
+        await self.send_json({"type": "config.sync.status", **event["data"]})
