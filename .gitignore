@@ -32,6 +32,9 @@ Thumbs.db
 # Django collectstatic output
 staticfiles/
 
+# Django media uploads
+media/
+
 # Docker
 docker-data/
 
