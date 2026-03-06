@@ -14,6 +14,7 @@ from projects.selectors import (
     list_issue_activities,
     list_issue_comments,
     list_project_issues,
+    list_user_issues,
 )
 from projects.serializers.input import (
     CreateCommentSerializer,
@@ -22,6 +23,7 @@ from projects.serializers.input import (
     UpdateIssueSerializer,
 )
 from projects.serializers.output import (
+    CrossProjectIssueListSerializer,
     IssueActivitySerializer,
     IssueCommentSerializer,
     IssueDetailSerializer,
@@ -275,3 +277,19 @@ class IssueActivityListView(PaginatedViewMixin, APIView):
 
         activities = list_issue_activities(issue)
         return self.paginate(activities, IssueActivitySerializer, request)
+
+
+class UserIssueListView(PaginatedViewMixin, APIView):
+    """List issues across all projects the authenticated user belongs to."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        search = request.query_params.get("q")
+        filters = {}
+        for key in ("status", "priority", "assignee_id", "project_id"):
+            val = request.query_params.get(key)
+            if val:
+                filters[key] = val
+
+        issues = list_user_issues(request.user, filters=filters or None, search=search)
+        return self.paginate(issues, CrossProjectIssueListSerializer, request)

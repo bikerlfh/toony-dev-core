@@ -4,12 +4,15 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from projects.views import UserIssueListView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health/", include("common.urls")),
     path("api/auth/", include("accounts.urls")),
     path("api/organizations/", include("organizations.urls")),
     path("api/workspace/", include("workspace.urls")),
+    path("api/issues/", UserIssueListView.as_view(), name="user-issue-list"),
     path("api/projects/", include("projects.urls")),
     path("api/", include("agents.urls")),
     path("api/organizations/<uuid:org_id>/", include("importers.urls")),
