@@ -20,6 +20,7 @@ export function useToonyAgentWebSocket({
   sendApproval: (taskId: string, action: string, response: string) => void;
   sendReply: (taskId: string, message: string) => void;
   cancelTask: (taskId: string) => void;
+  sendConfigSync: () => void;
 } {
   const url = useMemo(() => {
     if (!agentId) return null;
@@ -69,5 +70,9 @@ export function useToonyAgentWebSocket({
     [send],
   );
 
-  return { readyState, sendApproval, sendReply, cancelTask };
+  const sendConfigSync = useCallback(() => {
+    send({ type: "config.sync.request" });
+  }, [send]);
+
+  return { readyState, sendApproval, sendReply, cancelTask, sendConfigSync };
 }
