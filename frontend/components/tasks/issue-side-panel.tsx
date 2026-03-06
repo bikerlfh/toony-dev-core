@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { IssueDetail, IssueStatus, ProjectPriority } from "@/types";
-import { getIssue } from "@/lib/api";
+import { getIssue } from "@/lib/api/issues";
 import { PriorityBadge } from "@/components/priority-badge";
 
 const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {

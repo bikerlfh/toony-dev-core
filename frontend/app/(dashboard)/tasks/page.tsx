@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { CrossProjectIssueList, ProjectList, IssueStatus, IssuePriority } from "@/types";
-import { listAllIssues, listProjects, updateIssue } from "@/lib/api";
+import { listAllIssues, updateIssue } from "@/lib/api/issues";
+import { listProjects } from "@/lib/api/projects";
 import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { IssueSidePanel } from "@/components/tasks/issue-side-panel";
 
