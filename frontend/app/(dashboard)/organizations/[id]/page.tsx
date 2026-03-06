@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getOrganization, updateOrganization } from "@/lib/api/organizations";
@@ -9,6 +9,7 @@ import { getOrganizationSettings, updateOrganizationSettings } from "@/lib/api/s
 import { listCredentials, createCredential, deleteCredential } from "@/lib/api/credentials";
 import { listIntegrations, createIntegration, deleteIntegration } from "@/lib/api/integrations";
 import { listImportJobs } from "@/lib/api/imports";
+import { listToonyAgentsByOrganization, listToonyAgents, updateToonyAgent, getToonyAgent } from "@/lib/api/toony-agents";
 import { Select } from "@/components/ui/select";
 import { ConfirmModal } from "@/components/confirm-modal";
 import type {
@@ -23,9 +24,12 @@ import type {
   IntegrationConfig,
   IntegrationProvider,
   ImportJob,
+  ToonyAgentList,
+  ToonyAgentDetail,
+  ToonyAgentStatus,
 } from "@/types";
 
-type Tab = "general" | "members" | "settings" | "credentials" | "integrations" | "imports";
+type Tab = "general" | "members" | "settings" | "credentials" | "integrations" | "imports" | "agents";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "general", label: "General" },
@@ -34,6 +38,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "credentials", label: "Credentials" },
   { key: "integrations", label: "Integrations" },
   { key: "imports", label: "Imports" },
+  { key: "agents", label: "Agents" },
 ];
 
 const MEMBERSHIP_ROLES: { value: MembershipRole; label: string }[] = [
@@ -88,6 +93,12 @@ const IMPORT_STATUS_COLORS: Record<string, string> = {
   COMPLETED: "bg-emerald-500/15 text-emerald-400",
   FAILED: "bg-red-500/15 text-red-400",
   PARTIALLY_COMPLETED: "bg-orange-500/15 text-orange-400",
+};
+
+const AGENT_STATUS_STYLES: Record<ToonyAgentStatus, { dot: string; badge: string }> = {
+  ONLINE: { dot: "bg-emerald-400", badge: "bg-emerald-500/15 text-emerald-400" },
+  BUSY: { dot: "bg-blue-400", badge: "bg-blue-500/15 text-blue-400" },
+  OFFLINE: { dot: "bg-slate-600", badge: "bg-slate-700 text-slate-400" },
 };
 
 // ────────────────────────────── General Tab ──────────────────────────────
@@ -1004,6 +1015,209 @@ function ImportsTab({ orgId }: { orgId: string }) {
   );
 }
 
+// ────────────────────────────── Agents Tab ──────────────────────────────
+
+function AgentsTab({ orgId }: { orgId: string }) {
+  const [agents, setAgents] = useState<ToonyAgentList[]>([]);
+  const [allAgents, setAllAgents] = useState<ToonyAgentList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [addLoading, setAddLoading] = useState(false);
+  const [removeAgent, setRemoveAgent] = useState<{ id: string; name: string } | null>(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
+
+  const fetchAgents = useCallback(async () => {
+    try {
+      const res = await listToonyAgentsByOrganization(orgId);
+      setAgents(res.results);
+    } catch {
+      // silent
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orgId]);
+
+  const fetchAllAgents = useCallback(async () => {
+    try {
+      const res = await listToonyAgents();
+      setAllAgents(res.results);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAgents();
+    fetchAllAgents();
+  }, [fetchAgents, fetchAllAgents]);
+
+  const availableAgents = useMemo(() => {
+    const assignedIds = new Set(agents.map((a) => a.id));
+    return allAgents.filter((a) => !assignedIds.has(a.id));
+  }, [allAgents, agents]);
+
+  async function handleAddAgent() {
+    if (!selectedAgentId) return;
+    setAddLoading(true);
+    try {
+      const agentDetail = await getToonyAgent(selectedAgentId);
+      const newOrgIds = [...agentDetail.organizations.map((o) => o.id), orgId];
+      await updateToonyAgent(selectedAgentId, { organization_ids: newOrgIds });
+      await fetchAgents();
+      setShowAddModal(false);
+      setSelectedAgentId("");
+    } catch {
+      // silent
+    } finally {
+      setAddLoading(false);
+    }
+  }
+
+  async function handleRemoveAgent() {
+    if (!removeAgent) return;
+    setRemoveLoading(true);
+    try {
+      const agentDetail = await getToonyAgent(removeAgent.id);
+      const newOrgIds = agentDetail.organizations
+        .filter((o) => o.id !== orgId)
+        .map((o) => o.id);
+      await updateToonyAgent(removeAgent.id, { organization_ids: newOrgIds });
+      await fetchAgents();
+      setRemoveAgent(null);
+    } catch {
+      // silent
+    } finally {
+      setRemoveLoading(false);
+    }
+  }
+
+  if (isLoading) return <p className="text-sm text-slate-500">Loading agents...</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-slate-400">
+            Toony Agents assigned to this organization.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+        >
+          + Add Agent
+        </button>
+      </div>
+
+      {agents.length === 0 ? (
+        <div className="mt-10 text-center">
+          <p className="text-sm text-slate-500">No agents assigned to this organization.</p>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {agents.map((agent) => {
+            const ss = AGENT_STATUS_STYLES[agent.status];
+            return (
+              <div
+                key={agent.id}
+                className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800/60">
+                    <svg
+                      className="h-4 w-4 text-slate-400"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="4" width="10" height="8" rx="2" />
+                      <circle cx="6" cy="8" r="0.75" fill="currentColor" stroke="none" />
+                      <circle cx="10" cy="8" r="0.75" fill="currentColor" stroke="none" />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-200">{agent.name}</p>
+                    <p className="mt-0.5 font-mono text-xs text-slate-600">{agent.slug}</p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-3 ml-4">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${ss.badge}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${ss.dot}`} />
+                    {agent.status.charAt(0) + agent.status.slice(1).toLowerCase()}
+                  </span>
+                  <button
+                    onClick={() => setRemoveAgent({ id: agent.id, name: agent.name })}
+                    className="rounded-md px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add Agent Modal */}
+      {showAddModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowAddModal(false); setSelectedAgentId(""); } }}
+        >
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="text-base font-medium tracking-tight text-white">Add Agent</h2>
+            <p className="mt-1 text-sm text-slate-500">Select a Toony Agent to assign to this organization.</p>
+            <select
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+              className="mt-4 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="">Select agent...</option>
+              {availableAgents.map((a) => (
+                <option key={a.id} value={a.id}>{a.name} ({a.slug})</option>
+              ))}
+            </select>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowAddModal(false); setSelectedAgentId(""); }}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddAgent}
+                disabled={!selectedAgentId || addLoading}
+                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {addLoading ? "Adding..." : "Add"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Confirm Modal */}
+      {removeAgent && (
+        <ConfirmModal
+          title="Remove Agent"
+          message={`Remove "${removeAgent.name}" from this organization? The agent will no longer be accessible to organization members.`}
+          confirmLabel="Remove"
+          confirmVariant="danger"
+          isLoading={removeLoading}
+          onConfirm={handleRemoveAgent}
+          onCancel={() => setRemoveAgent(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 // ────────────────────────────── Main Page ──────────────────────────────
 
 export default function OrganizationDetailPage() {
@@ -1087,6 +1301,7 @@ export default function OrganizationDetailPage() {
         {activeTab === "credentials" && <CredentialsTab orgId={orgId} />}
         {activeTab === "integrations" && <IntegrationsTab orgId={orgId} />}
         {activeTab === "imports" && <ImportsTab orgId={orgId} />}
+        {activeTab === "agents" && <AgentsTab orgId={orgId} />}
       </div>
     </div>
   );
