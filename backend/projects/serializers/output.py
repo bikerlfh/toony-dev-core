@@ -193,6 +193,39 @@ class IssueListSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class _IssueProjectSerializer(serializers.ModelSerializer):
+    """Minimal project info embedded in cross-project issue listings."""
+    class Meta:
+        model = Project
+        fields = ["id", "name", "icon", "color"]
+        read_only_fields = fields
+
+
+class CrossProjectIssueListSerializer(serializers.ModelSerializer):
+    assignee = UserDetailSerializer(read_only=True)
+    labels = LabelSerializer(many=True, read_only=True)
+    project = _IssueProjectSerializer(read_only=True)
+
+    class Meta:
+        model = Issue
+        fields = [
+            "id",
+            "project_id",
+            "project",
+            "identifier",
+            "title",
+            "status",
+            "priority",
+            "assignee",
+            "labels",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
 class IssueDetailSerializer(serializers.ModelSerializer):
     assignee = UserDetailSerializer(read_only=True)
     reporter = UserDetailSerializer(read_only=True)
