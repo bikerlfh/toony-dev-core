@@ -6,6 +6,7 @@ from projects.views.issue_views import (
     IssueCommentListCreateView,
     IssueDetailView,
     IssueListCreateView,
+    UserIssueListView,
 )
 from projects.views.milestone_views import MilestoneDetailView, MilestoneListCreateView
 from projects.views.project_views import (
@@ -33,4 +34,5 @@ __all__ = [
     "IssueActivityListView",
     "ResourceListCreateView",
     "ResourceDetailView",
+    "UserIssueListView",
 ]
