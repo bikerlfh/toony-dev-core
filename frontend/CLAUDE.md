@@ -116,7 +116,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 - `Label` — `id`, `name`, `color`, `description`, `organization`, `created_at`
 - `ProjectList` / `ProjectDetail` — `id`, `name`, `slug`, `description`, `status` (ProjectStatus), `priority` (ProjectPriority), `team`, `lead`, `start_date`, `target_date`, `completed_at`, `member_count`, `issue_count`, `icon`, `color`
 - `ProjectMember` — `id`, `user`, `role` (LEAD|CONTRIBUTOR|REVIEWER), `joined_at`
-- `ProjectSettings` — `repository_url`, `repository_credential`, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix_override`, `estimation_method`
+- `ProjectSettings` — `repository_url`, `repository_credential`, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix`, `estimation_method`
 - `Milestone` — `id`, `name`, `description`, `target_date`, `status` (MilestoneStatus), `sort_order`, `project`
 - `Cycle` — `id`, `name`, `number`, `start_date`, `end_date`, `status` (CycleStatus), `project`
 - `IssueList` / `IssueDetail` — `id`, `identifier`, `title`, `description`, `status`, `priority`, `assignee`, `reporter`, `labels`, `milestone`, `cycle`, `parent`, `estimate`, `due_date`, `sort_order`, `sub_issue_count`, `comment_count`

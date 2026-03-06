@@ -41,6 +41,7 @@ export default function CreateProjectPage() {
   const [orgId, setOrgId] = useState("");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [issuePrefix, setIssuePrefix] = useState("");
   const [shortSummary, setShortSummary] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<ProjectStatus>("BACKLOG");
@@ -87,6 +88,7 @@ export default function CreateProjectPage() {
         organization_id: orgId,
         name,
         slug,
+        issue_prefix: issuePrefix,
         description,
         short_summary: shortSummary || undefined,
         status,
@@ -196,6 +198,22 @@ export default function CreateProjectPage() {
                 className={`${INPUT_CLASS} font-mono`}
               />
               <p className="mt-1 text-xs text-slate-600">Used in URLs. Auto-generated from name.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-400">
+                Issue prefix <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                maxLength={10}
+                value={issuePrefix}
+                onChange={(e) => setIssuePrefix(e.target.value.toUpperCase())}
+                placeholder="ENG"
+                className={`${INPUT_CLASS} font-mono uppercase`}
+              />
+              <p className="mt-1 text-xs text-slate-600">Used in issue identifiers (e.g. ENG-1, ENG-2).</p>
             </div>
 
             <div>

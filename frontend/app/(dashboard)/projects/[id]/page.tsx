@@ -1155,7 +1155,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
       setBranchConvention(data.branch_naming_convention);
       setReviewers(data.required_reviewers_count);
       setAutoClose(data.auto_close_completed_issues);
-      setPrefixOverride(data.issue_prefix_override);
+      setPrefixOverride(data.issue_prefix);
       setEstimation(data.estimation_method);
     } finally { setIsLoading(false); }
   }, [projectId]);
@@ -1173,7 +1173,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
         branch_naming_convention: branchConvention,
         required_reviewers_count: reviewers,
         auto_close_completed_issues: autoClose,
-        issue_prefix_override: prefixOverride,
+        issue_prefix: prefixOverride,
         estimation_method: estimation,
       });
       setSettings(updated);
@@ -1226,7 +1226,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
                   className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400">Issue prefix override</label>
+                <label className="block text-sm font-medium text-slate-400">Issue prefix</label>
                 <input type="text" maxLength={10} value={prefixOverride} onChange={(e) => setPrefixOverride(e.target.value)} disabled={!canManage}
                   className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
               </div>

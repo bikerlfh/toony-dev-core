@@ -133,7 +133,7 @@ export interface ProjectSettings {
   branch_naming_convention: string;
   required_reviewers_count: number;
   auto_close_completed_issues: boolean;
-  issue_prefix_override: string;
+  issue_prefix: string;
   estimation_method: EstimationMethod;
   updated_at: string;
 }
@@ -142,6 +142,7 @@ export interface CreateProjectPayload {
   organization_id: string;
   name: string;
   slug: string;
+  issue_prefix: string;
   description?: string;
   short_summary?: string;
   status?: ProjectStatus;
@@ -178,7 +179,7 @@ export interface UpdateProjectSettingsPayload {
   branch_naming_convention?: string;
   required_reviewers_count?: number;
   auto_close_completed_issues?: boolean;
-  issue_prefix_override?: string;
+  issue_prefix?: string;
   estimation_method?: EstimationMethod;
 }
 

@@ -43,7 +43,7 @@ def get_agent_workspace_config(agent_id):
                 "base_branch": settings.default_branch if settings else "main",
                 "branch_convention": settings.branch_naming_convention if settings else "",
                 "default_reviewers": reviewers,
-                "issue_prefix": settings.issue_prefix_override if settings else "",
+                "issue_prefix": settings.issue_prefix if settings else "",
             })
 
         result.append({

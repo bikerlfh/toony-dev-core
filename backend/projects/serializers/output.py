@@ -125,7 +125,7 @@ class ProjectSettingsSerializer(serializers.ModelSerializer):
             "branch_naming_convention",
             "required_reviewers_count",
             "auto_close_completed_issues",
-            "issue_prefix_override",
+            "issue_prefix",
             "estimation_method",
             "updated_at",
         ]

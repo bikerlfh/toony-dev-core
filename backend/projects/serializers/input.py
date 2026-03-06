@@ -31,6 +31,7 @@ class CreateProjectSerializer(serializers.Serializer):
     )
     start_date = serializers.DateField(required=False, allow_null=True)
     target_date = serializers.DateField(required=False, allow_null=True)
+    issue_prefix = serializers.CharField(max_length=10)
 
 
 class UpdateProjectSerializer(serializers.Serializer):
@@ -74,8 +75,8 @@ class UpdateProjectSettingsSerializer(serializers.Serializer):
         min_value=0, required=False,
     )
     auto_close_completed_issues = serializers.BooleanField(required=False)
-    issue_prefix_override = serializers.CharField(
-        max_length=10, required=False, allow_blank=True,
+    issue_prefix = serializers.CharField(
+        max_length=10, required=False,
     )
     estimation_method = serializers.ChoiceField(
         choices=EstimationMethod.choices, required=False,

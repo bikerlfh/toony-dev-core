@@ -11,6 +11,8 @@ from projects.selectors import get_project_by_slug
 
 
 def create_project(organization, name, slug, creator, **kwargs):
+    issue_prefix = kwargs.pop("issue_prefix")
+
     if get_project_by_slug(organization, slug):
         raise ConflictError(
             "A project with this slug already exists in the organization."
@@ -24,7 +26,10 @@ def create_project(organization, name, slug, creator, **kwargs):
             lead=creator,
             **kwargs,
         )
-        ProjectSettings.objects.create(project=project)
+        ProjectSettings.objects.create(
+            project=project,
+            issue_prefix=issue_prefix,
+        )
         ProjectMembership.objects.create(
             project=project,
             user=creator,
@@ -86,7 +91,7 @@ def update_project_settings(settings_obj, **kwargs):
         "branch_naming_convention",
         "required_reviewers_count",
         "auto_close_completed_issues",
-        "issue_prefix_override",
+        "issue_prefix",
         "estimation_method",
     }
     for field, value in kwargs.items():

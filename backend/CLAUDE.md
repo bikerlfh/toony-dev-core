@@ -91,7 +91,7 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 - **Label** — `id`, `organization` → Org, `name`, `color` (hex), `description`
 - **Project** — `id`, `organization` → Org, `team` → Team, `name`, `slug`, `description`, `status` (BACKLOG|PLANNED|IN_PROGRESS|PAUSED|COMPLETED|CANCELED), `priority` (NONE|URGENT|HIGH|MEDIUM|LOW), `lead` → User?, `start_date`, `target_date`, `completed_at`, `sort_order`, `icon`, `color`
 - **ProjectMembership** — `project` → Project, `user` → User, `role` (LEAD|CONTRIBUTOR|REVIEWER)
-- **ProjectSettings** — 1:1 → Project, `repository_url`, `repository_credential` → RepositoryCredential?, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix_override`, `estimation_method` (STORY_POINTS|T_SHIRT|HOURS)
+- **ProjectSettings** — 1:1 → Project, `repository_url`, `repository_credential` → RepositoryCredential?, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix`, `estimation_method` (STORY_POINTS|T_SHIRT|HOURS)
 - **Milestone** — `project` → Project, `name`, `description`, `target_date`, `status` (PLANNED|IN_PROGRESS|COMPLETED), `sort_order`
 - **Cycle** — `project` → Project, `name`, `number`, `start_date`, `end_date`, `status` (PLANNED|ACTIVE|COMPLETED)
 - **Issue** — `project` → Project, `milestone`?, `cycle`?, `parent`? (self), `identifier` (e.g. "ENG-42", unique), `title`, `description`, `status` (BACKLOG|TODO|IN_PROGRESS|IN_REVIEW|DONE|CANCELED), `priority`, `assignee` → User?, `reporter` → User, `labels` → M2M Label, `estimate`, `due_date`, `sort_order`, `external_tracker_name`, `external_tracker_url`, `external_tracker_id`

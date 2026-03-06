@@ -133,9 +133,7 @@ class ProjectSettings(BaseModel):
     )
     required_reviewers_count = models.IntegerField(default=1)
     auto_close_completed_issues = models.BooleanField(default=False)
-    issue_prefix_override = models.CharField(
-        max_length=10, blank=True, default=""
-    )
+    issue_prefix = models.CharField(max_length=10)
     estimation_method = models.CharField(
         max_length=20,
         choices=EstimationMethod.choices,

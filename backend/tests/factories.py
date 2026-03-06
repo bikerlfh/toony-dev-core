@@ -96,6 +96,7 @@ class ProjectSettingsFactory(factory.django.DjangoModelFactory):
         model = ProjectSettings
 
     project = factory.SubFactory(ProjectFactory)
+    issue_prefix = factory.Sequence(lambda n: f"PRJ{n}")
 
 
 class ProjectMembershipFactory(factory.django.DjangoModelFactory):
