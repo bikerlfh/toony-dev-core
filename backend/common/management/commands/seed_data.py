@@ -3,7 +3,6 @@ from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 
 from accounts.models import User
-from accounts.services import create_user
 from organizations.services import create_organization
 from projects.services import (
     create_cycle,
@@ -44,22 +43,24 @@ class Command(BaseCommand):
             Label.objects.all().delete()
             Organization.objects.all().delete()
             User.objects.filter(
-                email__in=["admin@toony.dev", "member@toony.dev"]
+                username__in=["admin", "member"]
             ).delete()
             self.stdout.write(self.style.SUCCESS("Data flushed."))
 
-        if User.objects.filter(email="admin@toony.dev").exists():
+        if User.objects.filter(username="admin").exists():
             self.stdout.write(self.style.WARNING("Seed data already exists. Skipping."))
             return
 
         self.stdout.write("Creating users...")
-        admin = create_user(
+        admin = User.objects.create_user(
+            username="admin",
             email="admin@toony.dev",
             password="admin123",
             first_name="Admin",
             last_name="User",
         )
-        member = create_user(
+        member = User.objects.create_user(
+            username="member",
             email="member@toony.dev",
             password="member123",
             first_name="Member",
@@ -233,7 +234,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             "Seed data created successfully!\n"
-            "  - 2 users (admin@toony.dev / admin123, member@toony.dev / member123)\n"
+            "  - 2 users (admin / admin123, member / member123)\n"
             "  - 1 organization (toony-demo)\n"
             "  - 2 teams, 5 labels, 3 projects\n"
             "  - 2 milestones, 1 cycle\n"
