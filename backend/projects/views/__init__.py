@@ -4,6 +4,10 @@ from projects.views.artifact_views import (
     IssueArtifactDetailView,
     IssueArtifactListCreateView,
 )
+from projects.views.document_views import (
+    IssueDocumentDetailView,
+    IssueDocumentListCreateView,
+)
 from projects.views.cycle_views import CycleDetailView, CycleListCreateView
 from projects.views.resource_views import ResourceDetailView, ResourceListCreateView
 from projects.views.issue_views import (
@@ -45,4 +49,6 @@ __all__ = [
     "IssueArtifactDetailView",
     "GlobalArtifactListView",
     "GlobalArtifactDetailView",
+    "IssueDocumentListCreateView",
+    "IssueDocumentDetailView",
 ]
