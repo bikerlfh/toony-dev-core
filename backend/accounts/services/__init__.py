@@ -1,3 +1,3 @@
-from accounts.services.user_service import authenticate_user, create_user
+from accounts.services.user_service import authenticate_user, update_profile, change_password
 
-__all__ = ["create_user", "authenticate_user"]
+__all__ = ["authenticate_user", "update_profile", "change_password"]

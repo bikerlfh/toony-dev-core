@@ -6,14 +6,14 @@ from accounts.models import User
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    list_display = ("email", "first_name", "last_name", "is_staff", "created_at")
+    list_display = ("username", "email", "first_name", "last_name", "is_staff", "created_at")
     list_filter = ("is_staff", "is_superuser", "is_active")
-    search_fields = ("email", "first_name", "last_name")
+    search_fields = ("username", "email", "first_name", "last_name")
     ordering = ("-created_at",)
 
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "avatar")}),
+        (None, {"fields": ("username", "password")}),
+        ("Personal info", {"fields": ("first_name", "last_name", "email", "avatar")}),
         (
             "Permissions",
             {
@@ -33,7 +33,7 @@ class UserAdmin(DjangoUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "first_name", "last_name", "password1", "password2"),
+                "fields": ("username", "first_name", "last_name", "email", "password1", "password2"),
             },
         ),
     )

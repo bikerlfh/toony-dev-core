@@ -1,23 +1,12 @@
 from django.contrib.auth import authenticate
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.models import User
-from accounts.selectors import get_user_by_email
-from common.exceptions import ConflictError
 
-
-def create_user(email, password, **extra_fields):
-    if get_user_by_email(email):
-        raise ConflictError("A user with this email already exists.")
-
-    return User.objects.create_user(email=email, password=password, **extra_fields)
-
-
-def authenticate_user(email, password):
-    user = authenticate(email=email, password=password)
+def authenticate_user(username, password):
+    user = authenticate(username=username, password=password)
     if user is None:
-        raise AuthenticationFailed("Invalid email or password.")
+        raise AuthenticationFailed("Invalid username or password.")
 
     refresh = RefreshToken.for_user(user)
     return {
@@ -25,3 +14,17 @@ def authenticate_user(email, password):
         "access": str(refresh.access_token),
         "refresh": str(refresh),
     }
+
+
+def update_profile(user, **fields):
+    for key, value in fields.items():
+        setattr(user, key, value)
+    user.save(update_fields=list(fields.keys()) + ["updated_at"])
+    return user
+
+
+def change_password(user, current_password, new_password):
+    if not user.check_password(current_password):
+        raise ValidationError({"current_password": ["Current password is incorrect."]})
+    user.set_password(new_password)
+    user.save(update_fields=["password", "updated_at"])
