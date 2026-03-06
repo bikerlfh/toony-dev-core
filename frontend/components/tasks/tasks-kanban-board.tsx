@@ -167,17 +167,8 @@ function IssueCard({
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       } ${isDragging ? "opacity-30 scale-[0.97]" : ""}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-xs font-mono text-slate-500 shrink-0">{issue.identifier}</span>
-          <span
-            className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white/90"
-            style={{ backgroundColor: issue.project.color || "#6366f1" }}
-          >
-            {issue.project.icon && <span>{issue.project.icon}</span>}
-            {issue.project.name}
-          </span>
-        </div>
+      <div className="flex items-start justify-between">
+        <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
         <PriorityBadge priority={issue.priority} />
       </div>
       <p className="mt-1 text-sm font-medium text-slate-200 line-clamp-2">{issue.title}</p>
