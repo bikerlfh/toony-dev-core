@@ -3,6 +3,10 @@ from projects.selectors.artifact_selector import (
     list_all_artifacts,
     list_issue_artifacts,
 )
+from projects.selectors.document_selector import (
+    get_document_by_id,
+    list_issue_documents,
+)
 from projects.selectors.cycle_selector import (
     get_cycle_by_id,
     get_next_cycle_number,
@@ -60,4 +64,6 @@ __all__ = [
     "list_issue_artifacts",
     "list_all_artifacts",
     "get_artifact_by_id",
+    "list_issue_documents",
+    "get_document_by_id",
 ]
