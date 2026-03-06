@@ -35,6 +35,11 @@ export interface ToonyAgentDetail extends ToonyAgentList {
     first_name: string;
     last_name: string;
   };
+  organizations: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
   updated_at: string;
 }
 
