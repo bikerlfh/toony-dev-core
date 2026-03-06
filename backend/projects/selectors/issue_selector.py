@@ -86,3 +86,30 @@ def list_issue_activities(issue):
     return IssueActivity.objects.filter(
         issue=issue,
     ).select_related("user").order_by("-created_at")
+
+
+def list_user_issues(user, *, filters=None, search=None):
+    """List issues across all projects the user is a member of."""
+    qs = Issue.objects.filter(
+        project__memberships__user=user,
+    ).select_related(
+        "assignee", "project",
+    ).prefetch_related("labels")
+
+    if search:
+        vector = SearchVector("title", weight="A") + SearchVector("description", weight="B")
+        query = SearchQuery(search)
+        qs = qs.annotate(rank=SearchRank(vector, query)).filter(rank__gte=0.01).order_by("-rank")
+        return qs
+
+    if filters:
+        if "status" in filters:
+            qs = qs.filter(status=filters["status"])
+        if "priority" in filters:
+            qs = qs.filter(priority=filters["priority"])
+        if "assignee_id" in filters:
+            qs = qs.filter(assignee_id=filters["assignee_id"])
+        if "project_id" in filters:
+            qs = qs.filter(project_id=filters["project_id"])
+
+    return qs.order_by("sort_order", "-created_at")
