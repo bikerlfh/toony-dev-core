@@ -137,8 +137,17 @@ export interface ApprovalNeededWsEvent {
   sequence: number;
 }
 
+export interface ConfigSyncStatusWsEvent {
+  type: "config.sync.status";
+  success: boolean;
+  org_count: number;
+  project_count: number;
+  error?: string;
+}
+
 export type ToonyAgentWsEvent =
   | ToonyAgentStatusWsEvent
   | TaskStatusWsEvent
   | TaskEventWsEvent
-  | ApprovalNeededWsEvent;
+  | ApprovalNeededWsEvent
+  | ConfigSyncStatusWsEvent;

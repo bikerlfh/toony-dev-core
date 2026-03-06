@@ -100,6 +100,8 @@ export default function ToonyAgentDetailPage() {
   const [addOrgLoading, setAddOrgLoading] = useState(false);
   const [removeOrgAgent, setRemoveOrgAgent] = useState<{ id: string; name: string } | null>(null);
   const [removeOrgLoading, setRemoveOrgLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const fetchAgent = useCallback(async () => {
     try {
@@ -149,15 +151,30 @@ export default function ToonyAgentDetailPage() {
             t.id === event.task_id ? { ...t, status: event.status as AgentTaskStatus } : t
           )
         );
+      } else if (event.type === "config.sync.status") {
+        setSyncLoading(false);
+        if (event.success) {
+          setSyncResult({
+            success: true,
+            message: `Synced ${event.org_count} org(s), ${event.project_count} project(s)`,
+          });
+        } else {
+          setSyncResult({
+            success: false,
+            message: event.error || "Sync failed",
+          });
+        }
+        setTimeout(() => setSyncResult(null), 5000);
       }
     },
     []
   );
 
-  useToonyAgentWebSocket({
-    agentId: agent?.id ?? null,
-    onEvent: handleWsEvent,
-  });
+  const { readyState, sendApproval, sendReply, cancelTask, sendConfigSync } =
+    useToonyAgentWebSocket({
+      agentId: agent?.id ?? null,
+      onEvent: handleWsEvent,
+    });
 
   /* ── Task stats ───────────────────────────────────────── */
 
@@ -329,6 +346,19 @@ export default function ToonyAgentDetailPage() {
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
+          {agent.status !== "OFFLINE" && (
+            <button
+              onClick={() => {
+                setSyncLoading(true);
+                setSyncResult(null);
+                sendConfigSync();
+              }}
+              disabled={syncLoading}
+              className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white disabled:opacity-50"
+            >
+              {syncLoading ? "Syncing..." : "Sync Config"}
+            </button>
+          )}
           <button
             onClick={() => setShowTaskModal(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
@@ -343,6 +373,19 @@ export default function ToonyAgentDetailPage() {
           </button>
         </div>
       </div>
+
+      {syncResult && (
+        <div
+          className={`mt-3 flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm ${
+            syncResult.success
+              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+              : "border-red-500/20 bg-red-500/10 text-red-400"
+          }`}
+        >
+          <span>{syncResult.success ? "Synced" : "Failed"}:</span>
+          <span className="text-slate-300">{syncResult.message}</span>
+        </div>
+      )}
 
       {/* ── Metrics strip ─────────────────────────────────── */}
       <div className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
