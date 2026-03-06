@@ -1,11 +1,13 @@
 backend_url: "ws://localhost:8000/ws/toony-agents/runner/"
-api_key: "tok_ta_Q5CjeTz_ty8xFrg8tGD-oL6o_aSTL7nh9X0FQkuqCyI"
+api_key: "tok_ta_6WdIw6DV74izQ__wFqe31xEhu6jA49Y8tY9lSXzX9R8"
+workspace_root: "~/work"
 
 claude:
   binary: "claude"
   output_format: "stream-json"
   working_directory: "."
-  max_task_timeout: 3600
+  max_task_timeout: 7200  # 2 hours
+  max_concurrent_tasks: 1
 
 reconnect:
   max_retries: -1
