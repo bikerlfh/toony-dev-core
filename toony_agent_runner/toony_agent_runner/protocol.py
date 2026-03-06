@@ -4,10 +4,11 @@ Protocol definitions for runner <-> backend WebSocket communication.
 Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
     TaskEventMessage, ApprovalNeededMessage, TaskCompletedMessage,
-    TaskFailedMessage, CommandResultMessage
+    TaskFailedMessage, CommandResultMessage, ConfigSyncAckMessage
 
 Incoming messages (backend -> runner):
-    TaskAssign, ApprovalResponse, TaskCancel, HeartbeatAck, CommandExecute
+    TaskAssign, ApprovalResponse, TaskCancel, HeartbeatAck, CommandExecute,
+    ConfigSync
 """
 
 from __future__ import annotations
@@ -129,6 +130,7 @@ class TaskAssign:
     task_id: str
     title: str
     prompt: str
+    project_id: str | None = None
 
 
 @dataclass
@@ -174,6 +176,13 @@ class CommandExecute:
 
 
 @dataclass
+class ConfigSync:
+    """Backend sends workspace configuration for local provisioning."""
+
+    organizations: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
 class CommandResultMessage:
     """Runner reports the result of a command execution."""
 
@@ -192,12 +201,31 @@ class CommandResultMessage:
         }
 
 
+@dataclass
+class ConfigSyncAckMessage:
+    """Acknowledges a config sync from the backend."""
+
+    success: bool
+    org_count: int = 0
+    project_count: int = 0
+    error: str = ""
+
+    def to_json(self) -> dict:
+        return {
+            "type": "config.sync.ack",
+            "success": self.success,
+            "org_count": self.org_count,
+            "project_count": self.project_count,
+            "error": self.error,
+        }
+
+
 # ---------------------------------------------------------------------------
 # Message parsing
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute
+IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -212,6 +240,7 @@ def parse_server_message(data: dict) -> IncomingMessage:
             task_id=data["task_id"],
             title=data.get("title", ""),
             prompt=data["prompt"],
+            project_id=data.get("project_id"),
         )
 
     if msg_type == "approval.response":
@@ -241,5 +270,8 @@ def parse_server_message(data: dict) -> IncomingMessage:
             command_key=data["command_key"],
             args=data.get("args", {}),
         )
+
+    if msg_type == "config.sync":
+        return ConfigSync(organizations=data.get("organizations", []))
 
     raise ValueError(f"Unknown server message type: {msg_type!r}")
