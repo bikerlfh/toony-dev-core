@@ -80,6 +80,7 @@ export {
   updateComment,
   deleteComment,
   listActivities,
+  listAllIssues,
 } from "./issues";
 export {
   listSubAgents,

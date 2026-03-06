@@ -322,6 +322,17 @@ export interface IssueFilters {
   label_ids?: string[];
 }
 
+export interface IssueProject {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface CrossProjectIssueList extends IssueList {
+  project: IssueProject;
+}
+
 // --- Comment ---
 
 export interface IssueComment {

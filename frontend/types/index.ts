@@ -63,6 +63,8 @@ export type {
   CreateIssuePayload,
   UpdateIssuePayload,
   IssueFilters,
+  IssueProject,
+  CrossProjectIssueList,
   IssueComment,
   CreateCommentPayload,
   IssueActivity,

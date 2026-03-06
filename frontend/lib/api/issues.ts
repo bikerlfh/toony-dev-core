@@ -5,6 +5,9 @@ import type {
   IssueComment,
   IssueActivity,
   IssueFilters,
+  IssueStatus,
+  IssuePriority,
+  CrossProjectIssueList,
   CreateIssuePayload,
   UpdateIssuePayload,
   CreateCommentPayload,
@@ -135,6 +138,28 @@ export async function listActivities(
   const { data } = await api.get<PaginatedResponse<IssueActivity>>(
     `${base(projectId)}/${issueId}/activities/`,
     { params }
+  );
+  return data;
+}
+
+export async function listAllIssues(
+  filters?: {
+    status?: IssueStatus;
+    priority?: IssuePriority;
+    assignee_id?: string;
+    project_id?: string;
+  },
+  cursor?: string
+): Promise<PaginatedResponse<CrossProjectIssueList>> {
+  const params = new URLSearchParams();
+  if (cursor) params.append("cursor", cursor);
+  if (filters?.status) params.append("status", filters.status);
+  if (filters?.priority) params.append("priority", filters.priority);
+  if (filters?.assignee_id) params.append("assignee_id", filters.assignee_id);
+  if (filters?.project_id) params.append("project_id", filters.project_id);
+  const qs = params.toString();
+  const { data } = await api.get<PaginatedResponse<CrossProjectIssueList>>(
+    `/issues/${qs ? `?${qs}` : ""}`
   );
   return data;
 }
