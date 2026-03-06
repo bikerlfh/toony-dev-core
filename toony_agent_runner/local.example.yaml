@@ -1,0 +1,31 @@
+# Toony - Project Local Overrides
+# Location: {workspace_root}/{org_slug}/projects/{project_slug}/.toony/local.yaml
+#
+# This file is NOT managed by config.sync. Edit freely.
+# All fields are optional -- only add what you need.
+
+# Deployment environments
+# environments:
+#   staging: "https://staging.company.com"
+#   production: "https://company.com"
+
+# Deploy command (run from project root)
+# deploy_cmd: "npm run deploy:staging"
+
+# Documentation URLs
+# docs_url: "https://notion.so/company/backend-docs"
+# api_docs_url: "https://api.company.com/docs"
+
+# Feature flag system
+# feature_flags_system: "LaunchDarkly"
+
+# Communication channels
+# slack_channel: "#backend-team"
+# teams_channel: "Backend Dev"
+
+# On-call documentation (path relative to project root)
+# oncall_doc: "docs/ONCALL.md"
+
+# PR configuration (overrides workspace-registry defaults)
+# pr_template: ".github/PULL_REQUEST_TEMPLATE.md"
+# auto_label_pr: ["needs-review", "backend"]
