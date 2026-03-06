@@ -576,6 +576,12 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+        elif msg_type == "config.sync.request":
+            await self.channel_layer.group_send(
+                runner_group,
+                {"type": "config_sync_request", "data": {}},
+            )
+
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
