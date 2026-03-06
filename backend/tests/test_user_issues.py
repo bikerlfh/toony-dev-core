@@ -89,7 +89,7 @@ class TestUserIssueList:
         response = authenticated_client.get(URL, {"project_id": str(p1.id)})
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) == 1
-        assert response.data["results"][0]["project_id"] == str(p1.id)
+        assert str(response.data["results"][0]["project_id"]) == str(p1.id)
 
     def test_response_includes_project_info(
         self, authenticated_client, user, organization
