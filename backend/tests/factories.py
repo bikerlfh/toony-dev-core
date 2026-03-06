@@ -1,6 +1,8 @@
 import factory
 from django.utils import timezone
 
+from django.core.files.base import ContentFile
+
 from accounts.models import User
 from accounts.models.membership import MembershipRole, OrganizationMembership
 from organizations.models import Organization, OrganizationSettings
@@ -9,6 +11,7 @@ from projects.models import (
     Issue,
     IssueArtifact,
     IssueComment,
+    IssueDocument,
     Milestone,
     Project,
     ProjectMembership,
@@ -192,3 +195,17 @@ class IssueArtifactFactory(factory.django.DjangoModelFactory):
     artifact_type = "PLAN"
     content = "# Test Plan\n\nThis is a test artifact."
     session_id = factory.Sequence(lambda n: f"session_{n}")
+
+
+class IssueDocumentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = IssueDocument
+
+    issue = factory.SubFactory(IssueFactory)
+    uploaded_by = factory.SubFactory(UserFactory)
+    original_filename = factory.Sequence(lambda n: f"document_{n}.pdf")
+    file_size = 1024
+    content_type = "application/pdf"
+    file = factory.LazyAttribute(
+        lambda obj: ContentFile(b"fake file content", name=obj.original_filename)
+    )

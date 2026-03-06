@@ -5,6 +5,7 @@ from tests.factories import (
     AgentTaskFactory,
     CycleFactory,
     IssueArtifactFactory,
+    IssueDocumentFactory,
     IssueFactory,
     LabelFactory,
     MembershipFactory,
@@ -125,3 +126,8 @@ def agent_task(organization, project, toony_agent, user):
 @pytest.fixture()
 def artifact(issue, agent_task):
     return IssueArtifactFactory(issue=issue, agent_task=agent_task)
+
+
+@pytest.fixture()
+def issue_document(issue, user):
+    return IssueDocumentFactory(issue=issue, uploaded_by=user)
