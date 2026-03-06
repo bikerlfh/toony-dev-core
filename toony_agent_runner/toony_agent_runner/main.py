@@ -33,6 +33,8 @@ from .protocol import (
     ApprovalResponse,
     CommandExecute,
     CommandResultMessage,
+    ConfigSync,
+    ConfigSyncAckMessage,
     HeartbeatMessage,
     RegisterMessage,
     TaskAcceptedMessage,
@@ -45,6 +47,7 @@ from .protocol import (
     HeartbeatAck,
     parse_server_message,
 )
+from .workspace import process_config_sync, resolve_project_path
 from .commands import execute_command
 from .stream_parser import (
     EVENT_TYPE_ERROR,
@@ -113,6 +116,7 @@ class ReconnectConfig:
 class RunnerConfig:
     backend_url: str = "ws://localhost:8000/ws/toony-agents/runner/"
     api_key: str = ""
+    workspace_root: str = ""
     claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     reconnect: ReconnectConfig = field(default_factory=ReconnectConfig)
 
@@ -133,6 +137,7 @@ def load_config(path: str) -> RunnerConfig:
     return RunnerConfig(
         backend_url=raw.get("backend_url", RunnerConfig.backend_url),
         api_key=raw.get("api_key", ""),
+        workspace_root=raw.get("workspace_root", ""),
         claude=ClaudeConfig(
             working_directory=claude_raw.get(
                 "working_directory", ClaudeConfig.working_directory
@@ -743,6 +748,8 @@ async def run(config: RunnerConfig) -> None:
     active_tasks: dict[str, asyncio.Task[None]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
     max_tasks = config.claude.max_concurrent_tasks
+    project_map: dict[str, Path] = {}
+    workspace_root = Path(config.workspace_root).expanduser().resolve() if config.workspace_root else None
 
     def _cleanup_finished_tasks() -> None:
         finished = [tid for tid, t in active_tasks.items() if t.done()]
@@ -838,11 +845,21 @@ async def run(config: RunnerConfig) -> None:
                     msg.task_id, msg.title,
                     len(active_tasks) + 1, max_tasks,
                 )
+                # Resolve project-specific working directory.
+                task_config = config
+                if msg.project_id and workspace_root:
+                    task_cwd = resolve_project_path(msg.project_id, project_map)
+                    if task_cwd and task_cwd.exists():
+                        from copy import copy
+                        task_config = copy(config)
+                        task_config.claude = copy(config.claude)
+                        task_config.claude.working_directory = str(task_cwd)
+                        logger.info("Task %s will run in %s", msg.task_id, task_cwd)
                 ce = asyncio.Event()
                 cancel_events[msg.task_id] = ce
                 active_tasks[msg.task_id] = asyncio.create_task(
                     execute_task(
-                        msg.task_id, msg.prompt, conn, config, ce
+                        msg.task_id, msg.prompt, conn, task_config, ce
                     )
                 )
 
@@ -917,6 +934,44 @@ async def run(config: RunnerConfig) -> None:
                     msg.command_key, msg.command_id,
                 )
                 asyncio.create_task(_handle_command(msg, conn, config))
+
+            elif isinstance(msg, ConfigSync):
+                logger.info("Received config.sync with %d organizations", len(msg.organizations))
+                if workspace_root:
+                    try:
+                        project_map = process_config_sync(
+                            {"organizations": msg.organizations},
+                            workspace_root,
+                        )
+                        total_projects = sum(
+                            len(o.get("projects", []))
+                            for o in msg.organizations
+                        )
+                        await conn.send(
+                            ConfigSyncAckMessage(
+                                success=True,
+                                org_count=len(msg.organizations),
+                                project_count=total_projects,
+                            ).to_json()
+                        )
+                        logger.info(
+                            "Config sync complete: %d orgs, %d projects",
+                            len(msg.organizations), total_projects,
+                        )
+                    except Exception as exc:
+                        logger.error("Config sync failed: %s", exc)
+                        await conn.send(
+                            ConfigSyncAckMessage(
+                                success=False, error=str(exc)
+                            ).to_json()
+                        )
+                else:
+                    logger.warning("Received config.sync but workspace_root not configured, skipping")
+                    await conn.send(
+                        ConfigSyncAckMessage(
+                            success=False, error="workspace_root not configured"
+                        ).to_json()
+                    )
 
     finally:
         # Shutdown: cancel all running tasks.
