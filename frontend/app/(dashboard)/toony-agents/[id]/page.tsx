@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getToonyAgent, listAgentTasks } from "@/lib/api/toony-agents";
+import { getToonyAgent, listAgentTasks, updateToonyAgent } from "@/lib/api/toony-agents";
+import { listOrganizations } from "@/lib/api/organizations";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { useToonyAgentWebSocket } from "@/hooks/use-toony-agent-websocket";
 import { ManageKeysModal } from "@/components/toony-agents/manage-keys-modal";
 import { CreateTaskModal } from "@/components/toony-agents/create-task-modal";
@@ -13,6 +15,7 @@ import type {
   AgentTaskStatus,
   ToonyAgentStatus,
   ToonyAgentWsEvent,
+  Organization,
 } from "@/types";
 
 /* ── Status config ────────────────────────────────────── */
@@ -91,6 +94,12 @@ export default function ToonyAgentDetailPage() {
   const [showKeysModal, setShowKeysModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("ALL");
+  const [showAddOrgModal, setShowAddOrgModal] = useState(false);
+  const [allOrgs, setAllOrgs] = useState<Organization[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [addOrgLoading, setAddOrgLoading] = useState(false);
+  const [removeOrgAgent, setRemoveOrgAgent] = useState<{ id: string; name: string } | null>(null);
+  const [removeOrgLoading, setRemoveOrgLoading] = useState(false);
 
   const fetchAgent = useCallback(async () => {
     try {
@@ -111,10 +120,20 @@ export default function ToonyAgentDetailPage() {
     }
   }, [agentId]);
 
+  const fetchAvailableOrgs = useCallback(async () => {
+    try {
+      const res = await listOrganizations();
+      setAllOrgs(res.results);
+    } catch {
+      // silent
+    }
+  }, []);
+
   useEffect(() => {
     fetchAgent();
     fetchTasks();
-  }, [fetchAgent, fetchTasks]);
+    fetchAvailableOrgs();
+  }, [fetchAgent, fetchTasks, fetchAvailableOrgs]);
 
   /* ── WebSocket ────────────────────────────────────────── */
 
@@ -171,6 +190,45 @@ export default function ToonyAgentDetailPage() {
 
   function handleTaskCreated(taskId: string) {
     router.push(`/toony-agents/${agentId}/tasks/${taskId}`);
+  }
+
+  const availableOrgs = useMemo(() => {
+    if (!agent) return [];
+    const assignedIds = new Set(agent.organizations.map((o) => o.id));
+    return allOrgs.filter((o) => !assignedIds.has(o.id));
+  }, [allOrgs, agent]);
+
+  async function handleAddOrg() {
+    if (!agent || !selectedOrgId) return;
+    setAddOrgLoading(true);
+    try {
+      const newIds = [...agent.organizations.map((o) => o.id), selectedOrgId];
+      await updateToonyAgent(agentId, { organization_ids: newIds });
+      await fetchAgent();
+      setShowAddOrgModal(false);
+      setSelectedOrgId("");
+    } catch {
+      // silent
+    } finally {
+      setAddOrgLoading(false);
+    }
+  }
+
+  async function handleRemoveOrg() {
+    if (!agent || !removeOrgAgent) return;
+    setRemoveOrgLoading(true);
+    try {
+      const newIds = agent.organizations
+        .filter((o) => o.id !== removeOrgAgent.id)
+        .map((o) => o.id);
+      await updateToonyAgent(agentId, { organization_ids: newIds });
+      await fetchAgent();
+      setRemoveOrgAgent(null);
+    } catch {
+      // silent
+    } finally {
+      setRemoveOrgLoading(false);
+    }
   }
 
   /* ── Loading ──────────────────────────────────────────── */
@@ -306,6 +364,47 @@ export default function ToonyAgentDetailPage() {
         </div>
       </div>
 
+      {/* ── Organizations section ───────────────────────────── */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium text-white">Organizations</h2>
+          <button
+            onClick={() => setShowAddOrgModal(true)}
+            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            + Add Organization
+          </button>
+        </div>
+        <p className="mt-3 text-xs text-slate-600">
+          {agent.organizations.length} organization{agent.organizations.length !== 1 && "s"}
+        </p>
+        {agent.organizations.length === 0 ? (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-500">Not assigned to any organization.</p>
+          </div>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {agent.organizations.map((org) => (
+              <div
+                key={org.id}
+                className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-200">{org.name}</p>
+                  <p className="mt-0.5 font-mono text-xs text-slate-600">{org.slug}</p>
+                </div>
+                <button
+                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
+                  className="shrink-0 rounded-md px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* ── Tasks section ──────────────────────────────────── */}
       <div className="mt-8">
         <div className="flex items-center justify-between">
@@ -415,6 +514,59 @@ export default function ToonyAgentDetailPage() {
         agentId={agentId}
         onSuccess={handleTaskCreated}
       />
+
+      {/* ── Add Organization Modal ─────────────────────────── */}
+      {showAddOrgModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowAddOrgModal(false); setSelectedOrgId(""); } }}
+        >
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="text-base font-medium tracking-tight text-white">Add Organization</h2>
+            <p className="mt-1 text-sm text-slate-500">Select an organization to assign this agent to.</p>
+            <select
+              value={selectedOrgId}
+              onChange={(e) => setSelectedOrgId(e.target.value)}
+              className="mt-4 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+            >
+              <option value="">Select organization...</option>
+              {availableOrgs.map((o) => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
+            </select>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowAddOrgModal(false); setSelectedOrgId(""); }}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddOrg}
+                disabled={!selectedOrgId || addOrgLoading}
+                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {addOrgLoading ? "Adding..." : "Add"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Remove Organization Confirm ────────────────────── */}
+      {removeOrgAgent && (
+        <ConfirmModal
+          title="Remove Organization"
+          message={`Remove "${removeOrgAgent.name}" from this agent? The agent will no longer be accessible to members of that organization.`}
+          confirmLabel="Remove"
+          confirmVariant="danger"
+          isLoading={removeOrgLoading}
+          onConfirm={handleRemoveOrg}
+          onCancel={() => setRemoveOrgAgent(null)}
+        />
+      )}
     </div>
   );
 }
