@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from accounts.models import User
 from accounts.serializers.output import UserDetailSerializer
 from organizations.models import Organization
 from projects.models import (
@@ -8,6 +9,7 @@ from projects.models import (
     IssueActivity,
     IssueArtifact,
     IssueComment,
+    IssueDocument,
     Milestone,
     Project,
     ProjectMembership,
@@ -371,5 +373,31 @@ class IssueArtifactDetailSerializer(serializers.ModelSerializer):
             "agent_task",
             "created_at",
             "updated_at",
+        ]
+        read_only_fields = fields
+
+
+# --- IssueDocument ---
+
+class _DocumentUploaderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name"]
+        read_only_fields = fields
+
+
+class IssueDocumentSerializer(serializers.ModelSerializer):
+    uploaded_by = _DocumentUploaderSerializer(read_only=True)
+
+    class Meta:
+        model = IssueDocument
+        fields = [
+            "id",
+            "original_filename",
+            "file",
+            "file_size",
+            "content_type",
+            "uploaded_by",
+            "created_at",
         ]
         read_only_fields = fields

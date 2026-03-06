@@ -212,3 +212,54 @@ class UpdateArtifactSerializer(serializers.Serializer):
     content = serializers.CharField(required=False)
     status = serializers.ChoiceField(choices=ArtifactStatus.choices, required=False)
     requires_approval = serializers.BooleanField(required=False)
+
+
+# --- IssueDocument ---
+
+ALLOWED_DOCUMENT_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+    "text/plain",
+}
+
+ALLOWED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp",
+    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".txt",
+}
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+class UploadIssueDocumentSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, file):
+        import os
+
+        ext = os.path.splitext(file.name)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise serializers.ValidationError(
+                f"File type '{ext}' is not allowed. "
+                f"Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            )
+
+        content_type = file.content_type or ""
+        if content_type not in ALLOWED_DOCUMENT_TYPES:
+            raise serializers.ValidationError(
+                f"Content type '{content_type}' is not allowed."
+            )
+
+        if file.size > MAX_FILE_SIZE:
+            raise serializers.ValidationError(
+                f"File size {file.size} bytes exceeds maximum of {MAX_FILE_SIZE} bytes (10 MB)."
+            )
+
+        return file
