@@ -236,11 +236,28 @@ export default function ToonyAgentDetailPage() {
   if (isLoading) {
     return (
       <div>
-        <div className="h-4 w-32 animate-pulse rounded bg-slate-800" />
-        <div className="mt-6 h-[140px] animate-pulse rounded-xl border border-slate-800/60 bg-slate-900" />
-        <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[88px] animate-pulse bg-slate-950" />
+        <div className="h-4 w-24 animate-pulse rounded bg-slate-800" />
+        <div className="mt-6 flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-800/60" />
+            <div>
+              <div className="h-5 w-40 animate-pulse rounded bg-slate-800" />
+              <div className="mt-2 h-3.5 w-24 animate-pulse rounded bg-slate-800/60" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-800" />
+            <div className="h-9 w-28 animate-pulse rounded-lg bg-slate-800/60" />
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[84px] animate-pulse bg-slate-950" />
+          ))}
+        </div>
+        <div className="mt-8 space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-[60px] animate-pulse rounded-lg border border-slate-800/60 bg-slate-900" />
           ))}
         </div>
       </div>
@@ -254,7 +271,7 @@ export default function ToonyAgentDetailPage() {
   return (
     <div>
       {/* ── Breadcrumb ─────────────────────────────────────── */}
-      <div className="mb-4">
+      <div className="mb-6">
         <Link
           href="/toony-agents"
           className="text-sm text-slate-500 transition-colors hover:text-slate-300"
@@ -263,72 +280,72 @@ export default function ToonyAgentDetailPage() {
         </Link>
       </div>
 
-      {/* ── Agent identity card ────────────────────────────── */}
-      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            {/* Bot icon */}
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-800/60">
-              <svg
-                className="h-6 w-6 text-slate-400"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+      {/* ── Agent header ──────────────────────────────────── */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800/60">
+            <svg
+              className="h-5 w-5 text-indigo-400"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="4" width="10" height="8" rx="2" />
+              <circle cx="6" cy="8" r="0.75" fill="currentColor" stroke="none" />
+              <circle cx="10" cy="8" r="0.75" fill="currentColor" stroke="none" />
+              <path d="M8 1.5v2.5" />
+              <path d="M1 7.5v1" />
+              <path d="M15 7.5v1" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <h1 className="truncate text-xl font-medium tracking-tight text-white">{agent.name}</h1>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusStyle.border} ${statusStyle.text}`}
               >
-                <rect x="3" y="4" width="10" height="8" rx="2" />
-                <circle cx="6" cy="8" r="0.75" fill="currentColor" stroke="none" />
-                <circle cx="10" cy="8" r="0.75" fill="currentColor" stroke="none" />
-                <path d="M8 1.5v2.5" />
-                <path d="M1 7.5v1" />
-                <path d="M15 7.5v1" />
-              </svg>
+                <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+                {agent.status.charAt(0) + agent.status.slice(1).toLowerCase()}
+              </span>
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <h1 className="truncate text-lg font-medium text-white">{agent.name}</h1>
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusStyle.border} ${statusStyle.text}`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
-                  {agent.status.charAt(0) + agent.status.slice(1).toLowerCase()}
-                </span>
-              </div>
-              <span className="mt-1 inline-block font-mono text-sm text-slate-500">{agent.slug}</span>
-              <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <svg className="h-3.5 w-3.5 text-slate-600" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1.5 8h2.25l1.5-3.5 2.5 7 2.5-7 1.5 3.5h2.75" />
-                  </svg>
-                  {timeAgo(agent.last_heartbeat)}
-                </span>
-                <span>
-                  Registered by {agent.registered_by.first_name} {agent.registered_by.last_name}
-                </span>
-              </div>
+            <span className="mt-1 inline-block font-mono text-sm text-slate-500">{agent.slug}</span>
+            <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
+              <span>
+                Registered by {agent.registered_by.first_name} {agent.registered_by.last_name}
+              </span>
+              <span className="text-slate-800">|</span>
+              <span className="flex items-center gap-1.5">
+                <svg className="h-3 w-3 text-slate-600" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1.5 8h2.25l1.5-3.5 2.5 7 2.5-7 1.5 3.5h2.75" />
+                </svg>
+                {timeAgo(agent.last_heartbeat)}
+              </span>
+              <span className="text-slate-800">|</span>
+              <span>Last seen {timeAgo(agent.last_connected_at)}</span>
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <button
-              onClick={() => setShowTaskModal(true)}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-            >
-              + New Task
-            </button>
-            <button
-              onClick={() => setShowKeysModal(true)}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
-            >
-              Manage Keys
-            </button>
-          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => setShowTaskModal(true)}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+          >
+            + New Task
+          </button>
+          <button
+            onClick={() => setShowKeysModal(true)}
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            Manage Keys
+          </button>
         </div>
       </div>
 
-      {/* ── Stats bento grid ───────────────────────────────── */}
-      <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
+      {/* ── Metrics strip ─────────────────────────────────── */}
+      <div className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
         <div className="bg-slate-950 p-5">
           <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Active</dt>
           <dd className="mt-2 text-2xl font-medium tracking-tight text-white">
@@ -351,58 +368,12 @@ export default function ToonyAgentDetailPage() {
           <p className="mt-1 text-xs text-slate-600">errors</p>
         </div>
         <div className="bg-slate-950 p-5">
-          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Last heartbeat</dt>
-          <dd className="mt-2 text-sm text-slate-300">{timeAgo(agent.last_heartbeat)}</dd>
+          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Total</dt>
+          <dd className="mt-2 text-2xl font-medium tracking-tight text-white">
+            {stats.total}
+          </dd>
+          <p className="mt-1 text-xs text-slate-600">tasks dispatched</p>
         </div>
-        <div className="bg-slate-950 p-5">
-          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Last connected</dt>
-          <dd className="mt-2 text-sm text-slate-300">{timeAgo(agent.last_connected_at)}</dd>
-        </div>
-        <div className="bg-slate-950 p-5">
-          <dt className="text-xs font-medium uppercase tracking-wider text-slate-600">Total tasks</dt>
-          <dd className="mt-2 text-2xl font-medium tracking-tight text-white">{stats.total}</dd>
-        </div>
-      </div>
-
-      {/* ── Organizations section ───────────────────────────── */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-white">Organizations</h2>
-          <button
-            onClick={() => setShowAddOrgModal(true)}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
-          >
-            + Add Organization
-          </button>
-        </div>
-        <p className="mt-3 text-xs text-slate-600">
-          {agent.organizations.length} organization{agent.organizations.length !== 1 && "s"}
-        </p>
-        {agent.organizations.length === 0 ? (
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-500">Not assigned to any organization.</p>
-          </div>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {agent.organizations.map((org) => (
-              <div
-                key={org.id}
-                className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-200">{org.name}</p>
-                  <p className="mt-0.5 font-mono text-xs text-slate-600">{org.slug}</p>
-                </div>
-                <button
-                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
-                  className="shrink-0 rounded-md px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* ── Tasks section ──────────────────────────────────── */}
@@ -426,13 +397,11 @@ export default function ToonyAgentDetailPage() {
           </div>
         </div>
 
-        {/* Count */}
         <p className="mt-3 text-xs text-slate-600">
           {filteredTasks.length} task{filteredTasks.length !== 1 && "s"}
           {hasTaskFilter && ` of ${tasks.length}`}
         </p>
 
-        {/* Task list */}
         {filteredTasks.length === 0 ? (
           <div className="mt-10 text-center">
             {hasTaskFilter ? (
@@ -459,7 +428,7 @@ export default function ToonyAgentDetailPage() {
             )}
           </div>
         ) : (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-1.5">
             {filteredTasks.map((task) => {
               const ts = TASK_STATUS_STYLES[task.status];
               return (
@@ -498,6 +467,54 @@ export default function ToonyAgentDetailPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Organizations ─────────────────────────────────── */}
+      <div className="mt-8">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-medium text-white">Organizations</h2>
+          <span className="text-xs text-slate-600">
+            {agent.organizations.length}
+          </span>
+          <button
+            onClick={() => setShowAddOrgModal(true)}
+            className="ml-auto rounded-md border border-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
+          >
+            + Add
+          </button>
+        </div>
+
+        {agent.organizations.length === 0 ? (
+          <div className="mt-4">
+            <div className="font-mono text-sm text-slate-500">
+              <span className="text-indigo-500">~</span>
+              <span className="text-slate-600">/</span>
+              <span> no organizations assigned</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {agent.organizations.map((org) => (
+              <div
+                key={org.id}
+                className="group flex items-center gap-2 rounded-lg border border-slate-800/60 bg-slate-900 py-1.5 pl-3 pr-2 transition-colors hover:border-slate-700/60"
+              >
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-slate-200">{org.name}</span>
+                  <span className="ml-2 font-mono text-xs text-slate-600">{org.slug}</span>
+                </div>
+                <button
+                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-600 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                >
+                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
