@@ -9,6 +9,8 @@ from projects.views import (
     IssueCommentDetailView,
     IssueCommentListCreateView,
     IssueDetailView,
+    IssueDocumentDetailView,
+    IssueDocumentListCreateView,
     IssueListCreateView,
     MilestoneDetailView,
     MilestoneListCreateView,
@@ -52,4 +54,7 @@ urlpatterns = [
     # Artifacts
     path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/", IssueArtifactListCreateView.as_view(), name="issue-artifact-list-create"),
     path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/<uuid:artifact_id>/", IssueArtifactDetailView.as_view(), name="issue-artifact-detail"),
+    # Documents
+    path("<uuid:project_id>/issues/<uuid:issue_id>/documents/", IssueDocumentListCreateView.as_view(), name="issue-document-list-create"),
+    path("<uuid:project_id>/issues/<uuid:issue_id>/documents/<uuid:document_id>/", IssueDocumentDetailView.as_view(), name="issue-document-detail"),
 ]
