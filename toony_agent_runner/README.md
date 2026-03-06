@@ -1,6 +1,6 @@
 # toony_agent_runner
 
-Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them via the Claude Agent SDK, streams events in real-time, and handles interactive approval gates.
+Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them via the Claude Agent SDK, streams events in real-time, handles interactive approval gates, and supports concurrent task execution.
 
 ## Requirements
 
@@ -99,6 +99,7 @@ If this works, the runner will be able to authenticate.
      working_directory: "/path/to/your/project"
      max_task_timeout: 3600
      approval_timeout: 600
+     max_concurrent_tasks: 3    # run up to 3 tasks simultaneously
      permission_mode: "acceptEdits"
    ```
 
@@ -123,6 +124,7 @@ If this works, the runner will be able to authenticate.
 | `claude.working_directory` | `.` | Directory where Claude executes tasks |
 | `claude.max_task_timeout` | `3600` | Max seconds per task before timeout |
 | `claude.approval_timeout` | `600` | Max seconds to wait for user approval response |
+| `claude.max_concurrent_tasks` | `1` | Max Claude tasks running simultaneously. Set higher for parallel execution |
 | `claude.oauth_token` | `""` | OAuth token for MAX plan auth (or set `CLAUDE_CODE_OAUTH_TOKEN` env var) |
 | `claude.permission_mode` | `acceptEdits` | SDK permission mode |
 | `claude.allowed_tools` | (all) | List of tools Claude can use |
@@ -164,7 +166,7 @@ START
   │    ├─ Send heartbeat every 30s
   │    ├─ Wait for messages from backend
   │    │
-  │    ├─ On "task.assign":
+  │    ├─ On "task.assign" (if capacity available):
   │    │    ├─ Send "task.accepted"
   │    │    ├─ Create ClaudeSDKClient with PreToolUse hook
   │    │    │
@@ -174,17 +176,17 @@ START
   │    │    │
   │    │    └─ If AskUserQuestion tool called (via PreToolUse hook):
   │    │         ├─ Send "approval.needed" to backend
-  │    │         ├─ Wait for "approval.response" from user
+  │    │         ├─ Wait for "approval.response" from user (routed by task_id)
   │    │         └─ Return deny with user's answer as permissionDecisionReason
   │    │
-  │    ├─ On "task.cancel": interrupt SDK client
+  │    ├─ On "task.cancel": set cancel event for specific task
   │    ├─ On "command.execute":
   │    │    ├─ Look up command_key in COMMAND_REGISTRY
   │    │    ├─ Execute handler with args (sandboxed to working_dir)
   │    │    └─ Send "command.result" with success/error
   │    └─ On disconnect: reconnect with exponential backoff
   │
-  └─ On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
+  └─ On SIGINT/SIGTERM: set all cancel events, wait for tasks, close connection, exit
 ```
 
 ### Resiliency
@@ -193,7 +195,7 @@ START
 |----------|----------|
 | WebSocket disconnects during task | SDK keeps executing, runner buffers events, reconnects, flushes buffer |
 | SDK error | Runner sends `task.failed` with error message, returns to idle |
-| Runner process killed | SDK subprocess dies. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
+| Runner process killed | SDK subprocesses die. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
 | Backend unreachable at start | Retries connection with exponential backoff until successful |
 | Task exceeds timeout | Runner cancels Claude and sends `task.failed` |
 
@@ -261,6 +263,25 @@ A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQu
 5. Hook always returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
 
 The hook always denies because there is no terminal for the CLI to render the question. Claude receives the user's answer as the denial reason and uses it to continue normally.
+
+## Concurrent Task Execution
+
+The runner supports running multiple Claude tasks simultaneously, controlled by `max_concurrent_tasks` (default: `1` for backward compatibility).
+
+```yaml
+claude:
+  max_concurrent_tasks: 3
+```
+
+How it works:
+
+- Each task gets its own `asyncio.Task` and cancellation event, keyed by `task_id`
+- Approval gates are routed per-task — an approval on one task doesn't affect others
+- When at capacity, new `task.assign` / `task.reply` messages are ignored (task stays QUEUED on the backend)
+- `task.cancel` targets only the specific task; other tasks continue unaffected
+- On shutdown (SIGINT/SIGTERM), all active tasks receive cancel signals and are given 10s to finish gracefully before being force-cancelled
+
+Logs include slot usage for visibility: `[2/3 slots]`.
 
 ## Dependencies
 

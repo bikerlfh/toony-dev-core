@@ -18,6 +18,11 @@ toony-agent-runner --config config.yml --verbose   # debug logging
 
 # Configuration: copy config.example.yml -> config.yml, set api_key
 # For MAX plan auth: run `claude setup-token` and set oauth_token in config or CLAUDE_CODE_OAUTH_TOKEN env var
+
+# Tests (requires toony_agent_runner_venv pyenv virtualenv)
+PYENV_VERSION=toony_agent_runner_venv pyenv exec pytest tests/ -v          # all tests
+PYENV_VERSION=toony_agent_runner_venv pyenv exec pytest tests/test_multitask.py -v  # single file
+PYENV_VERSION=toony_agent_runner_venv pyenv exec pytest tests/test_multitask.py::TestConfigMaxConcurrentTasks::test_default_is_one -v  # single test
 ```
 
 Python 3.11+ required. Dependencies: `websockets>=12.0`, `pyyaml>=6.0`, `claude-agent-sdk>=0.1.40`.
@@ -57,7 +62,7 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, task execu
 - **Claude Agent SDK**: Uses `ClaudeSDKClient` (streaming mode with interrupt support) for task execution and session resume via `ClaudeAgentOptions(resume=session_id)` for task replies.
 - **Approval gates via PreToolUse hook**: A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQuestion` call — regardless of permission mode. The hook bridges to the backend WebSocket, awaits the user's response, and always returns `permissionDecision: "deny"` with the answer as `permissionDecisionReason` (since there is no terminal for the CLI to render the question). A separate `can_use_tool` callback (`_auto_approve_tool`) always returns `PermissionResultAllow` to enable the bidirectional stdio control protocol required for hooks.
 - **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The SDK continues executing during disconnection.
-- **Single-task execution**: Runner processes one task at a time. A second `task.assign` while busy is logged and ignored.
+- **Concurrent task execution**: Runner supports `max_concurrent_tasks` (default 1). Task state (`active_tasks`, `cancel_events`, `pending_approvals`) is keyed by `task_id`. Tasks beyond capacity are ignored (stay QUEUED on backend).
 
 ### WebSocket Protocol
 

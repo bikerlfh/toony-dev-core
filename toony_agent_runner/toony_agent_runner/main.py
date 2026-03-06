@@ -96,6 +96,7 @@ class ClaudeConfig:
     working_directory: str = "."
     max_task_timeout: int = 3600
     approval_timeout: int = 600  # 10 minutes
+    max_concurrent_tasks: int = 1
     oauth_token: str = ""
     permission_mode: str = "acceptEdits"
     allowed_tools: list[str] = field(default_factory=lambda: list(_DEFAULT_ALLOWED_TOOLS))
@@ -141,6 +142,9 @@ def load_config(path: str) -> RunnerConfig:
             ),
             approval_timeout=claude_raw.get(
                 "approval_timeout", ClaudeConfig.approval_timeout
+            ),
+            max_concurrent_tasks=claude_raw.get(
+                "max_concurrent_tasks", ClaudeConfig.max_concurrent_tasks
             ),
             oauth_token=claude_raw.get(
                 "oauth_token", ClaudeConfig.oauth_token
@@ -293,12 +297,13 @@ def _make_pretooluse_hook(
             task_id, sequence,
         )
 
-        # Guard against concurrent approvals.
-        if conn.pending_approval is not None and not conn.pending_approval.done():
+        # Guard against concurrent approvals for the same task.
+        existing = conn.pending_approvals.get(task_id)
+        if existing is not None and not existing.done():
             logger.error(
                 "New approval requested (seq=%d) while a previous approval is "
-                "still pending — this is a bug; rejecting",
-                sequence,
+                "still pending for task %s — this is a bug; rejecting",
+                sequence, task_id,
             )
             return SyncHookJSONOutput(
                 hookSpecificOutput={
@@ -311,7 +316,7 @@ def _make_pretooluse_hook(
         # Create a future for the main message loop to resolve.
         loop = asyncio.get_running_loop()
         future: asyncio.Future[dict[str, Any]] = loop.create_future()
-        conn.pending_approval = future
+        conn.pending_approvals[task_id] = future
 
         try:
             response = await asyncio.wait_for(
@@ -330,7 +335,7 @@ def _make_pretooluse_hook(
                 }
             )
         finally:
-            conn.pending_approval = None
+            conn.pending_approvals.pop(task_id, None)
 
         if response.get("action") == "reject":
             logger.info("Approval rejected for task %s (seq=%d)", task_id, sequence)
@@ -735,8 +740,15 @@ async def run(config: RunnerConfig) -> None:
 
     # Graceful shutdown handling.
     shutdown_event = asyncio.Event()
-    current_task: asyncio.Task[None] | None = None
-    cancel_event = asyncio.Event()
+    active_tasks: dict[str, asyncio.Task[None]] = {}
+    cancel_events: dict[str, asyncio.Event] = {}
+    max_tasks = config.claude.max_concurrent_tasks
+
+    def _cleanup_finished_tasks() -> None:
+        finished = [tid for tid, t in active_tasks.items() if t.done()]
+        for tid in finished:
+            active_tasks.pop(tid, None)
+            cancel_events.pop(tid, None)
 
     loop = asyncio.get_running_loop()
 
@@ -806,49 +818,75 @@ async def run(config: RunnerConfig) -> None:
 
             # Handle message.
             if isinstance(msg, TaskAssign):
-                if current_task is not None and not current_task.done():
+                _cleanup_finished_tasks()
+
+                if msg.task_id in active_tasks:
                     logger.warning(
-                        "Received task.assign while already running a task, "
-                        "ignoring task %s",
-                        msg.task_id,
+                        "Duplicate task.assign for %s, ignoring", msg.task_id
+                    )
+                    continue
+
+                if len(active_tasks) >= max_tasks:
+                    logger.warning(
+                        "At capacity [%d/%d slots], ignoring task %s",
+                        len(active_tasks), max_tasks, msg.task_id,
                     )
                     continue
 
                 logger.info(
-                    "Received task assignment: %s (%s)", msg.task_id, msg.title
+                    "Received task assignment: %s (%s) [%d/%d slots]",
+                    msg.task_id, msg.title,
+                    len(active_tasks) + 1, max_tasks,
                 )
-                cancel_event.clear()
-                current_task = asyncio.create_task(
+                ce = asyncio.Event()
+                cancel_events[msg.task_id] = ce
+                active_tasks[msg.task_id] = asyncio.create_task(
                     execute_task(
-                        msg.task_id, msg.prompt, conn, config, cancel_event
+                        msg.task_id, msg.prompt, conn, config, ce
                     )
                 )
 
             elif isinstance(msg, TaskCancel):
                 logger.info("Received task.cancel for %s", msg.task_id)
-                cancel_event.set()
+                ce = cancel_events.get(msg.task_id)
+                if ce is not None:
+                    ce.set()
+                else:
+                    logger.warning(
+                        "No active task found for cancel: %s", msg.task_id
+                    )
 
             elif isinstance(msg, TaskReply):
-                if current_task is not None and not current_task.done():
+                _cleanup_finished_tasks()
+
+                if msg.task_id in active_tasks:
                     logger.warning(
-                        "Received task.reply while busy, ignoring"
+                        "Duplicate task.reply for %s, ignoring", msg.task_id
+                    )
+                    continue
+
+                if len(active_tasks) >= max_tasks:
+                    logger.warning(
+                        "At capacity [%d/%d slots], ignoring task.reply %s",
+                        len(active_tasks), max_tasks, msg.task_id,
                     )
                     continue
 
                 logger.info(
-                    "Received task.reply for %s (session: %s)",
-                    msg.task_id,
-                    msg.session_id,
+                    "Received task.reply for %s (session: %s) [%d/%d slots]",
+                    msg.task_id, msg.session_id,
+                    len(active_tasks) + 1, max_tasks,
                 )
-                cancel_event.clear()
-                current_task = asyncio.create_task(
+                ce = asyncio.Event()
+                cancel_events[msg.task_id] = ce
+                active_tasks[msg.task_id] = asyncio.create_task(
                     execute_task_reply(
                         msg.task_id,
                         msg.message,
                         msg.session_id,
                         conn,
                         config,
-                        cancel_event,
+                        ce,
                         sequence_offset=msg.sequence_offset,
                     )
                 )
@@ -859,12 +897,16 @@ async def run(config: RunnerConfig) -> None:
                     msg.task_id,
                     msg.action,
                 )
-                # Resolve the pending approval future if one exists.
-                if conn.pending_approval is not None and not conn.pending_approval.done():
-                    conn.pending_approval.set_result({
+                future = conn.pending_approvals.get(msg.task_id)
+                if future is not None and not future.done():
+                    future.set_result({
                         "action": msg.action,
                         "response": msg.response,
                     })
+                else:
+                    logger.warning(
+                        "No pending approval for task %s", msg.task_id
+                    )
 
             elif isinstance(msg, HeartbeatAck):
                 logger.debug("Heartbeat acknowledged")
@@ -877,16 +919,19 @@ async def run(config: RunnerConfig) -> None:
                 asyncio.create_task(_handle_command(msg, conn, config))
 
     finally:
-        # Shutdown: cancel any running task.
+        # Shutdown: cancel all running tasks.
         logger.info("Shutting down...")
         heartbeat_task.cancel()
 
-        if current_task is not None and not current_task.done():
-            cancel_event.set()
-            try:
-                await asyncio.wait_for(current_task, timeout=10.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                current_task.cancel()
+        for ce in cancel_events.values():
+            ce.set()
+
+        running = [t for t in active_tasks.values() if not t.done()]
+        if running:
+            logger.info("Waiting for %d active task(s) to finish...", len(running))
+            _, pending = await asyncio.wait(running, timeout=10.0)
+            for t in pending:
+                t.cancel()
 
         await conn.close()
         logger.info("Shutdown complete")
