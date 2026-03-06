@@ -231,3 +231,19 @@ class TestToonyAgentAPI:
         url = toony_agent_url(agent.id)
         response = api_client.get(url)
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_get_toony_agent_includes_organizations(self, authenticated_client, organization, user):
+        from toony_agents.models import ToonyAgent
+        agent = ToonyAgent.objects.create(
+            name="Bot", slug="org-fields-bot", registered_by=user,
+        )
+        agent.organizations.add(organization)
+        url = toony_agent_url(agent.id)
+        response = authenticated_client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        assert "organizations" in response.data
+        assert len(response.data["organizations"]) == 1
+        org_data = response.data["organizations"][0]
+        assert str(organization.id) == org_data["id"]
+        assert organization.name == org_data["name"]
+        assert organization.slug == org_data["slug"]

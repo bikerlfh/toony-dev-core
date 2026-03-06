@@ -62,6 +62,16 @@ export async function deleteToonyAgent(
   await api.delete(`/toony-agents/${agentId}/`);
 }
 
+export async function listToonyAgentsByOrganization(
+  orgId: string
+): Promise<PaginatedResponse<ToonyAgentList>> {
+  const { data } = await api.get<PaginatedResponse<ToonyAgentList>>(
+    `/toony-agents/`,
+    { params: { organization: orgId } }
+  );
+  return data;
+}
+
 // ── API Keys ──
 
 export async function listAgentKeys(

@@ -15,13 +15,14 @@ class ToonyAgentListSerializer(serializers.ModelSerializer):
 
 class ToonyAgentDetailSerializer(serializers.ModelSerializer):
     registered_by = serializers.SerializerMethodField()
+    organizations = serializers.SerializerMethodField()
 
     class Meta:
         model = ToonyAgent
         fields = [
             "id", "name", "slug", "status", "last_heartbeat",
             "last_connected_at", "metadata", "registered_by",
-            "created_at", "updated_at",
+            "organizations", "created_at", "updated_at",
         ]
         read_only_fields = fields
 
@@ -33,6 +34,12 @@ class ToonyAgentDetailSerializer(serializers.ModelSerializer):
             "first_name": u.first_name,
             "last_name": u.last_name,
         }
+
+    def get_organizations(self, obj):
+        return [
+            {"id": str(o.id), "name": o.name, "slug": o.slug}
+            for o in obj.organizations.all()
+        ]
 
 
 class ToonyAgentKeySerializer(serializers.ModelSerializer):
