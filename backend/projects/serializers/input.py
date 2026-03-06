@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from projects.models import (
+    ArtifactStatus,
+    ArtifactType,
     CycleStatus,
     EstimationMethod,
     IssuePriority,
@@ -192,3 +194,21 @@ class UpdateProjectResourceSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255, required=False)
     url = serializers.URLField(required=False)
     type = serializers.ChoiceField(choices=ResourceType.choices, required=False)
+
+
+# --- Artifact ---
+
+class CreateArtifactSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=500)
+    artifact_type = serializers.ChoiceField(choices=ArtifactType.choices)
+    content = serializers.CharField()
+    session_id = serializers.CharField(max_length=255)
+    agent_task_id = serializers.UUIDField()
+    requires_approval = serializers.BooleanField(default=False)
+
+
+class UpdateArtifactSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=500, required=False)
+    content = serializers.CharField(required=False)
+    status = serializers.ChoiceField(choices=ArtifactStatus.choices, required=False)
+    requires_approval = serializers.BooleanField(required=False)

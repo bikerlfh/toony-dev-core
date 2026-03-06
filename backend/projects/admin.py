@@ -4,6 +4,7 @@ from projects.models import (
     Cycle,
     Issue,
     IssueActivity,
+    IssueArtifact,
     IssueComment,
     Milestone,
     Project,
@@ -72,4 +73,12 @@ class IssueActivityAdmin(admin.ModelAdmin):
     list_display = ("issue", "user", "action", "field_changed", "created_at")
     list_filter = ("action",)
     search_fields = ("issue__identifier", "user__email")
+    ordering = ("-created_at",)
+
+
+@admin.register(IssueArtifact)
+class IssueArtifactAdmin(admin.ModelAdmin):
+    list_display = ("title", "artifact_type", "status", "issue", "requires_approval", "created_at")
+    list_filter = ("artifact_type", "status", "requires_approval")
+    search_fields = ("title", "issue__identifier")
     ordering = ("-created_at",)

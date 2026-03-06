@@ -2,7 +2,9 @@ import pytest
 from rest_framework.test import APIClient
 
 from tests.factories import (
+    AgentTaskFactory,
     CycleFactory,
+    IssueArtifactFactory,
     IssueFactory,
     LabelFactory,
     MembershipFactory,
@@ -14,6 +16,7 @@ from tests.factories import (
     ProjectSettingsFactory,
     TeamFactory,
     TeamMembershipFactory,
+    ToonyAgentFactory,
     UserFactory,
 )
 
@@ -100,3 +103,25 @@ def cycle(project):
 @pytest.fixture()
 def issue(project, user):
     return IssueFactory(project=project, reporter=user)
+
+
+@pytest.fixture()
+def toony_agent(user, organization):
+    agent = ToonyAgentFactory(registered_by=user)
+    agent.organizations.add(organization)
+    return agent
+
+
+@pytest.fixture()
+def agent_task(organization, project, toony_agent, user):
+    return AgentTaskFactory(
+        organization=organization,
+        project=project,
+        toony_agent=toony_agent,
+        created_by=user,
+    )
+
+
+@pytest.fixture()
+def artifact(issue, agent_task):
+    return IssueArtifactFactory(issue=issue, agent_task=agent_task)

@@ -16,6 +16,9 @@ import { listProjectMembers } from "@/lib/api/projects";
 import { listMilestones } from "@/lib/api/milestones";
 import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
+import { listIssueArtifacts } from "@/lib/api/artifacts";
+import { ArtifactStatusBadge } from "@/components/artifact-status-badge";
+import { ArtifactTypeBadge } from "@/components/artifact-type-badge";
 import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 // Role checks removed — will be re-implemented when org context is rebuilt
 import { PriorityBadge } from "@/components/priority-badge";
@@ -33,6 +36,7 @@ import type {
   ProjectMember,
   ProjectWsEvent,
 } from "@/types";
+import type { ArtifactList } from "@/types/artifacts";
 
 const STATUS_OPTIONS: { value: IssueStatus; label: string }[] = [
   { value: "BACKLOG", label: "Backlog" },
@@ -69,7 +73,7 @@ const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
   { value: "LOW", label: "Low" },
 ];
 
-type DetailTab = "comments" | "activity";
+type DetailTab = "comments" | "activity" | "artifacts";
 
 export default function IssueDetailPage() {
   const params = useParams<{ id: string; issueId: string }>();
@@ -366,7 +370,7 @@ export default function IssueDetailPage() {
           {/* Tabs */}
           <div className="mt-6 border-b border-slate-800/60">
             <nav className="-mb-px flex gap-4">
-              {(["comments", "activity"] as DetailTab[]).map((tab) => (
+              {(["comments", "activity", "artifacts"] as DetailTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -396,6 +400,9 @@ export default function IssueDetailPage() {
                 projectId={projectId}
                 issueId={issueId}
               />
+            )}
+            {activeTab === "artifacts" && (
+              <ArtifactsSection projectId={projectId} issueId={issueId} />
             )}
           </div>
         </div>
@@ -563,6 +570,46 @@ export default function IssueDetailPage() {
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
+    </div>
+  );
+}
+
+// --- Artifacts Section ---
+
+function ArtifactsSection({ projectId, issueId }: { projectId: string; issueId: string }) {
+  const router = useRouter();
+  const [artifacts, setArtifacts] = useState<ArtifactList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await listIssueArtifacts(projectId, issueId);
+        setArtifacts(res.results);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [projectId, issueId]);
+
+  if (isLoading) return <p className="text-sm text-slate-500">Loading artifacts...</p>;
+  if (artifacts.length === 0) return <p className="text-sm text-slate-500">No artifacts yet.</p>;
+
+  return (
+    <div className="space-y-3">
+      {artifacts.map((a) => (
+        <div
+          key={a.id}
+          onClick={() => router.push(`/artifacts/${a.id}`)}
+          className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900 p-3 transition-colors hover:border-slate-700/60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-200">{a.title}</span>
+            <ArtifactTypeBadge type={a.artifact_type} />
+          </div>
+          <ArtifactStatusBadge status={a.status} />
+        </div>
+      ))}
     </div>
   );
 }

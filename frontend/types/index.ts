@@ -150,6 +150,15 @@ export type {
   ToonyAgentWsEvent,
 } from "./toony-agents";
 
+export type {
+  ArtifactType,
+  ArtifactStatus,
+  ArtifactList,
+  ArtifactDetail,
+  CreateArtifactPayload,
+  UpdateArtifactPayload,
+} from "./artifacts";
+
 // --- Pagination & Search ---
 
 export interface PaginatedResponse<T> {

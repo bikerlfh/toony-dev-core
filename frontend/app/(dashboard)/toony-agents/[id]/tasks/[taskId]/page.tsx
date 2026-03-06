@@ -8,6 +8,9 @@ import {
   listTaskEvents,
   cancelAgentTask,
 } from "@/lib/api/toony-agents";
+import { listAllArtifacts } from "@/lib/api/artifacts";
+import { ArtifactStatusBadge } from "@/components/artifact-status-badge";
+import { ArtifactTypeBadge } from "@/components/artifact-type-badge";
 import { useToonyAgentWebSocket } from "@/hooks/use-toony-agent-websocket";
 import { TaskPipelinePanel } from "@/components/toony-agents/task-pipeline-panel";
 import { TaskLiveOutput } from "@/components/toony-agents/task-live-output";
@@ -18,6 +21,7 @@ import type {
   TaskEventItem,
   ToonyAgentWsEvent,
 } from "@/types";
+import type { ArtifactList } from "@/types/artifacts";
 
 const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
   QUEUED: "bg-slate-500/15 text-slate-400",
@@ -55,6 +59,7 @@ export default function TaskViewPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [taskArtifacts, setTaskArtifacts] = useState<ArtifactList[]>([]);
 
   // Fetch agent (need id for WS), task, and initial events
   const fetchData = useCallback(async () => {
@@ -93,6 +98,12 @@ export default function TaskViewPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    listAllArtifacts({ agent_task_id: taskId }).then((res) => {
+      setTaskArtifacts(res.results);
+    });
+  }, [taskId]);
 
   // WebSocket handler
   const handleWsEvent = useCallback(
@@ -236,6 +247,27 @@ export default function TaskViewPage() {
           )}
         </div>
       </div>
+
+      {taskArtifacts.length > 0 && (
+        <div className="flex-shrink-0 border-b border-slate-800 px-4 py-3">
+          <h3 className="mb-2 text-xs font-medium uppercase text-slate-500">Artifacts</h3>
+          <div className="space-y-2">
+            {taskArtifacts.map((a) => (
+              <div
+                key={a.id}
+                onClick={() => router.push(`/artifacts/${a.id}`)}
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-3 py-2 transition-colors hover:border-slate-700/60"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-200">{a.title}</span>
+                  <ArtifactTypeBadge type={a.artifact_type} />
+                </div>
+                <ArtifactStatusBadge status={a.status} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Split layout */}
       <div className="flex flex-1 min-h-0">

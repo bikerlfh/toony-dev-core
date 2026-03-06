@@ -4,6 +4,8 @@ from projects.views import (
     CycleDetailView,
     CycleListCreateView,
     IssueActivityListView,
+    IssueArtifactDetailView,
+    IssueArtifactListCreateView,
     IssueCommentDetailView,
     IssueCommentListCreateView,
     IssueDetailView,
@@ -47,4 +49,7 @@ urlpatterns = [
     path("<uuid:project_id>/issues/<uuid:issue_id>/comments/", IssueCommentListCreateView.as_view(), name="issue-comment-list-create"),
     path("<uuid:project_id>/issues/<uuid:issue_id>/comments/<uuid:comment_id>/", IssueCommentDetailView.as_view(), name="issue-comment-detail"),
     path("<uuid:project_id>/issues/<uuid:issue_id>/activities/", IssueActivityListView.as_view(), name="issue-activity-list"),
+    # Artifacts
+    path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/", IssueArtifactListCreateView.as_view(), name="issue-artifact-list-create"),
+    path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/<uuid:artifact_id>/", IssueArtifactDetailView.as_view(), name="issue-artifact-detail"),
 ]

@@ -6,6 +6,7 @@ from projects.models import (
     Cycle,
     Issue,
     IssueActivity,
+    IssueArtifact,
     IssueComment,
     Milestone,
     Project,
@@ -315,6 +316,59 @@ class ProjectResourceSerializer(serializers.ModelSerializer):
             "title",
             "url",
             "type",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+# --- Artifact ---
+
+class IssueArtifactListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IssueArtifact
+        fields = [
+            "id",
+            "title",
+            "artifact_type",
+            "status",
+            "requires_approval",
+            "issue_id",
+            "agent_task_id",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class _ArtifactIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issue
+        fields = ["id", "identifier", "title"]
+        read_only_fields = fields
+
+
+class _ArtifactAgentTaskSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    status = serializers.CharField()
+
+
+class IssueArtifactDetailSerializer(serializers.ModelSerializer):
+    issue = _ArtifactIssueSerializer(read_only=True)
+    agent_task = _ArtifactAgentTaskSerializer(read_only=True)
+
+    class Meta:
+        model = IssueArtifact
+        fields = [
+            "id",
+            "title",
+            "artifact_type",
+            "content",
+            "status",
+            "session_id",
+            "requires_approval",
+            "issue",
+            "agent_task",
             "created_at",
             "updated_at",
         ]

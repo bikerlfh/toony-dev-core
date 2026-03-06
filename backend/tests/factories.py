@@ -7,6 +7,7 @@ from organizations.models import Organization, OrganizationSettings
 from projects.models import (
     Cycle,
     Issue,
+    IssueArtifact,
     IssueComment,
     Milestone,
     Project,
@@ -179,3 +180,15 @@ class AgentTaskFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: f"Task {n}")
     prompt = "Fix the bug"
     created_by = factory.SubFactory(UserFactory)
+
+
+class IssueArtifactFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = IssueArtifact
+
+    issue = factory.SubFactory(IssueFactory)
+    agent_task = factory.SubFactory(AgentTaskFactory)
+    title = factory.Sequence(lambda n: f"Artifact {n}")
+    artifact_type = "PLAN"
+    content = "# Test Plan\n\nThis is a test artifact."
+    session_id = factory.Sequence(lambda n: f"session_{n}")

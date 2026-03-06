@@ -1,3 +1,8 @@
+from projects.selectors.artifact_selector import (
+    get_artifact_by_id,
+    list_all_artifacts,
+    list_issue_artifacts,
+)
 from projects.selectors.cycle_selector import (
     get_cycle_by_id,
     get_next_cycle_number,
@@ -52,4 +57,7 @@ __all__ = [
     "list_project_resources",
     "get_resource_by_id",
     "list_user_issues",
+    "list_issue_artifacts",
+    "list_all_artifacts",
+    "get_artifact_by_id",
 ]
