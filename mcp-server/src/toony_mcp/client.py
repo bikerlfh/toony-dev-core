@@ -67,6 +67,9 @@ class ToonyClient:
     def get_issue(self, project_id: str, issue_id: str) -> dict:
         return self._get(f"/projects/{project_id}/issues/{issue_id}/")
 
+    def get_issue_full_detail(self, issue_id: str) -> dict:
+        return self._get(f"/issues/{issue_id}/")
+
     def create_issue(self, project_id: str, data: dict) -> dict:
         return self._post(f"/projects/{project_id}/issues/", data=data)
 
