@@ -53,7 +53,7 @@ Layered architecture per domain app:
 Request → URLs → Permission (resolves + attaches org/project to request) → View → Selector (reads) / Service (writes) → Serializer → Response
 ```
 
-Five Django apps: `accounts`, `organizations`, `projects`, `agents`, `importers`, plus `common` (shared utilities).
+Six Django apps: `accounts`, `organizations`, `projects`, `agents`, `workflows`, `importers`, plus `common` (shared utilities).
 
 Each app follows identical sub-package structure:
 - `models/` — Django ORM definitions
@@ -80,7 +80,8 @@ Route structure uses flat paths with UUIDs:
 - `/projects/[id]/issues/[issueId]` — Issue detail
 - `/teams`, `/teams/[id]` — Team list, detail
 - `/labels` — Labels CRUD
-- `/subagents`, `/skills`, `/toony-agents` — AI Studio pages
+- `/subagents`, `/skills`, `/workflows`, `/toony-agents` — AI Studio pages
+- `/workflows/new` — Create workflow, `/workflows/[id]/edit` — DAG editor
 
 Key infrastructure:
 - `lib/api.ts` — Axios instance (`baseURL: /api`), JWT interceptor (silent 401 refresh + request queue)

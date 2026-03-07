@@ -104,6 +104,11 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 - **SubAgentSkill** — `sub_agent` → SubAgent, `skill` → Skill, `priority`, `is_enabled`, `custom_config` (JSON)
 - **SkillVersion** — `skill` → Skill, `version`, `content`, `changelog`, `created_by` → User
 
+### workflows app
+- **Workflow** — `id`, `name`, `slug`, `description`, `is_active` (bool), `organization` → Org?, `project` → Project?, `issue` → Issue?, `label` → Label?, `created_by` → User
+- **WorkflowNode** — `workflow` → Workflow, `node_type` (SUBAGENT|SKILL), `sub_agent` → SubAgent?, `skill` → Skill?, `position_x`, `position_y`, `config_overrides` (JSON), `order`
+- **WorkflowEdge** — `workflow` → Workflow, `source_node` → WorkflowNode, `target_node` → WorkflowNode
+
 ### importers app
 - **ImportJob** — `organization` → Org, `target_project` → Project?, `provider` (LINEAR|JIRA|TRELLO|ASANA|GITHUB_PROJECTS), `status` (PENDING|IN_PROGRESS|COMPLETED|FAILED|PARTIALLY_COMPLETED), `config` (JSON), `progress`, `total_items`, `imported_items`, `error_log` (JSON), `started_by` → User, `started_at`, `completed_at`
 - **ImportMapping** — `import_job` → ImportJob, `external_id`, `external_type`, `internal_id` (UUID), `internal_type`
@@ -148,6 +153,11 @@ api/subagents/, /subagents/<sub_agent_id>/
   /skills/, /skills/<sub_agent_skill_id>/
 api/skills/, /skills/<skill_id>/
   /versions/
+
+api/workflows/, /workflows/<workflow_id>/
+  /nodes/, /nodes/<node_id>/
+  /edges/, /edges/<edge_id>/
+api/workflows/resolve/<issue_id>/              (GET, ?format=yaml)
 
 api/toony-agents/, /toony-agents/<agent_id>/
   /keys/, /keys/<key_id>/
