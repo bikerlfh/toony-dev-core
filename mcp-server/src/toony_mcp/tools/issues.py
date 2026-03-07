@@ -7,34 +7,13 @@ from toony_mcp.server import get_client, mcp
 def get_issue(issue_id: str) -> str:
     """Get detailed information about an issue by its UUID or identifier (e.g., 'ENG-42').
 
-    Returns the issue's title, description, status, priority, assignee,
-    reporter, labels, milestone, cycle, and other metadata.
+    Returns the issue with all related data: comments, activities,
+    artifacts, documents, project info, assignee, reporter, labels,
+    milestone, and cycle.
     """
     client = get_client()
-    me = client.get_me()
-    if "error" in me:
-        return json.dumps(me)
-
-    if "-" in issue_id and not _looks_like_uuid(issue_id):
-        projects = client.list_projects()
-        if "error" in projects:
-            return json.dumps(projects)
-        for project in projects.get("results", []):
-            issues = client.list_project_issues(project["id"], search=issue_id)
-            if "error" not in issues:
-                for issue in issues.get("results", []):
-                    if issue.get("identifier") == issue_id:
-                        return json.dumps(issue)
-        return json.dumps({"error": f"Issue '{issue_id}' not found"})
-    else:
-        projects = client.list_projects()
-        if "error" in projects:
-            return json.dumps(projects)
-        for project in projects.get("results", []):
-            result = client.get_issue(project["id"], issue_id)
-            if "error" not in result:
-                return json.dumps(result)
-        return json.dumps({"error": f"Issue '{issue_id}' not found"})
+    result = client.get_issue_full_detail(issue_id)
+    return json.dumps(result)
 
 
 @mcp.tool()
@@ -306,7 +285,3 @@ def create_artifact(
     }
     result = client.create_artifact(project_id, issue_id, data)
     return json.dumps(result)
-
-
-def _looks_like_uuid(s: str) -> bool:
-    return len(s) == 36 and s.count("-") == 4

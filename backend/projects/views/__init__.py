@@ -15,6 +15,7 @@ from projects.views.issue_views import (
     IssueCommentDetailView,
     IssueCommentListCreateView,
     IssueDetailView,
+    IssueFullDetailView,
     IssueListCreateView,
     UserIssueListView,
 )
@@ -39,6 +40,7 @@ __all__ = [
     "CycleDetailView",
     "IssueListCreateView",
     "IssueDetailView",
+    "IssueFullDetailView",
     "IssueCommentListCreateView",
     "IssueCommentDetailView",
     "IssueActivityListView",

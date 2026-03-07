@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from projects.views import GlobalArtifactDetailView, GlobalArtifactListView, UserIssueListView
+from projects.views import GlobalArtifactDetailView, GlobalArtifactListView, IssueFullDetailView, UserIssueListView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/organizations/", include("organizations.urls")),
     path("api/workspace/", include("workspace.urls")),
     path("api/issues/", UserIssueListView.as_view(), name="user-issue-list"),
+    path("api/issues/<str:issue_id>/", IssueFullDetailView.as_view(), name="issue-full-detail"),
     path("api/artifacts/", GlobalArtifactListView.as_view(), name="artifact-list"),
     path("api/artifacts/<uuid:artifact_id>/", GlobalArtifactDetailView.as_view(), name="artifact-detail"),
     path("api/projects/", include("projects.urls")),

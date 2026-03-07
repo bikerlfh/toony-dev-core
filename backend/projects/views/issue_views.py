@@ -1,16 +1,17 @@
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import User
 from common.mixins import PaginatedViewMixin
-from projects.models import Milestone, Cycle
+from projects.models import Cycle, Issue, Milestone, ProjectMembership
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
     get_issue_by_id,
     get_issue_by_identifier,
+    get_issue_full_detail,
     list_issue_activities,
     list_issue_comments,
     list_project_issues,
@@ -27,6 +28,7 @@ from projects.serializers.output import (
     IssueActivitySerializer,
     IssueCommentSerializer,
     IssueDetailSerializer,
+    IssueFullDetailSerializer,
     IssueListSerializer,
 )
 from projects.services import (
@@ -293,3 +295,21 @@ class UserIssueListView(PaginatedViewMixin, APIView):
 
         issues = list_user_issues(request.user, filters=filters or None, search=search)
         return self.paginate(issues, CrossProjectIssueListSerializer, request)
+
+
+class IssueFullDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, issue_id):
+        try:
+            issue = get_issue_full_detail(str(issue_id))
+        except Issue.DoesNotExist:
+            raise NotFound("Issue not found.")
+
+        if not ProjectMembership.objects.filter(
+            project=issue.project, user=request.user,
+        ).exists():
+            raise PermissionDenied("You are not a member of this project.")
+
+        serializer = IssueFullDetailSerializer(issue)
+        return Response(serializer.data, status=status.HTTP_200_OK)

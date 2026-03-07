@@ -15,6 +15,7 @@ from projects.selectors.cycle_selector import (
 from projects.selectors.issue_selector import (
     get_issue_by_id,
     get_issue_by_identifier,
+    get_issue_full_detail,
     get_next_identifier,
     list_issue_activities,
     list_issue_comments,
@@ -56,6 +57,7 @@ __all__ = [
     "list_project_issues",
     "get_issue_by_id",
     "get_issue_by_identifier",
+    "get_issue_full_detail",
     "list_issue_comments",
     "list_issue_activities",
     "list_project_resources",

@@ -1,6 +1,7 @@
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.db.models import Prefetch
 
-from projects.models import Issue, IssueActivity, IssueComment
+from projects.models import Issue, IssueActivity, IssueArtifact, IssueComment, IssueDocument
 
 
 def get_next_identifier(project):
@@ -98,3 +99,23 @@ def list_user_issues(user, *, filters=None, search=None):
             qs = qs.filter(project_id=filters["project_id"])
 
     return qs.order_by("sort_order", "-created_at")
+
+
+def get_issue_full_detail(issue_id_or_identifier):
+    """Fetch a single issue with all related data prefetched."""
+    try:
+        import uuid
+        uuid.UUID(issue_id_or_identifier)
+        lookup = {"id": issue_id_or_identifier}
+    except ValueError:
+        lookup = {"identifier__iexact": issue_id_or_identifier}
+
+    return Issue.objects.select_related(
+        "project", "assignee", "reporter", "milestone", "cycle", "parent",
+    ).prefetch_related(
+        "labels",
+        Prefetch("comments", queryset=IssueComment.objects.select_related("author").order_by("created_at")),
+        Prefetch("activities", queryset=IssueActivity.objects.select_related("user").order_by("-created_at")),
+        Prefetch("artifacts", queryset=IssueArtifact.objects.select_related("agent_task").order_by("-created_at")),
+        Prefetch("documents", queryset=IssueDocument.objects.select_related("uploaded_by").order_by("-created_at")),
+    ).get(**lookup)
