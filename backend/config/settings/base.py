@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "projects",
     "workspace",
     "agents",
+    "workflows",
     "toony_agents",
     "importers",
 ]

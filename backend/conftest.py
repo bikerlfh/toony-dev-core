@@ -19,6 +19,9 @@ from tests.factories import (
     TeamMembershipFactory,
     ToonyAgentFactory,
     UserFactory,
+    SubAgentFactory,
+    SkillFactory,
+    WorkflowFactory,
 )
 
 
@@ -131,6 +134,21 @@ def artifact(issue, agent_task):
 @pytest.fixture()
 def issue_document(issue, user):
     return IssueDocumentFactory(issue=issue, uploaded_by=user)
+
+
+@pytest.fixture()
+def sub_agent(user):
+    return SubAgentFactory(created_by=user)
+
+
+@pytest.fixture()
+def skill(user):
+    return SkillFactory(created_by=user)
+
+
+@pytest.fixture()
+def workflow(user):
+    return WorkflowFactory(created_by=user)
 
 
 @pytest.fixture()

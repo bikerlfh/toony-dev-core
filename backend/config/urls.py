@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/artifacts/<uuid:artifact_id>/", GlobalArtifactDetailView.as_view(), name="artifact-detail"),
     path("api/projects/", include("projects.urls")),
     path("api/", include("agents.urls")),
+    path("api/", include("workflows.urls")),
     path("api/organizations/<uuid:org_id>/", include("importers.urls")),
     path("api/", include("toony_agents.urls")),
     path("api/search/", include("organizations.search_urls")),

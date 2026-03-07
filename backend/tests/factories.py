@@ -19,6 +19,8 @@ from projects.models import (
 )
 from workspace.models import Label, Team, TeamMembership
 from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent, ToonyAgentKey
+from agents.models import SubAgent, Skill
+from workflows.models import Workflow, WorkflowNode, WorkflowEdge
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -205,6 +207,52 @@ class IssueArtifactFactory(factory.django.DjangoModelFactory):
     artifact_type = "PLAN"
     content = "# Test Plan\n\nThis is a test artifact."
     session_id = factory.Sequence(lambda n: f"session_{n}")
+
+
+class SubAgentFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SubAgent
+
+    name = factory.Sequence(lambda n: f"SubAgent {n}")
+    slug = factory.Sequence(lambda n: f"subagent-{n}")
+    created_by = factory.SubFactory(UserFactory)
+
+
+class SkillFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Skill
+
+    name = factory.Sequence(lambda n: f"Skill {n}")
+    slug = factory.Sequence(lambda n: f"skill-{n}")
+    created_by = factory.SubFactory(UserFactory)
+
+
+class WorkflowFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Workflow
+
+    name = factory.Sequence(lambda n: f"Workflow {n}")
+    slug = factory.Sequence(lambda n: f"workflow-{n}")
+    created_by = factory.SubFactory(UserFactory)
+
+
+class WorkflowNodeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = WorkflowNode
+
+    workflow = factory.SubFactory(WorkflowFactory)
+    node_type = "SUBAGENT"
+    sub_agent = factory.SubFactory(SubAgentFactory)
+    order = factory.Sequence(lambda n: n)
+
+
+class WorkflowEdgeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = WorkflowEdge
+
+    workflow = factory.SubFactory(WorkflowFactory)
+    source_node = factory.SubFactory(WorkflowNodeFactory)
+    target_node = factory.SubFactory(WorkflowNodeFactory)
 
 
 class IssueDocumentFactory(factory.django.DjangoModelFactory):
