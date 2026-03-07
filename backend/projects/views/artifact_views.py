@@ -140,3 +140,11 @@ class GlobalArtifactDetailView(APIView):
         artifact = update_artifact(artifact, **serializer.validated_data)
         output = IssueArtifactDetailSerializer(artifact).data
         return Response(output)
+
+    def delete(self, request, artifact_id):
+        artifact = get_artifact_by_id(artifact_id)
+        if artifact is None:
+            raise NotFound("Artifact not found.")
+        self._check_access(artifact, request.user)
+        delete_artifact(artifact)
+        return Response(status=status.HTTP_204_NO_CONTENT)

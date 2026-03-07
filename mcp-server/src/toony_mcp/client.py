@@ -100,6 +100,15 @@ class ToonyClient:
             data=data,
         )
 
+    def get_artifact(self, artifact_id: str) -> dict:
+        return self._get(f"/artifacts/{artifact_id}/")
+
+    def update_artifact(self, artifact_id: str, data: dict) -> dict:
+        return self._patch(f"/artifacts/{artifact_id}/", data=data)
+
+    def delete_artifact(self, artifact_id: str) -> dict:
+        return self._delete(f"/artifacts/{artifact_id}/")
+
     # -- Workspace --
     def list_labels(self, search: str | None = None) -> dict:
         params = {}

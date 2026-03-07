@@ -1,6 +1,6 @@
 ---
 name: toony-mcp
-description: "Use when the user wants to interact with Toony (project management) via MCP tools. Examples: check issues, update status, search projects, create comments or artifacts."
+description: "Use when the user wants to interact with Toony (project management) via MCP tools. Examples: check issues, update status, search projects, create comments or artifacts, manage subagents and skills."
 ---
 
 # Toony MCP — Common Patterns
@@ -24,9 +24,11 @@ Use the `mcp__toony__*` tools to interact with Toony as a project management sys
 - `label_ids` is a **comma-separated string**, not an array (e.g., `"uuid1,uuid2"`).
 - `update_issue` requires both `issue_id` (UUID) and `project_id` (UUID).
 
-## Creating Artifacts
+## Artifacts
 
 - Use **`create_artifact`** to publish plans, design docs, specs, or test plans attached to an issue.
+- **`update_artifact`** — update by UUID. Fields: `title`, `content`, `status`, `requires_approval`. Status must follow valid state transitions.
+- **`delete_artifact`** — delete by UUID.
 - `artifact_type` values: `PLAN`, `DESIGN_DOC`, `TECHNICAL_SPEC`, `TEST_PLAN`, `OTHER`.
 - Content supports markdown.
 
@@ -39,3 +41,4 @@ Use the `mcp__toony__*` tools to interact with Toony as a project management sys
 - **Status:** `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELED`
 - **Priority:** `NONE`, `URGENT`, `HIGH`, `MEDIUM`, `LOW`
 - **Artifact type:** `PLAN`, `DESIGN_DOC`, `TECHNICAL_SPEC`, `TEST_PLAN`, `OTHER`
+- **Artifact status:** `DRAFT`, `PENDING_APPROVAL`, `IN_REVIEW`, `APPROVED`, `REJECTED`, `REVISION_REQUESTED`, `SUPERSEDED`
