@@ -12,7 +12,7 @@ make lint                   # flake8 --max-line-length=120 --exclude=migrations,
 make migrate                # python manage.py migrate
 make makemigrations         # python manage.py makemigrations
 make shell                  # python manage.py shell
-make seed                   # python manage.py seed_data
+make loaddata file="all"    # python manage.py loaddata fixtures/all.json
 
 # Single test
 docker compose exec backend pytest tests/test_issues.py::TestIssueAPI::test_create_issue -v

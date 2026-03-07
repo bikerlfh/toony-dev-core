@@ -21,8 +21,7 @@ make logs-frontend      # Tail frontend logs
 
 make migrate            # Run Django migrations
 make makemigrations     # Generate new migrations
-make seed               # Seed demo data (admin@toony.dev / admin123)
-make seed-flush         # Flush DB then seed
+make loaddata file="all" # Load fixture data from fixtures/all.json
 
 make test               # Run backend tests (pytest -v)
 make test-cov           # Run tests with coverage report

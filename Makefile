@@ -1,6 +1,6 @@
 .PHONY: help build up down up-backend up-frontend logs logs-backend logs-frontend \
-       makemigrations migrate createsuperuser shell seed reset-db \
-       test lint format \
+       makemigrations migrate createsuperuser shell reset-db reset-migrations \
+       dumpdata loaddata test lint format \
        build-prod up-prod down-prod \
        clean
 
@@ -60,19 +60,22 @@ createsuperuser: ## Create a Django superuser
 shell: ## Open Django shell
 	$(MANAGE) shell
 
-seed: ## Load seed/demo data
-	$(MANAGE) seed_data
-
-seed-flush: ## Flush and reload seed data
-	$(MANAGE) seed_data --flush
-
 collectstatic: ## Collect static files
 	$(MANAGE) collectstatic --noinput
 
-## Dump data to app/fixtures/: make dumpdata app="applications"
+## Dump data to app/fixtures/: make dumpdata app="applications" outname="apps"
 dumpdata:
 	$(MANAGE) dumpdata $(app) --indent 2 --output fixtures/$(outname).json
 
+## Load fixture: make loaddata file="all" (loads fixtures/<file>.json)
+loaddata:
+	$(MANAGE) loaddata fixtures/$(file).json
+
+## Delete all migration files and regenerate them (destructive!)
+reset-migrations:
+	$(BACKEND) find accounts organizations projects workspace agents workflows toony_agents importers \
+		-path "*/migrations/[0-9]*.py" -delete
+	$(MANAGE) makemigrations accounts organizations projects workspace agents workflows toony_agents importers
 
 # ──────────────────────────────────────────────
 # Testing & quality
