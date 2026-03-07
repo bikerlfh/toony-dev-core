@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from django.core.files.base import ContentFile
 
-from accounts.models import User
+from accounts.models import User, UserAPIKey
 from accounts.models.membership import MembershipRole, OrganizationMembership
 from organizations.models import Organization, OrganizationSettings
 from projects.models import (
@@ -30,6 +30,16 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
     password = factory.PostGenerationMethodCall("set_password", "testpass123")
+
+
+class UserAPIKeyFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = UserAPIKey
+
+    user = factory.SubFactory(UserFactory)
+    key_hash = factory.Sequence(lambda n: f"hash_{n:064d}")
+    key_prefix = factory.Sequence(lambda n: f"toony_{n}")
+    name = factory.Sequence(lambda n: f"key-{n}")
 
 
 class OrganizationFactory(factory.django.DjangoModelFactory):

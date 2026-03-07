@@ -131,3 +131,12 @@ def artifact(issue, agent_task):
 @pytest.fixture()
 def issue_document(issue, user):
     return IssueDocumentFactory(issue=issue, uploaded_by=user)
+
+
+@pytest.fixture()
+def user_api_key(user):
+    from accounts.services.api_key_service import generate_api_key
+
+    key_obj, raw_key = generate_api_key(user=user, name="test-key")
+    key_obj._raw_key = raw_key
+    return key_obj
