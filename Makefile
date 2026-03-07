@@ -118,6 +118,9 @@ down-prod: ## Stop production services
 logs-prod: ## Tail production logs
 	$(COMPOSE_PROD) logs -f
 
+ssh-add:
+	sudo ssh-add ~/.ssh/id_ed25519
+
 # ──────────────────────────────────────────────
 # Cleanup
 # ──────────────────────────────────────────────
