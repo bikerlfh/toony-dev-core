@@ -69,6 +69,11 @@ seed-flush: ## Flush and reload seed data
 collectstatic: ## Collect static files
 	$(MANAGE) collectstatic --noinput
 
+## Dump data to app/fixtures/: make dumpdata app="applications"
+dumpdata:
+	$(MANAGE) dumpdata $(app) --indent 2 --output fixtures/$(outname).json
+
+
 # ──────────────────────────────────────────────
 # Testing & quality
 # ──────────────────────────────────────────────
