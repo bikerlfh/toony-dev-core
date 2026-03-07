@@ -1,0 +1,17 @@
+[project]
+name = "toony-mcp"
+version = "0.1.0"
+description = "MCP server for Toony Dev Core"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+toony-mcp = "toony_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
