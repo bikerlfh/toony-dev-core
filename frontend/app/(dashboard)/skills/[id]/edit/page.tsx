@@ -124,7 +124,7 @@ export default function EditSkillPage() {
     <div>
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => router.push(`/skills`)}
+          onClick={() => router.back()}
           className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
         >
           <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -273,7 +273,7 @@ export default function EditSkillPage() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => router.push(`/skills`)}
+                onClick={() => router.back()}
                 className="flex-1 rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
               >
                 Cancel

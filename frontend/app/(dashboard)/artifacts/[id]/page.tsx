@@ -74,10 +74,10 @@ export default function ArtifactDetailPage() {
     <div className="p-6">
       {/* Back */}
       <button
-        onClick={() => router.push("/artifacts")}
+        onClick={() => router.back()}
         className="mb-4 text-sm text-slate-500 transition-colors hover:text-slate-300"
       >
-        &larr; Back to Artifacts
+        &larr; Back
       </button>
 
       <div className="flex gap-6">

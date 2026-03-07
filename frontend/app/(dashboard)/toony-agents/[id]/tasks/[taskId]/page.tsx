@@ -218,12 +218,10 @@ export default function TaskViewPage() {
       {/* Header */}
       <div className="flex-shrink-0 border-b border-slate-800 px-4 py-3">
         <button
-          onClick={() =>
-            router.push(`/toony-agents/${agentId}`)
-          }
+          onClick={() => router.back()}
           className="mb-2 text-sm text-slate-500 transition-colors hover:text-slate-300"
         >
-          &larr; Back to {agent?.name ?? "Agent"}
+          &larr; Back
         </button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
