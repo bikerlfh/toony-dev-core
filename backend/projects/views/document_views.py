@@ -38,7 +38,7 @@ class IssueDocumentListCreateView(PaginatedViewMixin, APIView):
             uploaded_by=request.user,
             file=serializer.validated_data["file"],
         )
-        output = IssueDocumentSerializer(document).data
+        output = IssueDocumentSerializer(document, context={"request": request}).data
         return Response(output, status=status.HTTP_201_CREATED)
 
 

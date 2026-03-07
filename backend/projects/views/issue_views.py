@@ -311,5 +311,5 @@ class IssueFullDetailView(APIView):
         ).exists():
             raise PermissionDenied("You are not a member of this project.")
 
-        serializer = IssueFullDetailSerializer(issue)
+        serializer = IssueFullDetailSerializer(issue, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)

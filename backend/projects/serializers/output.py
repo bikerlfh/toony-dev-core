@@ -388,6 +388,7 @@ class _DocumentUploaderSerializer(serializers.ModelSerializer):
 
 class IssueDocumentSerializer(serializers.ModelSerializer):
     uploaded_by = _DocumentUploaderSerializer(read_only=True)
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = IssueDocument
@@ -395,12 +396,19 @@ class IssueDocumentSerializer(serializers.ModelSerializer):
             "id",
             "original_filename",
             "file",
+            "file_url",
             "file_size",
             "content_type",
             "uploaded_by",
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_file_url(self, obj):
+        request = self.context.get("request")
+        if request and obj.file:
+            return request.build_absolute_uri(obj.file.url)
+        return obj.file.url if obj.file else None
 
 
 class IssueFullDetailSerializer(serializers.ModelSerializer):
