@@ -33,6 +33,9 @@ class ToonyClient:
     def _patch(self, path: str, data: dict | None = None) -> dict:
         return self._request("PATCH", path, json=data)
 
+    def _put(self, path: str, data: dict | None = None) -> dict:
+        return self._request("PUT", path, json=data)
+
     def _delete(self, path: str) -> dict:
         return self._request("DELETE", path)
 
@@ -109,3 +112,43 @@ class ToonyClient:
 
     def search_global(self, organization_id: str, query: str) -> dict:
         return self._get(f"/search/{organization_id}/", params={"q": query})
+
+    # -- SubAgents --
+    def list_subagents(
+        self, search: str | None = None, organization: str | None = None
+    ) -> dict:
+        params = {}
+        if search:
+            params["search"] = search
+        if organization:
+            params["organization"] = organization
+        return self._get("/subagents/", params=params)
+
+    def get_subagent(self, subagent_id: str) -> dict:
+        return self._get(f"/subagents/{subagent_id}/")
+
+    def create_subagent(self, data: dict) -> dict:
+        return self._post("/subagents/", data=data)
+
+    def update_subagent(self, subagent_id: str, data: dict) -> dict:
+        return self._put(f"/subagents/{subagent_id}/", data=data)
+
+    # -- Skills --
+    def list_skills(
+        self, search: str | None = None, organization: str | None = None
+    ) -> dict:
+        params = {}
+        if search:
+            params["search"] = search
+        if organization:
+            params["organization"] = organization
+        return self._get("/skills/", params=params)
+
+    def get_skill(self, skill_id: str) -> dict:
+        return self._get(f"/skills/{skill_id}/")
+
+    def create_skill(self, data: dict) -> dict:
+        return self._post("/skills/", data=data)
+
+    def update_skill(self, skill_id: str, data: dict) -> dict:
+        return self._put(f"/skills/{skill_id}/", data=data)
