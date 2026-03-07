@@ -143,10 +143,13 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(STORAGE_KEY) === "true";
-  });
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Hydrate from localStorage after mount to avoid SSR mismatch
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "true") setCollapsed(true);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(collapsed));
