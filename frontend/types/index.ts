@@ -159,6 +159,8 @@ export type {
   UpdateArtifactPayload,
 } from "./artifacts";
 
+export type { IssueDocument } from "./issue-documents";
+
 // --- Pagination & Search ---
 
 export interface PaginatedResponse<T> {
