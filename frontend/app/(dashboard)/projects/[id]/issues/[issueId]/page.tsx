@@ -17,6 +17,12 @@ import { listMilestones } from "@/lib/api/milestones";
 import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
 import { listIssueArtifacts } from "@/lib/api/artifacts";
+import {
+  listIssueDocuments,
+  uploadIssueDocument,
+  deleteIssueDocument,
+} from "@/lib/api/issue-documents";
+import type { IssueDocument } from "@/types/issue-documents";
 import { ArtifactStatusBadge } from "@/components/artifact-status-badge";
 import { ArtifactTypeBadge } from "@/components/artifact-type-badge";
 import { useProjectWebSocket } from "@/hooks/use-project-websocket";
@@ -367,6 +373,9 @@ export default function IssueDetailPage() {
             )}
           </div>
 
+          {/* Attachments — always visible */}
+          <AttachmentsSection projectId={projectId} issueId={issueId} />
+
           {/* Tabs */}
           <div className="mt-6 border-b border-slate-800/60">
             <nav className="-mb-px flex gap-4">
@@ -568,6 +577,222 @@ export default function IssueDetailPage() {
           isLoading={isDeleting}
           onConfirm={handleDelete}
           onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Attachments Section ---
+
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+
+const FILE_TYPE_ICONS: Record<string, string> = {
+  "application/pdf": "PDF",
+  "application/msword": "DOC",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DOCX",
+  "application/vnd.ms-excel": "XLS",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "XLSX",
+  "text/csv": "CSV",
+  "text/plain": "TXT",
+};
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AttachmentsSection({
+  projectId,
+  issueId,
+}: {
+  projectId: string;
+  issueId: string;
+}) {
+  const [documents, setDocuments] = useState<IssueDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [uploading, setUploading] = useState<Map<string, number>>(new Map());
+  const [isDragging, setIsDragging] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<IssueDocument | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fetchDocuments = useCallback(async () => {
+    try {
+      const res = await listIssueDocuments(projectId, issueId);
+      setDocuments(res.results);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, issueId]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  async function handleFiles(files: FileList | File[]) {
+    const fileArray = Array.from(files);
+    for (const file of fileArray) {
+      const tempId = `${file.name}-${Date.now()}`;
+      setUploading((prev) => new Map(prev).set(tempId, 0));
+      try {
+        await uploadIssueDocument(projectId, issueId, file, (percent) => {
+          setUploading((prev) => new Map(prev).set(tempId, percent));
+        });
+        await fetchDocuments();
+      } catch {
+        // upload failed — silently remove progress
+      } finally {
+        setUploading((prev) => {
+          const next = new Map(prev);
+          next.delete(tempId);
+          return next;
+        });
+      }
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await deleteIssueDocument(projectId, issueId, deleteTarget.id);
+      setDeleteTarget(null);
+      fetchDocuments();
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  const backendOrigin = apiBase.replace(/\/api\/?$/, "");
+
+  return (
+    <div className="mt-6">
+      <h3 className="mb-3 text-xs font-medium uppercase text-slate-500">Attachments</h3>
+
+      {/* Drop zone */}
+      <label
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+        className={`flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed p-4 text-sm transition-colors ${
+          isDragging
+            ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
+            : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-400"
+        }`}
+      >
+        <span>Drop files here or click to upload</span>
+        <input
+          type="file"
+          multiple
+          className="hidden"
+          accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              handleFiles(e.target.files);
+              e.target.value = "";
+            }
+          }}
+        />
+      </label>
+
+      {/* Upload progress */}
+      {uploading.size > 0 && (
+        <div className="mt-3 space-y-2">
+          {Array.from(uploading.entries()).map(([id, percent]) => (
+            <div key={id} className="flex items-center gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className="h-full rounded-full bg-indigo-500 transition-all"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <span className="text-xs text-slate-500">{percent}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* File list */}
+      {isLoading ? (
+        <p className="mt-3 text-sm text-slate-500">Loading attachments...</p>
+      ) : documents.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {documents.map((doc) => {
+            const isImage = IMAGE_TYPES.has(doc.content_type);
+            const fileUrl = doc.file.startsWith("http") ? doc.file : `${backendOrigin}${doc.file}`;
+            const typeLabel = FILE_TYPE_ICONS[doc.content_type] || doc.content_type.split("/")[1]?.toUpperCase() || "FILE";
+
+            return (
+              <div
+                key={doc.id}
+                className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900 p-3"
+              >
+                {/* Thumbnail or icon */}
+                {isImage ? (
+                  <img
+                    src={fileUrl}
+                    alt={doc.original_filename}
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-[10px] font-bold text-slate-400">
+                    {typeLabel}
+                  </div>
+                )}
+
+                {/* File info */}
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm text-slate-200 hover:text-white"
+                  >
+                    {doc.original_filename}
+                  </a>
+                  <p className="text-xs text-slate-500">
+                    {formatFileSize(doc.file_size)}
+                    {doc.uploaded_by && (
+                      <> &middot; {doc.uploaded_by.first_name} {doc.uploaded_by.last_name}</>
+                    )}
+                  </p>
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() => setDeleteTarget(doc)}
+                  className="shrink-0 text-xs text-red-400 transition-colors hover:text-red-300"
+                >
+                  Remove
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="Remove attachment"
+          message={`Remove "${deleteTarget.original_filename}"? This cannot be undone.`}
+          confirmLabel="Remove"
+          confirmVariant="danger"
+          isLoading={isDeleting}
+          onConfirm={handleDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>
