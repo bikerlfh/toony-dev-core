@@ -1,6 +1,6 @@
 ---
 name: toony-mcp
-description: "Use when the user wants to interact with Toony (project management) via MCP tools. Examples: check issues, update status, search projects, create comments or artifacts."
+description: "Use when the user wants to interact with Toony (project management) via MCP tools. Examples: check issues, update status, search projects, create comments or artifacts, manage subagents and skills."
 ---
 
 # Toony MCP — Common Patterns
@@ -34,8 +34,25 @@ Use the `mcp__toony__*` tools to interact with Toony as a project management sys
 
 - Documents returned by `get_issue` include a `file_url` field with the absolute URL for direct download.
 
+## SubAgents
+
+- **`list_subagents`** — list all subagents. Optional `search` and `organization` (slug) filters.
+- **`get_subagent`** — get detail by **slug** (not UUID).
+- **`create_subagent`** — requires `name` and `slug`. Optional: `organization` (slug), `description`, `markdown`, `version`, `status`, `agent_type`, `tags` (comma-separated).
+- **`update_subagent`** — lookup by **slug**. All fields optional: `name`, `description`, `markdown`, `version`, `status`, `agent_type`, `tags` (comma-separated, replaces all), `assigned_projects` (comma-separated UUIDs, replaces all).
+
+## Skills
+
+- **`list_skills`** — list all skills. Optional `search` and `organization` (slug) filters.
+- **`get_skill`** — get detail by **slug** (not UUID).
+- **`create_skill`** — requires `name` and `slug`. Optional: `organization` (slug), `description`, `markdown`, `version`, `status`, `category`, `tags` (comma-separated). If `markdown` is provided, a SkillVersion is created automatically.
+- **`update_skill`** — lookup by **slug**. All fields optional: `name`, `description`, `markdown`, `version`, `status`, `category`, `tags` (comma-separated, replaces all), `changelog`. If `markdown` changes, a new SkillVersion is created automatically.
+
 ## Enum Reference
 
-- **Status:** `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELED`
+- **Status (issues):** `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELED`
 - **Priority:** `NONE`, `URGENT`, `HIGH`, `MEDIUM`, `LOW`
 - **Artifact type:** `PLAN`, `DESIGN_DOC`, `TECHNICAL_SPEC`, `TEST_PLAN`, `OTHER`
+- **SubAgent/Skill status:** `DRAFT`, `ACTIVE`, `INACTIVE`, `DEPRECATED`
+- **Agent type:** `CODER`, `REVIEWER`, `TESTER`, `PLANNER`, `CUSTOM`
+- **Skill category:** `CODING`, `TESTING`, `REVIEW`, `DOCUMENTATION`, `DEPLOYMENT`, `CUSTOM`
