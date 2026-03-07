@@ -65,14 +65,13 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
 
   const isDragging = draggingIssueId !== null;
 
-  const populatedColumns = COLUMNS.filter((col) => issues.some((i) => i.status === col.status));
-  const emptyColumns = COLUMNS.filter((col) => !issues.some((i) => i.status === col.status));
+  const ALWAYS_VISIBLE: Set<IssueStatus> = new Set(["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]);
+  const visibleColumns = COLUMNS.filter((col) => ALWAYS_VISIBLE.has(col.status) || issues.some((i) => i.status === col.status));
 
   return (
-    <div className="flex gap-4">
-      <div className="min-w-0 flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-4">
-          {populatedColumns.map((col) => {
+    <div className="min-w-0 flex-1 overflow-x-auto pb-4">
+      <div className="flex gap-4">
+        {visibleColumns.map((col) => {
             const columnIssues = issues.filter((i) => i.status === col.status);
             const isOver = dragOverColumn === col.status && isDragging;
 
@@ -110,34 +109,6 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
             );
           })}
         </div>
-      </div>
-      {emptyColumns.length > 0 && (
-        <div className="w-48 shrink-0 self-start rounded-xl border border-slate-800/40 bg-slate-900/50 p-3">
-          <h4 className="mb-2 text-xs font-medium text-slate-500">Empty statuses</h4>
-          <div className="flex flex-col gap-1.5">
-            {emptyColumns.map((col) => {
-              const isOver = dragOverColumn === col.status && isDragging;
-
-              return (
-                <div
-                  key={col.status}
-                  className={`rounded-lg border border-dashed px-3 py-2 text-xs transition-colors duration-150 ${
-                    isOver
-                      ? "border-indigo-500/40 bg-indigo-500/[0.06] text-indigo-400"
-                      : isDragging
-                        ? "border-slate-700/50 text-slate-400"
-                        : "border-slate-800/40 text-slate-500"
-                  }`}
-                  onDragOver={(e) => handleDragOver(e, col.status)}
-                  onDrop={(e) => handleDrop(e, col.status)}
-                >
-                  {col.label}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

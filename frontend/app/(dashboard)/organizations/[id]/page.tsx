@@ -1017,7 +1017,7 @@ function ImportsTab({ orgId }: { orgId: string }) {
 
 // ────────────────────────────── Agents Tab ──────────────────────────────
 
-function AgentsTab({ orgId }: { orgId: string }) {
+function AgentsTab({ orgId, onAgentClick }: { orgId: string; onAgentClick: (agentId: string) => void }) {
   const [agents, setAgents] = useState<ToonyAgentList[]>([]);
   const [allAgents, setAllAgents] = useState<ToonyAgentList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1121,7 +1121,8 @@ function AgentsTab({ orgId }: { orgId: string }) {
             return (
               <div
                 key={agent.id}
-                className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
+                onClick={() => onAgentClick(agent.id)}
+                className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3 cursor-pointer transition-colors hover:bg-slate-900/80"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-800/60">
@@ -1301,7 +1302,7 @@ export default function OrganizationDetailPage() {
         {activeTab === "credentials" && <CredentialsTab orgId={orgId} />}
         {activeTab === "integrations" && <IntegrationsTab orgId={orgId} />}
         {activeTab === "imports" && <ImportsTab orgId={orgId} />}
-        {activeTab === "agents" && <AgentsTab orgId={orgId} />}
+        {activeTab === "agents" && <AgentsTab orgId={orgId} onAgentClick={(agentId) => router.push(`/toony-agents/${agentId}`)} />}
       </div>
     </div>
   );

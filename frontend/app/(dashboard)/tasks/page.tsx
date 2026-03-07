@@ -36,6 +36,7 @@ export default function TasksPage() {
 
   useEffect(() => { fetchIssues(); }, [fetchIssues]);
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
+  useEffect(() => { window.dispatchEvent(new Event("sidebar-collapse")); }, []);
 
   const handleStatusChange = useCallback(
     async (issue: CrossProjectIssueList, newStatus: IssueStatus) => {

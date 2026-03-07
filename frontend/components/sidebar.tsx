@@ -152,6 +152,12 @@ export function Sidebar() {
     localStorage.setItem(STORAGE_KEY, String(collapsed));
   }, [collapsed]);
 
+  useEffect(() => {
+    const handler = () => setCollapsed(true);
+    window.addEventListener("sidebar-collapse", handler);
+    return () => window.removeEventListener("sidebar-collapse", handler);
+  }, []);
+
   function isChildActive(group: NavGroup): boolean {
     return group.children.some((child) => {
       return pathname.startsWith(child.path);
