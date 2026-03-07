@@ -285,3 +285,47 @@ def create_artifact(
     }
     result = client.create_artifact(project_id, issue_id, data)
     return json.dumps(result)
+
+
+@mcp.tool()
+def update_artifact(
+    artifact_id: str,
+    title: str | None = None,
+    content: str | None = None,
+    status: str | None = None,
+    requires_approval: bool | None = None,
+) -> str:
+    """Update an existing artifact.
+
+    Args:
+        artifact_id: UUID of the artifact
+        title: New title
+        content: New content (markdown)
+        status: New status (DRAFT, PENDING_APPROVAL, IN_REVIEW, APPROVED, REJECTED, REVISION_REQUESTED, SUPERSEDED). Must follow valid state transitions.
+        requires_approval: Whether the artifact needs approval
+    """
+    client = get_client()
+    data = {}
+    if title is not None:
+        data["title"] = title
+    if content is not None:
+        data["content"] = content
+    if status is not None:
+        data["status"] = status
+    if requires_approval is not None:
+        data["requires_approval"] = requires_approval
+
+    result = client.update_artifact(artifact_id, data)
+    return json.dumps(result)
+
+
+@mcp.tool()
+def delete_artifact(artifact_id: str) -> str:
+    """Delete an artifact.
+
+    Args:
+        artifact_id: UUID of the artifact to delete
+    """
+    client = get_client()
+    result = client.delete_artifact(artifact_id)
+    return json.dumps(result)
