@@ -401,3 +401,55 @@ class IssueDocumentSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+
+class IssueFullDetailSerializer(serializers.ModelSerializer):
+    project = _IssueProjectSerializer(read_only=True)
+    assignee = UserDetailSerializer(read_only=True)
+    reporter = UserDetailSerializer(read_only=True)
+    labels = LabelSerializer(many=True, read_only=True)
+    milestone = MilestoneSerializer(read_only=True)
+    cycle = CycleSerializer(read_only=True)
+    parent_identifier = serializers.CharField(
+        source="parent.identifier", read_only=True, default=None,
+    )
+    sub_issue_count = serializers.SerializerMethodField()
+    comments = IssueCommentSerializer(many=True, read_only=True)
+    activities = IssueActivitySerializer(many=True, read_only=True)
+    artifacts = IssueArtifactListSerializer(many=True, read_only=True)
+    documents = IssueDocumentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Issue
+        fields = [
+            "id",
+            "project",
+            "identifier",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reporter",
+            "labels",
+            "milestone",
+            "cycle",
+            "parent_identifier",
+            "sub_issue_count",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "external_tracker_name",
+            "external_tracker_url",
+            "external_tracker_id",
+            "comments",
+            "activities",
+            "artifacts",
+            "documents",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_sub_issue_count(self, obj):
+        return obj.sub_issues.count()
