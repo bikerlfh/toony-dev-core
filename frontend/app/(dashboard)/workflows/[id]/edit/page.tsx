@@ -152,6 +152,26 @@ function CatalogEntry({ item }: { item: CatalogItem }) {
   );
 }
 
+/* ── Help row ──────────────────────────────────────── */
+
+function HelpRow({ keys, desc }: { keys: string[]; desc: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap gap-1">
+        {keys.map((k) => (
+          <kbd
+            key={k}
+            className="rounded border border-slate-700/60 bg-slate-900 px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
+          >
+            {k}
+          </kbd>
+        ))}
+      </div>
+      <span className="text-right text-[11px] text-slate-500">{desc}</span>
+    </div>
+  );
+}
+
 /* ── Page ───────────────────────────────────────────── */
 
 export default function WorkflowEditPage() {
@@ -187,6 +207,7 @@ export default function WorkflowEditPage() {
   // Node properties
   const [nodeConfigJson, setNodeConfigJson] = useState("{}");
   const [nodeConfigError, setNodeConfigError] = useState("");
+  const [showHelp, setShowHelp] = useState(false);
 
   // Debounce ref for position updates
   const positionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -574,18 +595,89 @@ export default function WorkflowEditPage() {
         <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
           {workflow.slug}
         </span>
-        <span
-          className={`ml-auto flex items-center gap-1.5 text-xs font-medium ${
-            workflow.is_active ? "text-emerald-400" : "text-amber-400"
-          }`}
-        >
+        <div className="ml-auto flex items-center gap-3">
           <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              workflow.is_active ? "bg-emerald-400" : "bg-amber-400"
+            className={`flex items-center gap-1.5 text-xs font-medium ${
+              workflow.is_active ? "text-emerald-400" : "text-amber-400"
             }`}
-          />
-          {workflow.is_active ? "Active" : "Inactive"}
-        </span>
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                workflow.is_active ? "bg-emerald-400" : "bg-amber-400"
+              }`}
+            />
+            {workflow.is_active ? "Active" : "Inactive"}
+          </span>
+
+          {/* Help button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowHelp((v) => !v)}
+              className={`flex h-7 w-7 items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                showHelp
+                  ? "bg-slate-800 text-slate-200"
+                  : "text-slate-500 hover:bg-slate-800/60 hover:text-slate-300"
+              }`}
+              title="Editor help"
+            >
+              ?
+            </button>
+
+            {showHelp && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowHelp(false)}
+                />
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-slate-800/60 bg-slate-950 p-4 shadow-xl">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Editor shortcuts
+                  </h4>
+                  <div className="mt-3 space-y-2.5">
+                    <HelpRow
+                      keys={["Drag from catalog"]}
+                      desc="Add a node to the canvas"
+                    />
+                    <HelpRow
+                      keys={["Drag handle \u2192 handle"]}
+                      desc="Connect two nodes with an edge"
+                    />
+                    <HelpRow
+                      keys={["Click node"]}
+                      desc="Select and view properties"
+                    />
+                    <HelpRow
+                      keys={["Backspace", "Delete"]}
+                      desc="Remove selected node or edge"
+                    />
+                    <HelpRow
+                      keys={["Scroll"]}
+                      desc="Zoom in / out"
+                    />
+                    <HelpRow
+                      keys={["Click + drag canvas"]}
+                      desc="Pan the viewport"
+                    />
+                    <HelpRow
+                      keys={["Drag node"]}
+                      desc="Reposition (auto-saved)"
+                    />
+                  </div>
+                  <div className="mt-4 border-t border-slate-800/60 pt-3">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Tips
+                    </h4>
+                    <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
+                      <li>Cycles are not allowed — the API will reject circular edges.</li>
+                      <li>Use the right panel to edit workflow properties or node config overrides.</li>
+                      <li>Nodes connect from bottom (source) to top (target) handles.</li>
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Error banner */}
