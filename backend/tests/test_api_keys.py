@@ -64,3 +64,44 @@ class TestAPIKeySelector:
 
         found = get_api_key_by_id(user, key_obj.id)
         assert found is None
+
+
+@pytest.mark.django_db
+class TestAPIKeyAuthentication:
+    def test_authenticate_with_valid_key(self, api_client, user):
+        _, raw_key = generate_api_key(user=user, name="test-key")
+
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw_key}")
+        response = api_client.get("/api/auth/me/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["id"] == str(user.id)
+
+    def test_authenticate_with_invalid_key(self, api_client):
+        api_client.credentials(HTTP_AUTHORIZATION="Bearer toony_invalidkey12345678901234567890")
+        response = api_client.get("/api/auth/me/")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_authenticate_with_revoked_key(self, api_client, user):
+        key_obj, raw_key = generate_api_key(user=user, name="test-key")
+        revoke_api_key(key_obj)
+
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw_key}")
+        response = api_client.get("/api/auth/me/")
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_authenticate_updates_last_used_at(self, api_client, user):
+        key_obj, raw_key = generate_api_key(user=user, name="test-key")
+        assert key_obj.last_used_at is None
+
+        api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {raw_key}")
+        api_client.get("/api/auth/me/")
+
+        key_obj.refresh_from_db()
+        assert key_obj.last_used_at is not None
+
+    def test_jwt_still_works(self, authenticated_client):
+        response = authenticated_client.get("/api/auth/me/")
+        assert response.status_code == status.HTTP_200_OK
