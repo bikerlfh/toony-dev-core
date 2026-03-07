@@ -17,3 +17,40 @@ class UpdateWorkflowSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True)
     is_active = serializers.BooleanField(required=False)
     label = serializers.UUIDField(required=False, allow_null=True)
+
+
+from workflows.models.workflow_node import WorkflowNodeType
+
+
+class CreateWorkflowNodeSerializer(serializers.Serializer):
+    node_type = serializers.ChoiceField(choices=WorkflowNodeType.choices)
+    sub_agent = serializers.UUIDField(required=False, allow_null=True)
+    skill = serializers.UUIDField(required=False, allow_null=True)
+    position_x = serializers.FloatField(required=False, default=0)
+    position_y = serializers.FloatField(required=False, default=0)
+    config_overrides = serializers.JSONField(required=False, default=dict)
+    order = serializers.IntegerField(required=False, default=0)
+
+    def validate(self, attrs):
+        node_type = attrs.get("node_type")
+        if node_type == "SUBAGENT" and not attrs.get("sub_agent"):
+            raise serializers.ValidationError(
+                {"sub_agent": "Required when node_type is SUBAGENT."}
+            )
+        if node_type == "SKILL" and not attrs.get("skill"):
+            raise serializers.ValidationError(
+                {"skill": "Required when node_type is SKILL."}
+            )
+        return attrs
+
+
+class UpdateWorkflowNodeSerializer(serializers.Serializer):
+    position_x = serializers.FloatField(required=False)
+    position_y = serializers.FloatField(required=False)
+    config_overrides = serializers.JSONField(required=False)
+    order = serializers.IntegerField(required=False)
+
+
+class CreateWorkflowEdgeSerializer(serializers.Serializer):
+    source_node = serializers.UUIDField()
+    target_node = serializers.UUIDField()
