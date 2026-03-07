@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 
@@ -161,3 +163,16 @@ class ToonyClient:
 
     def update_skill(self, skill_id: str, data: dict) -> dict:
         return self._put(f"/skills/{skill_id}/", data=data)
+
+    # -- Workflows --
+    def resolve_issue_workflow_yaml(self, issue_id: str) -> str:
+        """Get the resolved workflow YAML for an issue."""
+        url = f"{self.api_url}/workflows/resolve/{issue_id}/"
+        response = self.session.get(url, params={"format": "yaml"})
+        if response.status_code >= 400:
+            try:
+                detail = response.json()
+            except ValueError:
+                detail = response.text
+            return json.dumps({"error": f"HTTP {response.status_code}", "detail": detail})
+        return response.text
