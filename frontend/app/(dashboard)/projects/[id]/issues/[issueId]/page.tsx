@@ -616,6 +616,7 @@ function AttachmentsSection({
   const [isDragging, setIsDragging] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<IssueDocument | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const fetchDocuments = useCallback(async () => {
     try {
@@ -630,9 +631,16 @@ function AttachmentsSection({
     fetchDocuments();
   }, [fetchDocuments]);
 
-  async function handleFiles(files: FileList | File[]) {
-    const fileArray = Array.from(files);
-    for (const file of fileArray) {
+  const images = documents.filter((d) => IMAGE_TYPES.has(d.content_type));
+
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  const backendOrigin = apiBase.replace(/\/api\/?$/, "");
+  const resolveUrl = (url: string) =>
+    url.startsWith("http") ? url : `${backendOrigin}${url}`;
+
+  async function handleFiles(fileList: FileList | File[]) {
+    const arr = Array.from(fileList);
+    for (const file of arr) {
       const tempId = `${file.name}-${Date.now()}`;
       setUploading((prev) => new Map(prev).set(tempId, 0));
       try {
@@ -641,7 +649,7 @@ function AttachmentsSection({
         });
         await fetchDocuments();
       } catch {
-        // upload failed — silently remove progress
+        // upload failed
       } finally {
         setUploading((prev) => {
           const next = new Map(prev);
@@ -655,12 +663,10 @@ function AttachmentsSection({
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
-    if (e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-    }
+    if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
   }
 
-  async function handleDelete() {
+  async function handleDeleteConfirm() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
@@ -672,14 +678,22 @@ function AttachmentsSection({
     }
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-  const backendOrigin = apiBase.replace(/\/api\/?$/, "");
+  const hasContent = documents.length > 0 || uploading.size > 0;
 
   return (
     <div className="mt-6">
-      <h3 className="mb-3 text-xs font-medium uppercase text-slate-500">Attachments</h3>
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">
+          Attachments
+        </h3>
+        {documents.length > 0 && (
+          <span className="text-xs text-slate-600">
+            {documents.length} file{documents.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
 
-      {/* Drop zone */}
+      {/* Drop zone — compact when content exists */}
       <label
         onDragOver={(e) => {
           e.preventDefault();
@@ -687,13 +701,17 @@ function AttachmentsSection({
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
-        className={`flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed p-4 text-sm transition-colors ${
+        className={`flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
           isDragging
             ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
-            : "border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-400"
-        }`}
+            : "border-slate-800 text-slate-600 hover:border-slate-700 hover:text-slate-500"
+        } ${hasContent ? "p-2.5" : "p-6"}`}
       >
-        <span>Drop files here or click to upload</span>
+        <span className="text-xs">
+          {hasContent
+            ? "Drop files or click to add more"
+            : "Drop files here or click to upload"}
+        </span>
         <input
           type="file"
           multiple
@@ -710,79 +728,124 @@ function AttachmentsSection({
 
       {/* Upload progress */}
       {uploading.size > 0 && (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-1.5">
           {Array.from(uploading.entries()).map(([id, percent]) => (
-            <div key={id} className="flex items-center gap-3">
+            <div
+              key={id}
+              className="flex items-center gap-3 rounded-lg border border-slate-800/60 bg-slate-900 px-3 py-2"
+            >
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
                 <div
                   className="h-full rounded-full bg-indigo-500 transition-all"
                   style={{ width: `${percent}%` }}
                 />
               </div>
-              <span className="text-xs text-slate-500">{percent}%</span>
+              <span className="text-xs tabular-nums text-slate-500">
+                {percent}%
+              </span>
             </div>
           ))}
         </div>
       )}
 
-      {/* File list */}
       {isLoading ? (
-        <p className="mt-3 text-sm text-slate-500">Loading attachments...</p>
+        <div className="mt-3 flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-1 w-6 rounded-full bg-slate-700 animate-pulse"
+              style={{ animationDelay: `${i * 150}ms` }}
+            />
+          ))}
+        </div>
       ) : documents.length > 0 ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           {documents.map((doc) => {
             const isImage = IMAGE_TYPES.has(doc.content_type);
-            const fileUrl = doc.file.startsWith("http") ? doc.file : `${backendOrigin}${doc.file}`;
-            const typeLabel = FILE_TYPE_ICONS[doc.content_type] || doc.content_type.split("/")[1]?.toUpperCase() || "FILE";
+            const typeLabel =
+              FILE_TYPE_ICONS[doc.content_type] ||
+              doc.content_type.split("/")[1]?.toUpperCase() ||
+              "FILE";
 
             return (
               <div
                 key={doc.id}
-                className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-900 p-3"
+                className="group relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-slate-800/60 bg-slate-900 transition-colors hover:border-slate-700/60"
+                onClick={() => {
+                  if (isImage) {
+                    setLightboxIndex(images.indexOf(doc));
+                  } else {
+                    window.open(resolveUrl(doc.file), "_blank");
+                  }
+                }}
               >
-                {/* Thumbnail or icon */}
+                {/* Content: thumbnail or type badge */}
                 {isImage ? (
                   <img
-                    src={fileUrl}
+                    src={resolveUrl(doc.file)}
                     alt={doc.original_filename}
-                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-[10px] font-bold text-slate-400">
-                    {typeLabel}
+                  <div className="flex h-full w-full items-center justify-center">
+                    <span className="text-xs font-bold text-slate-500">
+                      {typeLabel}
+                    </span>
                   </div>
                 )}
 
-                {/* File info */}
-                <div className="min-w-0 flex-1">
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block truncate text-sm text-slate-200 hover:text-white"
-                  >
-                    {doc.original_filename}
-                  </a>
-                  <p className="text-xs text-slate-500">
-                    {formatFileSize(doc.file_size)}
-                    {doc.uploaded_by && (
-                      <> &middot; {doc.uploaded_by.first_name} {doc.uploaded_by.last_name}</>
-                    )}
-                  </p>
+                {/* Hover overlay — filename + size */}
+                <div className="absolute inset-0 flex flex-col justify-end bg-black/0 transition-colors group-hover:bg-black/60">
+                  <div className="p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <p className="truncate text-[10px] font-medium text-white">
+                      {doc.original_filename}
+                    </p>
+                    <p className="text-[9px] text-slate-400">
+                      {formatFileSize(doc.file_size)}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Delete */}
+                {/* Delete button on hover */}
                 <button
-                  onClick={() => setDeleteTarget(doc)}
-                  className="shrink-0 text-xs text-red-400 transition-colors hover:text-red-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(doc);
+                  }}
+                  className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded bg-black/60 text-red-400 opacity-0 transition-opacity hover:text-red-300 group-hover:opacity-100"
                 >
-                  Remove
+                  <svg
+                    className="h-3 w-3"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
                 </button>
               </div>
             );
           })}
         </div>
       ) : null}
+
+      {/* Image lightbox */}
+      {lightboxIndex !== null && (
+        <ImageLightbox
+          images={images}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+          onDelete={(doc) => {
+            setLightboxIndex(null);
+            setDeleteTarget(doc);
+          }}
+          resolveUrl={resolveUrl}
+        />
+      )}
 
       {deleteTarget && (
         <ConfirmModal
@@ -791,9 +854,179 @@ function AttachmentsSection({
           confirmLabel="Remove"
           confirmVariant="danger"
           isLoading={isDeleting}
-          onConfirm={handleDelete}
+          onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
         />
+      )}
+    </div>
+  );
+}
+
+// --- Image Lightbox ---
+
+function ImageLightbox({
+  images,
+  currentIndex,
+  onClose,
+  onNavigate,
+  onDelete,
+  resolveUrl,
+}: {
+  images: IssueDocument[];
+  currentIndex: number;
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+  onDelete: (doc: IssueDocument) => void;
+  resolveUrl: (url: string) => string;
+}) {
+  const doc = images[currentIndex];
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < images.length - 1;
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && hasPrev) onNavigate(currentIndex - 1);
+      if (e.key === "ArrowRight" && hasNext) onNavigate(currentIndex + 1);
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose, onNavigate, currentIndex, hasPrev, hasNext]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90"
+      onClick={onClose}
+    >
+      {/* Top bar */}
+      <div
+        className="absolute top-0 left-0 right-0 flex items-center justify-between border-b border-slate-800/40 px-6 py-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-white">
+            {doc.original_filename}
+          </p>
+          <p className="text-xs text-slate-500">
+            {formatFileSize(doc.file_size)}
+            {images.length > 1 && (
+              <>
+                {" "}&middot; {currentIndex + 1} of {images.length}
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <a
+            href={resolveUrl(doc.file)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            title="Open in new tab"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 3H3v10h10v-3M9 3h4v4M14 2L7 9" />
+            </svg>
+          </a>
+          <button
+            onClick={() => onDelete(doc)}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+            title="Delete"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2 4h12M5.333 4V2.667a1.333 1.333 0 011.334-1.334h2.666a1.333 1.333 0 011.334 1.334V4M12.667 4v9.333a1.333 1.333 0 01-1.334 1.334H4.667a1.333 1.333 0 01-1.334-1.334V4" />
+            </svg>
+          </button>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            title="Close (Esc)"
+          >
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Image */}
+      <div
+        className="flex max-h-[calc(100vh-8rem)] max-w-[calc(100vw-8rem)] items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={resolveUrl(doc.file)}
+          alt={doc.original_filename}
+          className="max-h-full max-w-full rounded-lg object-contain"
+        />
+      </div>
+
+      {/* Navigation arrows */}
+      {hasPrev && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate(currentIndex - 1);
+          }}
+          className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800/60 bg-slate-900/80 text-slate-400 transition-colors hover:border-slate-700 hover:text-white"
+        >
+          <svg
+            className="h-5 w-5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10 12L6 8l4-4" />
+          </svg>
+        </button>
+      )}
+      {hasNext && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate(currentIndex + 1);
+          }}
+          className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800/60 bg-slate-900/80 text-slate-400 transition-colors hover:border-slate-700 hover:text-white"
+        >
+          <svg
+            className="h-5 w-5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 12l4-4-4-4" />
+          </svg>
+        </button>
       )}
     </div>
   );

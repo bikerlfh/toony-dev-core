@@ -90,6 +90,44 @@ Card title transitions to `text-indigo-400` on hover via Tailwind `group` / `gro
 - Ghost/text: `text-sm text-indigo-400 hover:text-indigo-300`
 - Clear action: `text-xs text-slate-500 hover:text-slate-300` with small X icon
 
+### Attachment tile grid
+Uniform square tiles for all file types in a wrapping flex layout. Images show thumbnails, documents show type badges.
+
+**Container:** `flex flex-wrap gap-2`
+
+**Tile:** `h-24 w-24 rounded-lg border border-slate-800/60 bg-slate-900 overflow-hidden hover:border-slate-700/60`
+
+**Image tile content:** `<img>` with `h-full w-full object-cover`
+
+**Document tile content:** Centered type label (`text-xs font-bold text-slate-500`) — e.g. PDF, DOCX, CSV
+
+**Hover overlay:** `bg-black/60` with filename (`text-[10px] font-medium text-white truncate`) and file size (`text-[9px] text-slate-400`) anchored to bottom via `flex flex-col justify-end`. Fades in with `opacity-0 group-hover:opacity-100 transition-opacity`.
+
+**Delete button:** `absolute top-1 right-1 h-5 w-5 rounded bg-black/60 text-red-400` — hidden until hover via `opacity-0 group-hover:opacity-100`.
+
+**Click behavior:** Images open lightbox preview, documents open in new tab.
+
+### Image lightbox
+Full-screen preview for image attachments. `fixed inset-0 z-50 bg-black/90`. Click backdrop to close.
+
+**Top bar:** Filename (`text-sm font-medium text-white`), file size + position counter (`text-xs text-slate-500`), action buttons (open in new tab, delete, close) as `h-8 w-8 rounded-md` icon buttons. Separated by `border-b border-slate-800/40`.
+
+**Navigation arrows:** `h-10 w-10 rounded-xl border border-slate-800/60 bg-slate-900/80` positioned `absolute left-4/right-4 top-1/2`. Keyboard support: Esc close, arrow keys navigate.
+
+**Image:** `max-h-[calc(100vh-8rem)] max-w-[calc(100vw-8rem)] rounded-lg object-contain`.
+
+### Drop zone (adaptive)
+File upload target that compacts when content already exists.
+
+**Empty state:** `p-6 rounded-xl border-2 border-dashed border-slate-800 text-slate-600 text-xs`
+
+**With content:** Same but `p-2.5` — single compact line.
+
+**Drag active:** `border-indigo-500 bg-indigo-500/10 text-indigo-400`
+
+### Upload progress inline
+Progress bars inside `rounded-lg border border-slate-800/60 bg-slate-900 px-3 py-2`. Bar: `h-1.5 rounded-full bg-slate-800` track with `bg-indigo-500` fill. Percentage: `text-xs tabular-nums text-slate-500`.
+
 ## Avatar circles
 
 - Small (in cards): `h-5 w-5 rounded-full bg-slate-800 text-[10px] font-medium text-slate-400`

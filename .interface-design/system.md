@@ -134,6 +134,15 @@ Wrapper has the border color as background. `gap-px` creates 1px dividers. Each 
 </div>
 ```
 
+### Attachment Tile Grid
+Uniform `h-24 w-24` square tiles in `flex flex-wrap gap-2`. Images: thumbnail via `object-cover`. Documents: centered type label (`text-xs font-bold text-slate-500`). Hover overlay (`bg-black/60`) reveals filename + size. Delete X at `top-1 right-1`. Images open lightbox on click; documents open in new tab.
+
+### Image Lightbox
+`fixed inset-0 z-50 bg-black/90`. Top bar with filename, size, position counter, action buttons (`h-8 w-8 rounded-md`). Nav arrows: `h-10 w-10 rounded-xl border border-slate-800/60 bg-slate-900/80`. Keyboard: Esc/arrows. Image: `max-h-[calc(100vh-8rem)] rounded-lg object-contain`.
+
+### Adaptive Drop Zone
+`rounded-xl border-2 border-dashed border-slate-800`. Empty: `p-6`. With content: `p-2.5`. Drag active: `border-indigo-500 bg-indigo-500/10 text-indigo-400`.
+
 ## SVG Icon Style
 
 Hand-drawn SVGs at 16x16 viewBox, `fill="none" stroke="currentColor" strokeWidth="1.5"`. Consistent with the technical, minimal aesthetic. Use `strokeLinecap="round" strokeLinejoin="round"` for softer edges.
