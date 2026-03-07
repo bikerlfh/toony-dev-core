@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listSkills, deleteSkill } from "@/lib/api/skills";
-import { ConfirmModal } from "@/components/confirm-modal";
+import { listSkills } from "@/lib/api/skills";
 import type { SkillList, SkillCategory, SkillStatus } from "@/types";
 
 /* ── Status maps ──────────────────────────────────────── */
@@ -124,12 +123,9 @@ function FilterPill<T extends string>({
 
 export default function SkillsPage() {
   const router = useRouter();
-  const canManage = true;
 
   const [skills, setSkills] = useState<SkillList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<SkillList | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState<SkillStatus | "ALL">("ALL");
   const [categoryFilter, setCategoryFilter] = useState<SkillCategory | "ALL">(
@@ -168,20 +164,6 @@ export default function SkillsPage() {
     setCategoryFilter("ALL");
   }
 
-  /* ── delete ─────────────────────────────────────────── */
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      await deleteSkill(deleteTarget.slug);
-      setDeleteTarget(null);
-      fetchSkills();
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   /* ── loading skeleton ───────────────────────────────── */
 
   if (isLoading) {
@@ -195,12 +177,20 @@ export default function SkillsPage() {
           <div className="h-7 w-48 animate-pulse rounded-lg bg-slate-800" />
           <div className="h-7 w-64 animate-pulse rounded-lg bg-slate-800" />
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-800/60">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-[130px] animate-pulse rounded-xl border border-slate-800/60 bg-slate-900"
-            />
+              className="flex items-center gap-4 border-b border-slate-800/40 px-4 py-3.5 last:border-b-0"
+            >
+              <div className="h-8 w-8 animate-pulse rounded-lg bg-slate-800" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-32 animate-pulse rounded bg-slate-800" />
+                <div className="h-3 w-48 animate-pulse rounded bg-slate-800/60" />
+              </div>
+              <div className="h-3 w-12 animate-pulse rounded bg-slate-800" />
+              <div className="h-3 w-10 animate-pulse rounded bg-slate-800" />
+            </div>
           ))}
         </div>
       </div>
@@ -214,14 +204,12 @@ export default function SkillsPage() {
         <h1 className="text-2xl font-medium tracking-tight text-white">
           Skills
         </h1>
-        {canManage && (
-          <button
-            onClick={() => router.push("/skills/new")}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            Add skill
-          </button>
-        )}
+        <button
+          onClick={() => router.push("/skills/new")}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+        >
+          Add skill
+        </button>
       </div>
 
       {/* ── Filters ──────────────────────────────────────── */}
@@ -291,7 +279,7 @@ export default function SkillsPage() {
         {hasFilters && ` of ${skills.length}`}
       </p>
 
-      {/* ── Grid ─────────────────────────────────────────── */}
+      {/* ── List ────────────────────────────────────────── */}
       {filtered.length === 0 ? (
         <div className="mt-16 text-center">
           <p className="text-sm text-slate-500">
@@ -309,103 +297,72 @@ export default function SkillsPage() {
           )}
         </div>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
           {filtered.map((skill) => {
             const ss = STATUS_STYLES[skill.status];
             const catColor = CATEGORY_COLORS[skill.category];
             return (
               <div
                 key={skill.id}
-                className={`group cursor-pointer rounded-xl border border-l-[3px] border-slate-800/60 ${ss.border} bg-slate-900 p-5 transition-all hover:border-slate-700/60`}
+                className="group flex cursor-pointer items-center gap-4 border-b border-slate-800/40 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-slate-900/60"
                 onClick={() => router.push(`/skills/${skill.id}/edit`)}
               >
-                {/* Identity: icon + name + badges */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
-                      style={{
-                        backgroundColor: `${catColor}18`,
-                        color: catColor,
-                      }}
-                    >
-                      {CATEGORY_ICONS[skill.category]}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-[15px] font-semibold leading-tight text-white transition-colors group-hover:text-indigo-400">
-                        {skill.name}
-                      </h3>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {CATEGORY_LABELS[skill.category]}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                {/* Category icon */}
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+                  style={{
+                    backgroundColor: `${catColor}18`,
+                    color: catColor,
+                  }}
+                >
+                  {CATEGORY_ICONS[skill.category]}
+                </div>
+
+                {/* Name + description */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-indigo-400">
+                      {skill.name}
+                    </span>
                     {skill.is_external && (
-                      <span className="inline-flex rounded-full bg-purple-900/50 px-2 py-0.5 text-[10px] font-medium text-purple-400">
+                      <span className="inline-flex shrink-0 rounded-full bg-purple-900/50 px-2 py-0.5 text-[10px] font-medium text-purple-400">
                         External
                       </span>
                     )}
                     {!skill.organization && (
-                      <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                      <span className="inline-flex shrink-0 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                         Global
                       </span>
                     )}
                   </div>
+                  {skill.description && (
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {skill.description}
+                    </p>
+                  )}
                 </div>
 
-                {/* Meta: status + version + actions */}
-                <div className="mt-4 flex items-center justify-between border-t border-slate-800/40 pt-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`h-1.5 w-1.5 rounded-full ${ss.dot}`} />
-                    <span className={`text-xs font-medium ${ss.text}`}>
-                      {STATUS_LABELS[skill.status]}
-                    </span>
-                  </div>
+                {/* Category */}
+                <span className="hidden shrink-0 text-xs text-slate-500 sm:block">
+                  {CATEGORY_LABELS[skill.category]}
+                </span>
 
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-slate-600">v{skill.version}</span>
-                    {canManage && (
-                      <>
-                        <span className="text-slate-800">&middot;</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/skills/${skill.id}/edit`);
-                          }}
-                          className="text-indigo-400 transition-colors hover:text-indigo-300"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(skill);
-                          }}
-                          className="text-red-400 transition-colors hover:text-red-300"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
+                {/* Status */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${ss.dot}`} />
+                  <span className={`text-xs font-medium ${ss.text}`}>
+                    {STATUS_LABELS[skill.status]}
+                  </span>
                 </div>
+
+                {/* Version */}
+                <span className="w-12 shrink-0 text-right text-xs text-slate-600">
+                  v{skill.version}
+                </span>
               </div>
             );
           })}
         </div>
-      )}
-
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete skill"
-          message={`Delete skill "${deleteTarget.name}"? This will also remove it from all agents.`}
-          confirmLabel="Delete"
-          confirmVariant="danger"
-          isLoading={isDeleting}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
       )}
     </div>
   );

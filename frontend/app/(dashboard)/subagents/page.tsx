@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { listSubAgents, deleteSubAgent } from "@/lib/api/sub-agents";
-import { ConfirmModal } from "@/components/confirm-modal";
+import { listSubAgents } from "@/lib/api/sub-agents";
 import type { SubAgentList, SubAgentType, SubAgentStatus } from "@/types";
 
 /* ── Status maps ──────────────────────────────────────── */
@@ -120,12 +119,9 @@ function FilterPill<T extends string>({
 
 export default function SubAgentsPage() {
   const router = useRouter();
-  const canManage = true;
 
   const [agents, setAgents] = useState<SubAgentList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<SubAgentList | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState<SubAgentStatus | "ALL">(
     "ALL"
@@ -163,20 +159,6 @@ export default function SubAgentsPage() {
     setTypeFilter("ALL");
   }
 
-  /* ── delete ─────────────────────────────────────────── */
-
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      await deleteSubAgent(deleteTarget.slug);
-      setDeleteTarget(null);
-      fetchAgents();
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
   /* ── loading skeleton ───────────────────────────────── */
 
   if (isLoading) {
@@ -190,12 +172,20 @@ export default function SubAgentsPage() {
           <div className="h-7 w-48 animate-pulse rounded-lg bg-slate-800" />
           <div className="h-7 w-56 animate-pulse rounded-lg bg-slate-800" />
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-800/60">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-[130px] animate-pulse rounded-xl border border-slate-800/60 bg-slate-900"
-            />
+              className="flex items-center gap-4 border-b border-slate-800/40 px-4 py-3.5 last:border-b-0"
+            >
+              <div className="h-8 w-8 animate-pulse rounded-lg bg-slate-800" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 w-32 animate-pulse rounded bg-slate-800" />
+                <div className="h-3 w-48 animate-pulse rounded bg-slate-800/60" />
+              </div>
+              <div className="h-3 w-12 animate-pulse rounded bg-slate-800" />
+              <div className="h-3 w-10 animate-pulse rounded bg-slate-800" />
+            </div>
           ))}
         </div>
       </div>
@@ -209,14 +199,12 @@ export default function SubAgentsPage() {
         <h1 className="text-2xl font-medium tracking-tight text-white">
           Sub-Agents
         </h1>
-        {canManage && (
-          <button
-            onClick={() => router.push("/subagents/new")}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            Add sub-agent
-          </button>
-        )}
+        <button
+          onClick={() => router.push("/subagents/new")}
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+        >
+          Add sub-agent
+        </button>
       </div>
 
       {/* ── Filters ──────────────────────────────────────── */}
@@ -286,7 +274,7 @@ export default function SubAgentsPage() {
         {hasFilters && ` of ${agents.length}`}
       </p>
 
-      {/* ── Grid ─────────────────────────────────────────── */}
+      {/* ── List ────────────────────────────────────────── */}
       {filtered.length === 0 ? (
         <div className="mt-16 text-center">
           <p className="text-sm text-slate-500">
@@ -304,103 +292,72 @@ export default function SubAgentsPage() {
           )}
         </div>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
           {filtered.map((agent) => {
             const ss = STATUS_STYLES[agent.status];
             const typeColor = TYPE_COLORS[agent.agent_type];
             return (
               <div
                 key={agent.id}
-                className={`group cursor-pointer rounded-xl border border-l-[3px] border-slate-800/60 ${ss.border} bg-slate-900 p-5 transition-all hover:border-slate-700/60`}
+                className="group flex cursor-pointer items-center gap-4 border-b border-slate-800/40 px-4 py-3.5 transition-colors last:border-b-0 hover:bg-slate-900/60"
                 onClick={() => router.push(`/subagents/${agent.id}/edit`)}
               >
-                {/* Identity: icon + name + badges */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold"
-                      style={{
-                        backgroundColor: `${typeColor}18`,
-                        color: typeColor,
-                      }}
-                    >
-                      {TYPE_ICONS[agent.agent_type]}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-[15px] font-semibold leading-tight text-white transition-colors group-hover:text-indigo-400">
-                        {agent.name}
-                      </h3>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {TYPE_LABELS[agent.agent_type]}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                {/* Type icon */}
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+                  style={{
+                    backgroundColor: `${typeColor}18`,
+                    color: typeColor,
+                  }}
+                >
+                  {TYPE_ICONS[agent.agent_type]}
+                </div>
+
+                {/* Name + description */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-indigo-400">
+                      {agent.name}
+                    </span>
                     {agent.is_external && (
-                      <span className="inline-flex rounded-full bg-purple-900/50 px-2 py-0.5 text-[10px] font-medium text-purple-400">
+                      <span className="inline-flex shrink-0 rounded-full bg-purple-900/50 px-2 py-0.5 text-[10px] font-medium text-purple-400">
                         External
                       </span>
                     )}
                     {!agent.organization && (
-                      <span className="inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                      <span className="inline-flex shrink-0 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                         Global
                       </span>
                     )}
                   </div>
+                  {agent.description && (
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {agent.description}
+                    </p>
+                  )}
                 </div>
 
-                {/* Meta: status + version + actions */}
-                <div className="mt-4 flex items-center justify-between border-t border-slate-800/40 pt-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`h-1.5 w-1.5 rounded-full ${ss.dot}`} />
-                    <span className={`text-xs font-medium ${ss.text}`}>
-                      {STATUS_LABELS[agent.status]}
-                    </span>
-                  </div>
+                {/* Type */}
+                <span className="hidden shrink-0 text-xs text-slate-500 sm:block">
+                  {TYPE_LABELS[agent.agent_type]}
+                </span>
 
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-slate-600">v{agent.version}</span>
-                    {canManage && (
-                      <>
-                        <span className="text-slate-800">&middot;</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/subagents/${agent.id}/edit`);
-                          }}
-                          className="text-indigo-400 transition-colors hover:text-indigo-300"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(agent);
-                          }}
-                          className="text-red-400 transition-colors hover:text-red-300"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
+                {/* Status */}
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${ss.dot}`} />
+                  <span className={`text-xs font-medium ${ss.text}`}>
+                    {STATUS_LABELS[agent.status]}
+                  </span>
                 </div>
+
+                {/* Version */}
+                <span className="w-12 shrink-0 text-right text-xs text-slate-600">
+                  v{agent.version}
+                </span>
               </div>
             );
           })}
         </div>
-      )}
-
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete sub-agent"
-          message={`Delete sub-agent "${deleteTarget.name}"? This will also remove all skill assignments.`}
-          confirmLabel="Delete"
-          confirmVariant="danger"
-          isLoading={isDeleting}
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
       )}
     </div>
   );

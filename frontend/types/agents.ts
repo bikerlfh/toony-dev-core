@@ -14,6 +14,7 @@ export interface SubAgentList {
   name: string;
   slug: string;
   organization: string | null;
+  description: string;
   status: SubAgentStatus;
   agent_type: SubAgentType;
   version: string;
@@ -74,6 +75,7 @@ export interface SkillList {
   name: string;
   slug: string;
   organization: string | null;
+  description: string;
   status: SkillStatus;
   category: SkillCategory;
   version: string;
