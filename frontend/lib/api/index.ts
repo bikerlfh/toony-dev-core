@@ -132,3 +132,17 @@ export {
   cancelAgentTask,
   listTaskEvents,
 } from "./toony-agents";
+export {
+  listWorkflows,
+  createWorkflow,
+  getWorkflow,
+  updateWorkflow,
+  deleteWorkflow,
+  listNodes,
+  createNode,
+  updateNode,
+  deleteNode,
+  listEdges,
+  createEdge,
+  deleteEdge,
+} from "./workflows";

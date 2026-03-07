@@ -1,0 +1,84 @@
+export interface WorkflowNodeData {
+  id: string;
+  node_type: "SUBAGENT" | "SKILL";
+  sub_agent: string | null;
+  sub_agent_slug: string | null;
+  skill: string | null;
+  skill_slug: string | null;
+  position_x: number;
+  position_y: number;
+  config_overrides: Record<string, unknown>;
+  order: number;
+}
+
+export interface WorkflowEdgeData {
+  id: string;
+  source_node: string;
+  target_node: string;
+}
+
+export interface WorkflowList {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  is_active: boolean;
+  organization: string | null;
+  project: string | null;
+  issue: string | null;
+  label: string | null;
+  nodes_count: number;
+  created_at: string;
+}
+
+export interface WorkflowDetail extends WorkflowList {
+  created_by: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  } | null;
+  nodes: WorkflowNodeData[];
+  edges: WorkflowEdgeData[];
+  updated_at: string;
+}
+
+export interface CreateWorkflowPayload {
+  name: string;
+  slug: string;
+  description?: string;
+  is_active?: boolean;
+  organization?: string;
+  project?: string;
+  issue?: string;
+  label?: string;
+}
+
+export interface UpdateWorkflowPayload {
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+  label?: string | null;
+}
+
+export interface CreateNodePayload {
+  node_type: "SUBAGENT" | "SKILL";
+  sub_agent?: string;
+  skill?: string;
+  position_x?: number;
+  position_y?: number;
+  config_overrides?: Record<string, unknown>;
+  order?: number;
+}
+
+export interface UpdateNodePayload {
+  position_x?: number;
+  position_y?: number;
+  config_overrides?: Record<string, unknown>;
+  order?: number;
+}
+
+export interface CreateEdgePayload {
+  source_node: string;
+  target_node: string;
+}

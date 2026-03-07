@@ -1,0 +1,934 @@
+"use client";
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type FormEvent,
+} from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  type Node,
+  type Edge,
+  type Connection,
+  type NodeTypes,
+  Handle,
+  Position,
+  type OnNodesChange,
+  BackgroundVariant,
+  type ReactFlowInstance,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+
+import {
+  getWorkflow,
+  updateWorkflow,
+  createNode,
+  updateNode,
+  deleteNode,
+  createEdge,
+  deleteEdge,
+} from "@/lib/api/workflows";
+import { listSubAgents } from "@/lib/api/sub-agents";
+import { listSkills } from "@/lib/api/skills";
+import { listLabels } from "@/lib/api/workspace";
+import type {
+  WorkflowDetail,
+  WorkflowNodeData,
+  SubAgentList,
+  SkillList,
+  Label,
+} from "@/types";
+
+/* ── Custom node ────────────────────────────────────── */
+
+type WfNodeData = {
+  label: string;
+  nodeType: "SUBAGENT" | "SKILL";
+  slug: string;
+  [key: string]: unknown;
+};
+
+function WorkflowNodeComponent({ data }: { data: WfNodeData }) {
+  const color = data.nodeType === "SUBAGENT" ? "#818cf8" : "#34d399";
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 shadow-lg min-w-[120px]">
+      <Handle type="target" position={Position.Top} className="!bg-slate-500" />
+      <div className="flex items-center gap-2">
+        <div
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-[9px] font-bold"
+          style={{ backgroundColor: `${color}18`, color }}
+        >
+          {data.nodeType === "SUBAGENT" ? "SA" : "SK"}
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-xs font-medium text-slate-200">
+            {data.label}
+          </div>
+          <div className="truncate text-[10px] text-slate-500">
+            {data.slug}
+          </div>
+        </div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!bg-slate-500"
+      />
+    </div>
+  );
+}
+
+const nodeTypes: NodeTypes = {
+  workflowNode: WorkflowNodeComponent,
+};
+
+/* ── Helpers ────────────────────────────────────────── */
+
+function apiNodeToFlowNode(n: WorkflowNodeData): Node {
+  const isSubAgent = n.node_type === "SUBAGENT";
+  return {
+    id: n.id,
+    type: "workflowNode",
+    position: { x: n.position_x, y: n.position_y },
+    data: {
+      label: isSubAgent
+        ? (n.sub_agent_slug ?? "Sub-Agent")
+        : (n.skill_slug ?? "Skill"),
+      nodeType: n.node_type,
+      slug: (isSubAgent ? n.sub_agent_slug : n.skill_slug) ?? "",
+    },
+  };
+}
+
+/* ── Catalog item ───────────────────────────────────── */
+
+interface CatalogItem {
+  id: string;
+  name: string;
+  slug: string;
+  type: "SUBAGENT" | "SKILL";
+}
+
+function CatalogEntry({ item }: { item: CatalogItem }) {
+  const color = item.type === "SUBAGENT" ? "#818cf8" : "#34d399";
+
+  function onDragStart(e: DragEvent) {
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        catalogId: item.id,
+        catalogType: item.type,
+        catalogName: item.name,
+        catalogSlug: item.slug,
+      })
+    );
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      className="flex cursor-grab items-center gap-2 rounded-md border border-slate-800/40 bg-slate-900/40 px-2.5 py-2 transition-colors hover:border-slate-700 hover:bg-slate-900 active:cursor-grabbing"
+    >
+      <div
+        className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-[8px] font-bold"
+        style={{ backgroundColor: `${color}18`, color }}
+      >
+        {item.type === "SUBAGENT" ? "SA" : "SK"}
+      </div>
+      <span className="truncate text-xs text-slate-300">{item.name}</span>
+    </div>
+  );
+}
+
+/* ── Page ───────────────────────────────────────────── */
+
+export default function WorkflowEditPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+
+  /* ── State ──────────────────────────────────────── */
+
+  const [workflow, setWorkflow] = useState<WorkflowDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Workflow properties form
+  const [wfName, setWfName] = useState("");
+  const [wfDescription, setWfDescription] = useState("");
+  const [wfLabelId, setWfLabelId] = useState("");
+  const [wfIsActive, setWfIsActive] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Catalog data
+  const [subAgents, setSubAgents] = useState<SubAgentList[]>([]);
+  const [skills, setSkills] = useState<SkillList[]>([]);
+  const [labels, setLabels] = useState<Label[]>([]);
+  const [catalogSearch, setCatalogSearch] = useState("");
+
+  // React Flow
+  const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+
+  // Node properties
+  const [nodeConfigJson, setNodeConfigJson] = useState("{}");
+  const [nodeConfigError, setNodeConfigError] = useState("");
+
+  // Debounce ref for position updates
+  const positionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ── Load data ──────────────────────────────────── */
+
+  const loadWorkflow = useCallback(async () => {
+    try {
+      const [wf, saRes, skRes, lblRes] = await Promise.all([
+        getWorkflow(id),
+        listSubAgents(),
+        listSkills(),
+        listLabels(),
+      ]);
+
+      setWorkflow(wf);
+      setWfName(wf.name);
+      setWfDescription(wf.description ?? "");
+      setWfLabelId(wf.label ?? "");
+      setWfIsActive(wf.is_active);
+
+      setSubAgents(saRes.results);
+      setSkills(skRes.results);
+      setLabels(lblRes.results);
+
+      // Convert API nodes/edges to React Flow format
+      setNodes(wf.nodes.map(apiNodeToFlowNode));
+      setEdges(
+        wf.edges.map((e) => ({
+          id: e.id,
+          source: e.source_node,
+          target: e.target_node,
+        }))
+      );
+    } catch {
+      setError("Failed to load workflow.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, setNodes, setEdges]);
+
+  useEffect(() => {
+    loadWorkflow();
+  }, [loadWorkflow]);
+
+  /* ── Catalog items ──────────────────────────────── */
+
+  const catalogItems = useMemo<CatalogItem[]>(() => {
+    const items: CatalogItem[] = [
+      ...subAgents.map((sa) => ({
+        id: sa.id,
+        name: sa.name,
+        slug: sa.slug,
+        type: "SUBAGENT" as const,
+      })),
+      ...skills.map((sk) => ({
+        id: sk.id,
+        name: sk.name,
+        slug: sk.slug,
+        type: "SKILL" as const,
+      })),
+    ];
+    if (!catalogSearch) return items;
+    const q = catalogSearch.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.slug.toLowerCase().includes(q)
+    );
+  }, [subAgents, skills, catalogSearch]);
+
+  const catalogSubAgents = catalogItems.filter((i) => i.type === "SUBAGENT");
+  const catalogSkills = catalogItems.filter((i) => i.type === "SKILL");
+
+  /* ── Selected node data ─────────────────────────── */
+
+  const selectedNode = selectedNodeId
+    ? (nodes.find((n) => n.id === selectedNodeId) as Node<WfNodeData> | undefined) ?? null
+    : null;
+  const selectedApiNode = workflow?.nodes.find(
+    (n) => n.id === selectedNodeId
+  );
+
+  /* ── Drop handler ───────────────────────────────── */
+
+  const onDrop = useCallback(
+    async (event: DragEvent) => {
+      event.preventDefault();
+      const raw = event.dataTransfer.getData("application/json");
+      if (!raw || !rfInstance) return;
+
+      const {
+        catalogId,
+        catalogType,
+        catalogName,
+        catalogSlug,
+      } = JSON.parse(raw) as {
+        catalogId: string;
+        catalogType: "SUBAGENT" | "SKILL";
+        catalogName: string;
+        catalogSlug: string;
+      };
+
+      const position = rfInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      try {
+        const apiNode = await createNode(id, {
+          node_type: catalogType,
+          ...(catalogType === "SUBAGENT"
+            ? { sub_agent: catalogId }
+            : { skill: catalogId }),
+          position_x: Math.round(position.x),
+          position_y: Math.round(position.y),
+        });
+
+        const flowNode = apiNodeToFlowNode(apiNode);
+        // Use slug from catalog since API might not return it
+        flowNode.data.label = catalogName;
+        flowNode.data.slug = catalogSlug;
+        setNodes((nds) => [...nds, flowNode]);
+
+        // Update local workflow state for properties panel
+        setWorkflow((prev) =>
+          prev ? { ...prev, nodes: [...prev.nodes, apiNode] } : prev
+        );
+      } catch (err: unknown) {
+        const data = (
+          err as { response?: { data?: Record<string, string[]> } }
+        )?.response?.data;
+        setError(
+          data ? Object.values(data).flat().join(" ") : "Failed to add node."
+        );
+      }
+    },
+    [rfInstance, id, setNodes]
+  );
+
+  const onDragOver = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  /* ── Connect handler ────────────────────────────── */
+
+  const onConnect = useCallback(
+    async (connection: Connection) => {
+      if (!connection.source || !connection.target) return;
+
+      try {
+        const apiEdge = await createEdge(id, {
+          source_node: connection.source,
+          target_node: connection.target,
+        });
+
+        setEdges((eds) =>
+          addEdge(
+            {
+              ...connection,
+              id: apiEdge.id,
+            },
+            eds
+          )
+        );
+
+        // Update local workflow state
+        setWorkflow((prev) =>
+          prev ? { ...prev, edges: [...prev.edges, apiEdge] } : prev
+        );
+      } catch (err: unknown) {
+        const data = (
+          err as { response?: { data?: Record<string, string[]> } }
+        )?.response?.data;
+        setError(
+          data
+            ? Object.values(data).flat().join(" ")
+            : "Failed to create edge."
+        );
+      }
+    },
+    [id, setEdges]
+  );
+
+  /* ── Delete handlers ────────────────────────────── */
+
+  const onNodesDelete = useCallback(
+    async (deleted: Node[]) => {
+      for (const n of deleted) {
+        try {
+          await deleteNode(id, n.id);
+          setWorkflow((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  nodes: prev.nodes.filter((nd) => nd.id !== n.id),
+                  edges: prev.edges.filter(
+                    (e) => e.source_node !== n.id && e.target_node !== n.id
+                  ),
+                }
+              : prev
+          );
+        } catch {
+          setError("Failed to delete node.");
+        }
+      }
+      if (deleted.some((n) => n.id === selectedNodeId)) {
+        setSelectedNodeId(null);
+      }
+    },
+    [id, selectedNodeId]
+  );
+
+  const onEdgesDelete = useCallback(
+    async (deleted: Edge[]) => {
+      for (const e of deleted) {
+        try {
+          await deleteEdge(id, e.id);
+          setWorkflow((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  edges: prev.edges.filter((ed) => ed.id !== e.id),
+                }
+              : prev
+          );
+        } catch {
+          setError("Failed to delete edge.");
+        }
+      }
+    },
+    [id]
+  );
+
+  /* ── Drag end: persist position ─────────────────── */
+
+  const onNodeDragStop = useCallback(
+    (_: unknown, node: Node) => {
+      if (positionTimerRef.current) clearTimeout(positionTimerRef.current);
+
+      positionTimerRef.current = setTimeout(async () => {
+        try {
+          await updateNode(id, node.id, {
+            position_x: Math.round(node.position.x),
+            position_y: Math.round(node.position.y),
+          });
+        } catch {
+          // Silently fail on position update
+        }
+      }, 300);
+    },
+    [id]
+  );
+
+  /* ── Node selection ─────────────────────────────── */
+
+  const handleNodesChange: OnNodesChange = useCallback(
+    (changes) => {
+      onNodesChange(changes);
+
+      // Track selection
+      for (const change of changes) {
+        if (change.type === "select") {
+          if (change.selected) {
+            setSelectedNodeId(change.id);
+            const apiNode = workflow?.nodes.find((n) => n.id === change.id);
+            setNodeConfigJson(
+              JSON.stringify(apiNode?.config_overrides ?? {}, null, 2)
+            );
+            setNodeConfigError("");
+          } else if (change.id === selectedNodeId) {
+            setSelectedNodeId(null);
+          }
+        }
+      }
+    },
+    [onNodesChange, workflow, selectedNodeId]
+  );
+
+  /* ── Save workflow properties ───────────────────── */
+
+  async function handleSaveProperties(e: FormEvent) {
+    e.preventDefault();
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const updated = await updateWorkflow(id, {
+        name: wfName,
+        description: wfDescription || undefined,
+        is_active: wfIsActive,
+        label: wfLabelId || null,
+      });
+      setWorkflow((prev) => (prev ? { ...prev, ...updated } : prev));
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[]> } })
+        ?.response?.data;
+      setError(
+        data
+          ? Object.values(data).flat().join(" ")
+          : "Failed to update workflow."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  /* ── Save node config overrides ─────────────────── */
+
+  async function handleSaveNodeConfig() {
+    if (!selectedNodeId) return;
+    setNodeConfigError("");
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(nodeConfigJson);
+    } catch {
+      setNodeConfigError("Invalid JSON.");
+      return;
+    }
+
+    try {
+      await updateNode(id, selectedNodeId, { config_overrides: parsed });
+      setWorkflow((prev) =>
+        prev
+          ? {
+              ...prev,
+              nodes: prev.nodes.map((n) =>
+                n.id === selectedNodeId
+                  ? { ...n, config_overrides: parsed }
+                  : n
+              ),
+            }
+          : prev
+      );
+    } catch {
+      setNodeConfigError("Failed to save config.");
+    }
+  }
+
+  /* ── Loading / error ────────────────────────────── */
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-indigo-500" />
+      </div>
+    );
+  }
+
+  if (!workflow) {
+    return (
+      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
+        <p className="text-sm text-red-400">{error || "Workflow not found."}</p>
+      </div>
+    );
+  }
+
+  /* ── Render ──────────────────────────────────────── */
+
+  return (
+    <div className="flex h-[calc(100vh-6rem)] flex-col">
+      {/* Header */}
+      <div className="flex shrink-0 items-center gap-3 pb-4">
+        <button
+          onClick={() => router.push("/workflows")}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+        >
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10 3L5 8l5 5" />
+          </svg>
+        </button>
+        <h1 className="text-lg font-medium tracking-tight text-white">
+          {workflow.name}
+        </h1>
+        <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+          {workflow.slug}
+        </span>
+        <span
+          className={`ml-auto flex items-center gap-1.5 text-xs font-medium ${
+            workflow.is_active ? "text-emerald-400" : "text-amber-400"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              workflow.is_active ? "bg-emerald-400" : "bg-amber-400"
+            }`}
+          />
+          {workflow.is_active ? "Active" : "Inactive"}
+        </span>
+      </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          <svg
+            className="mt-0.5 h-4 w-4 shrink-0"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <circle cx="8" cy="8" r="6.25" />
+            <path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" />
+          </svg>
+          <span className="flex-1">{error}</span>
+          <button
+            onClick={() => setError("")}
+            className="shrink-0 text-red-400/60 transition-colors hover:text-red-300"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Three-panel layout */}
+      <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-xl border border-slate-800/60">
+        {/* ── Left: Catalog ────────────────────────── */}
+        <div className="flex w-56 shrink-0 flex-col border-r border-slate-800/60 bg-slate-950/50">
+          <div className="border-b border-slate-800/60 px-3 py-2.5">
+            <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              Catalog
+            </h3>
+            <input
+              type="text"
+              value={catalogSearch}
+              onChange={(e) => setCatalogSearch(e.target.value)}
+              placeholder="Search..."
+              className="mt-2 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1 text-xs text-slate-300 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-2 py-2">
+            {catalogSubAgents.length > 0 && (
+              <div className="mb-3">
+                <p className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-600">
+                  Sub-Agents
+                </p>
+                <div className="space-y-1">
+                  {catalogSubAgents.map((item) => (
+                    <CatalogEntry key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {catalogSkills.length > 0 && (
+              <div>
+                <p className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-slate-600">
+                  Skills
+                </p>
+                <div className="space-y-1">
+                  {catalogSkills.map((item) => (
+                    <CatalogEntry key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {catalogItems.length === 0 && (
+              <p className="px-1 py-4 text-center text-xs text-slate-600">
+                {catalogSearch ? "No matches." : "No items available."}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Center: React Flow Canvas ────────────── */}
+        <div
+          ref={reactFlowWrapper}
+          className="flex-1"
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodesDelete={onNodesDelete}
+            onEdgesDelete={onEdgesDelete}
+            onNodeDragStop={onNodeDragStop}
+            onInit={setRfInstance}
+            nodeTypes={nodeTypes}
+            onSelectionChange={({ nodes: selected }) => {
+              if (selected.length === 0) {
+                setSelectedNodeId(null);
+              }
+            }}
+            fitView
+            deleteKeyCode={["Backspace", "Delete"]}
+            className="bg-slate-950"
+            defaultEdgeOptions={{
+              style: { stroke: "#475569", strokeWidth: 1.5 },
+              type: "smoothstep",
+            }}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={20}
+              size={1}
+              color="#1e293b"
+            />
+            <Controls
+              className="!border-slate-700 !bg-slate-900 [&>button]:!border-slate-700 [&>button]:!bg-slate-900 [&>button]:!text-slate-400 [&>button:hover]:!bg-slate-800"
+              showInteractive={false}
+            />
+          </ReactFlow>
+        </div>
+
+        {/* ── Right: Properties ────────────────────── */}
+        <div className="flex w-72 shrink-0 flex-col border-l border-slate-800/60 bg-slate-950/50">
+          <div className="flex-1 overflow-y-auto">
+            {selectedNode ? (
+              /* ── Node properties ─────────────────── */
+              <div className="p-3">
+                <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  Node properties
+                </h3>
+
+                <div className="mt-3 space-y-3">
+                  {/* Type badge */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Type
+                    </label>
+                    <span
+                      className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        selectedNode.data.nodeType === "SUBAGENT"
+                          ? "bg-indigo-900/30 text-indigo-400"
+                          : "bg-emerald-900/30 text-emerald-400"
+                      }`}
+                    >
+                      {selectedNode.data.nodeType === "SUBAGENT"
+                        ? "Sub-Agent"
+                        : "Skill"}
+                    </span>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Name
+                    </label>
+                    <p className="mt-0.5 text-sm text-slate-300">
+                      {selectedNode.data.label}
+                    </p>
+                  </div>
+
+                  {/* Slug */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Slug
+                    </label>
+                    <p className="mt-0.5 font-mono text-xs text-slate-400">
+                      {selectedNode.data.slug}
+                    </p>
+                  </div>
+
+                  {/* Reference ID */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Reference
+                    </label>
+                    <p className="mt-0.5 font-mono text-[10px] text-slate-600">
+                      {selectedApiNode
+                        ? selectedApiNode.sub_agent || selectedApiNode.skill
+                        : selectedNode.id}
+                    </p>
+                  </div>
+
+                  {/* Config overrides */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Config overrides (JSON)
+                    </label>
+                    <textarea
+                      value={nodeConfigJson}
+                      onChange={(e) => {
+                        setNodeConfigJson(e.target.value);
+                        setNodeConfigError("");
+                      }}
+                      rows={6}
+                      spellCheck={false}
+                      className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 font-mono text-xs text-slate-300 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                    />
+                    {nodeConfigError && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {nodeConfigError}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSaveNodeConfig}
+                      className="mt-2 w-full rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700"
+                    >
+                      Save config
+                    </button>
+                  </div>
+                </div>
+
+                {/* Deselect */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedNodeId(null)}
+                  className="mt-4 w-full rounded-md border border-slate-800 px-3 py-1.5 text-xs text-slate-500 transition-colors hover:border-slate-700 hover:text-slate-300"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              /* ── Workflow properties ─────────────── */
+              <form onSubmit={handleSaveProperties} className="p-3">
+                <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  Workflow properties
+                </h3>
+
+                <div className="mt-3 space-y-3">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={wfName}
+                      onChange={(e) => setWfName(e.target.value)}
+                      required
+                      className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Slug (read-only) */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Slug
+                    </label>
+                    <p className="mt-0.5 font-mono text-xs text-slate-400">
+                      {workflow.slug}
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Description
+                    </label>
+                    <textarea
+                      value={wfDescription}
+                      onChange={(e) => setWfDescription(e.target.value)}
+                      rows={3}
+                      className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Label */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Label trigger
+                    </label>
+                    <select
+                      value={wfLabelId}
+                      onChange={(e) => setWfLabelId(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="">None (default)</option>
+                      {labels.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Active */}
+                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={wfIsActive}
+                      onChange={(e) => setWfIsActive(e.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                    />
+                    Active
+                  </label>
+
+                  {/* Scope info (read-only) */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Scope
+                    </label>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {workflow.issue
+                        ? "Issue"
+                        : workflow.project
+                          ? "Project"
+                          : workflow.organization
+                            ? "Organization"
+                            : "Global"}
+                    </p>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="rounded-md border border-slate-800/40 bg-slate-900/30 px-2.5 py-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Nodes</span>
+                      <span className="font-medium text-slate-300">
+                        {nodes.length}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">Edges</span>
+                      <span className="font-medium text-slate-300">
+                        {edges.length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="mt-4 w-full rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : "Save properties"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

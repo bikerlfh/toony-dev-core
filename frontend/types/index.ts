@@ -163,6 +163,18 @@ export type {
 
 export type { IssueDocument } from "./issue-documents";
 
+export type {
+  WorkflowNodeData,
+  WorkflowEdgeData,
+  WorkflowList,
+  WorkflowDetail,
+  CreateWorkflowPayload,
+  UpdateWorkflowPayload,
+  CreateNodePayload,
+  UpdateNodePayload,
+  CreateEdgePayload,
+} from "./workflows";
+
 // --- Pagination & Search ---
 
 export interface PaginatedResponse<T> {
