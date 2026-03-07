@@ -7,6 +7,8 @@ export type {
   LoginCredentials,
   UpdateProfilePayload,
   ChangePasswordPayload,
+  UserAPIKey,
+  UserAPIKeyCreated,
 } from "./auth";
 
 export type {

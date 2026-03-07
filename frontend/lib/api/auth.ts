@@ -3,8 +3,11 @@ import type {
   AuthResponse,
   ChangePasswordPayload,
   LoginCredentials,
+  PaginatedResponse,
   UpdateProfilePayload,
   User,
+  UserAPIKey,
+  UserAPIKeyCreated,
 } from "@/types";
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
@@ -29,4 +32,18 @@ export async function updateProfile(payload: UpdateProfilePayload): Promise<User
 
 export async function changePassword(payload: ChangePasswordPayload): Promise<void> {
   await api.post("/auth/me/change-password/", payload);
+}
+
+export async function listAPIKeys(): Promise<PaginatedResponse<UserAPIKey>> {
+  const { data } = await api.get<PaginatedResponse<UserAPIKey>>("/auth/api-keys/");
+  return data;
+}
+
+export async function generateAPIKey(name: string): Promise<UserAPIKeyCreated> {
+  const { data } = await api.post<UserAPIKeyCreated>("/auth/api-keys/", { name });
+  return data;
+}
+
+export async function revokeAPIKey(keyId: string): Promise<void> {
+  await api.delete(`/auth/api-keys/${keyId}/`);
 }

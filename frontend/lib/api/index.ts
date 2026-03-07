@@ -1,4 +1,4 @@
-export { login, refreshToken, getMe, updateProfile, changePassword } from "./auth";
+export { login, refreshToken, getMe, updateProfile, changePassword, listAPIKeys, generateAPIKey, revokeAPIKey } from "./auth";
 export {
   listOrganizations,
   createOrganization,
