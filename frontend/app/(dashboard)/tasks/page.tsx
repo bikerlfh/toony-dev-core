@@ -6,6 +6,7 @@ import { listAllIssues, updateIssue } from "@/lib/api/issues";
 import { listProjects } from "@/lib/api/projects";
 import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { IssueSidePanel } from "@/components/tasks/issue-side-panel";
+import { Select } from "@/components/ui/select";
 
 interface Filters {
   project_id?: string;
@@ -64,42 +65,40 @@ export default function TasksPage() {
       {/* Filters */}
       <div className="mt-4 flex items-center gap-3">
         {/* Project filter */}
-        <select
+        <Select
+          options={[
+            { value: "", label: "All Projects" },
+            ...projects.map((p) => ({ value: p.id, label: p.name })),
+          ]}
           value={filters.project_id || ""}
-          onChange={(e) =>
+          onChange={(v) =>
             setFilters((f) => ({
               ...f,
-              project_id: e.target.value || undefined,
+              project_id: v || undefined,
             }))
           }
-          className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-sm text-slate-300 focus:border-indigo-500 focus:outline-none"
-        >
-          <option value="">All Projects</option>
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+          placeholder="All Projects"
+        />
 
         {/* Priority filter */}
-        <select
+        <Select
+          options={[
+            { value: "", label: "All Priorities" },
+            { value: "URGENT", label: "Urgent" },
+            { value: "HIGH", label: "High" },
+            { value: "MEDIUM", label: "Medium" },
+            { value: "LOW", label: "Low" },
+            { value: "NONE", label: "None" },
+          ]}
           value={filters.priority || ""}
-          onChange={(e) =>
+          onChange={(v) =>
             setFilters((f) => ({
               ...f,
-              priority: (e.target.value as IssuePriority) || undefined,
+              priority: (v as IssuePriority) || undefined,
             }))
           }
-          className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-sm text-slate-300 focus:border-indigo-500 focus:outline-none"
-        >
-          <option value="">All Priorities</option>
-          <option value="URGENT">Urgent</option>
-          <option value="HIGH">High</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="LOW">Low</option>
-          <option value="NONE">None</option>
-        </select>
+          placeholder="All Priorities"
+        />
       </div>
 
       {/* Board */}
