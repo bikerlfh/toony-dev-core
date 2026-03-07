@@ -9,6 +9,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { useToonyAgentWebSocket } from "@/hooks/use-toony-agent-websocket";
 import { ManageKeysModal } from "@/components/toony-agents/manage-keys-modal";
 import { CreateTaskModal } from "@/components/toony-agents/create-task-modal";
+import { Select } from "@/components/ui/select";
 import type {
   ToonyAgentDetail,
   AgentTaskList,
@@ -584,16 +585,16 @@ export default function ToonyAgentDetailPage() {
           <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
             <h2 className="text-base font-medium tracking-tight text-white">Add Organization</h2>
             <p className="mt-1 text-sm text-slate-500">Select an organization to assign this agent to.</p>
-            <select
+            <Select
+              options={[
+                { value: "", label: "Select organization..." },
+                ...availableOrgs.map((o) => ({ value: o.id, label: o.name })),
+              ]}
               value={selectedOrgId}
-              onChange={(e) => setSelectedOrgId(e.target.value)}
-              className="mt-4 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-            >
-              <option value="">Select organization...</option>
-              {availableOrgs.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
+              onChange={(v) => setSelectedOrgId(v)}
+              placeholder="Select organization..."
+              className="mt-4"
+            />
             <div className="mt-5 flex justify-end gap-3">
               <button
                 type="button"

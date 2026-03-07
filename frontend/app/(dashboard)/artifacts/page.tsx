@@ -6,6 +6,7 @@ import { listAllArtifacts } from "@/lib/api/artifacts";
 import { ArtifactStatusBadge } from "@/components/artifact-status-badge";
 import { ArtifactTypeBadge } from "@/components/artifact-type-badge";
 import type { ArtifactList, ArtifactType, ArtifactStatus } from "@/types/artifacts";
+import { Select } from "@/components/ui/select";
 
 type TypeFilter = ArtifactType | "ALL";
 type StatusFilter = ArtifactStatus | "ALL";
@@ -45,32 +46,34 @@ export default function ArtifactsPage() {
 
       {/* Filters */}
       <div className="mt-4 flex gap-3">
-        <select
+        <Select
+          options={[
+            { value: "ALL", label: "All Types" },
+            { value: "PLAN", label: "Plan" },
+            { value: "DESIGN_DOC", label: "Design Doc" },
+            { value: "TECHNICAL_SPEC", label: "Technical Spec" },
+            { value: "TEST_PLAN", label: "Test Plan" },
+            { value: "OTHER", label: "Other" },
+          ]}
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-          className="rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-        >
-          <option value="ALL">All Types</option>
-          <option value="PLAN">Plan</option>
-          <option value="DESIGN_DOC">Design Doc</option>
-          <option value="TECHNICAL_SPEC">Technical Spec</option>
-          <option value="TEST_PLAN">Test Plan</option>
-          <option value="OTHER">Other</option>
-        </select>
-        <select
+          onChange={(v) => setTypeFilter(v as TypeFilter)}
+          placeholder="All Types"
+        />
+        <Select
+          options={[
+            { value: "ALL", label: "All Statuses" },
+            { value: "DRAFT", label: "Draft" },
+            { value: "PENDING_APPROVAL", label: "Pending Approval" },
+            { value: "IN_REVIEW", label: "In Review" },
+            { value: "APPROVED", label: "Approved" },
+            { value: "REJECTED", label: "Rejected" },
+            { value: "REVISION_REQUESTED", label: "Revision Requested" },
+            { value: "SUPERSEDED", label: "Superseded" },
+          ]}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-        >
-          <option value="ALL">All Statuses</option>
-          <option value="DRAFT">Draft</option>
-          <option value="PENDING_APPROVAL">Pending Approval</option>
-          <option value="IN_REVIEW">In Review</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-          <option value="REVISION_REQUESTED">Revision Requested</option>
-          <option value="SUPERSEDED">Superseded</option>
-        </select>
+          onChange={(v) => setStatusFilter(v as StatusFilter)}
+          placeholder="All Statuses"
+        />
       </div>
 
       {/* Table */}

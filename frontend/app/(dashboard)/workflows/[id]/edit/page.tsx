@@ -41,6 +41,7 @@ import {
 import { listSubAgents } from "@/lib/api/sub-agents";
 import { listSkills } from "@/lib/api/skills";
 import { listLabels } from "@/lib/api/workspace";
+import { Select } from "@/components/ui/select";
 import type {
   WorkflowDetail,
   WorkflowNodeData,
@@ -951,18 +952,16 @@ export default function WorkflowEditPage() {
                     <label className="block text-xs font-medium text-slate-500">
                       Label trigger
                     </label>
-                    <select
+                    <Select
+                      options={[
+                        { value: "", label: "None (default)" },
+                        ...labels.map((l) => ({ value: l.id, label: l.name })),
+                      ]}
                       value={wfLabelId}
-                      onChange={(e) => setWfLabelId(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-300 focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="">None (default)</option>
-                      {labels.map((l) => (
-                        <option key={l.id} value={l.id}>
-                          {l.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(v) => setWfLabelId(v)}
+                      placeholder="None (default)"
+                      className="mt-1"
+                    />
                   </div>
 
                   {/* Active */}
