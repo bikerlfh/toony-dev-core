@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+      "toony": {
+        "command": "uv",
+        "args": ["--directory", "./mcp-server", "run", "toony-mcp"],
+        "env": {
+          "TOONY_API_URL": "http://localhost:8000/api",
+          "TOONY_API_KEY": "toony_39dc2e6b3ea051c0eb0d473d1b051c7f9e581142"
+        }
+      }
+    }
+  }
+  
