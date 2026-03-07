@@ -470,23 +470,27 @@ export default function WorkflowEditPage() {
     (changes) => {
       onNodesChange(changes);
 
-      // Track selection
-      for (const change of changes) {
-        if (change.type === "select") {
-          if (change.selected) {
-            setSelectedNodeId(change.id);
-            const apiNode = workflow?.nodes.find((n) => n.id === change.id);
-            setNodeConfigJson(
-              JSON.stringify(apiNode?.config_overrides ?? {}, null, 2)
-            );
-            setNodeConfigError("");
-          } else if (change.id === selectedNodeId) {
-            setSelectedNodeId(null);
-          }
-        }
+      // Track selection — process batch as a whole to avoid race conditions
+      const selectChanges = changes.filter((c) => c.type === "select");
+      if (selectChanges.length === 0) return;
+
+      const selected = selectChanges.find(
+        (c) => "selected" in c && c.selected
+      );
+
+      if (selected && "id" in selected) {
+        setSelectedNodeId(selected.id);
+        const apiNode = workflow?.nodes.find((n) => n.id === selected.id);
+        setNodeConfigJson(
+          JSON.stringify(apiNode?.config_overrides ?? {}, null, 2)
+        );
+        setNodeConfigError("");
+      } else {
+        // Only deselections in this batch
+        setSelectedNodeId(null);
       }
     },
-    [onNodesChange, workflow, selectedNodeId]
+    [onNodesChange, workflow]
   );
 
   /* ── Save workflow properties ───────────────────── */
@@ -776,11 +780,6 @@ export default function WorkflowEditPage() {
             onNodeDragStop={onNodeDragStop}
             onInit={setRfInstance}
             nodeTypes={nodeTypes}
-            onSelectionChange={({ nodes: selected }) => {
-              if (selected.length === 0) {
-                setSelectedNodeId(null);
-              }
-            }}
             fitView
             deleteKeyCode={["Backspace", "Delete"]}
             className="bg-slate-950"
