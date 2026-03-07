@@ -127,7 +127,7 @@ logs-prod: ## Tail production logs
 	$(COMPOSE_PROD) logs -f
 
 ssh-add:
-	sudo ssh-add ~/.ssh/id_ed25519
+	sudo ssh-add ~/.ssh/id_bitbucket
 
 # ──────────────────────────────────────────────
 # Cleanup
