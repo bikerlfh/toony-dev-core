@@ -260,10 +260,20 @@ export function Sidebar() {
 
       {/* User info + logout */}
       <div className="border-t border-slate-800/60 p-4">
-        <div className="mb-1 text-sm font-medium text-slate-300">
-          {user?.first_name} {user?.last_name}
-        </div>
-        <div className="mb-3 truncate text-xs text-slate-600">{user?.email}</div>
+        <Link
+          href="/profile"
+          className="group mb-3 flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors hover:bg-slate-900/60"
+        >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
+            {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+              {user?.first_name} {user?.last_name}
+            </div>
+            <div className="truncate text-xs text-slate-600">{user?.email}</div>
+          </div>
+        </Link>
         <button
           onClick={logout}
           className="flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
