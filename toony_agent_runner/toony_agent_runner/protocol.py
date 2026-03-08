@@ -3,11 +3,11 @@ Protocol definitions for runner <-> backend WebSocket communication.
 
 Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
-    TaskEventMessage, ApprovalNeededMessage, TaskCompletedMessage,
+    TaskEventMessage, QuestionAskedMessage, TaskCompletedMessage,
     TaskFailedMessage, CommandResultMessage, ConfigSyncAckMessage
 
 Incoming messages (backend -> runner):
-    TaskAssign, ApprovalResponse, TaskCancel, HeartbeatAck, CommandExecute,
+    TaskAssign, QuestionAnswered, TaskCancel, HeartbeatAck, CommandExecute,
     ConfigSync
 """
 
@@ -69,19 +69,24 @@ class TaskEventMessage:
 
 
 @dataclass
-class ApprovalNeededMessage:
-    """Signals that Claude is waiting for user approval."""
+class QuestionAskedMessage:
+    """Signals that Claude is asking the user a question."""
 
     task_id: str
-    data: dict[str, Any]
-    sequence: int
+    session_id: str
+    question_id: str
+    question_text: str
 
     def to_json(self) -> dict:
         return {
-            "type": "approval.needed",
+            "type": "question.asked",
             "task_id": self.task_id,
-            "data": self.data,
-            "sequence": self.sequence,
+            "session_id": self.session_id,
+            "question_id": self.question_id,
+            "question": {
+                "text": self.question_text,
+                "type": "free_text",
+            },
         }
 
 
@@ -134,12 +139,12 @@ class TaskAssign:
 
 
 @dataclass
-class ApprovalResponse:
-    """Backend relays an approval decision from the user."""
+class QuestionAnswered:
+    """Backend relays a user's answer to a question."""
 
     task_id: str
-    action: str  # "approve" or "reject"
-    response: str | None = None
+    question_id: str
+    answer: str
 
 
 @dataclass
@@ -225,7 +230,7 @@ class ConfigSyncAckMessage:
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | ApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync
+IncomingMessage = TaskAssign | QuestionAnswered | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -243,11 +248,11 @@ def parse_server_message(data: dict) -> IncomingMessage:
             project_id=data.get("project_id"),
         )
 
-    if msg_type == "approval.response":
-        return ApprovalResponse(
+    if msg_type == "question.answered":
+        return QuestionAnswered(
             task_id=data["task_id"],
-            action=data["action"],
-            response=data.get("response"),
+            question_id=data["question_id"],
+            answer=data.get("answer", ""),
         )
 
     if msg_type == "task.cancel":

@@ -10,6 +10,8 @@ from toony_agent_runner.protocol import (
     CommandResultMessage,
     ConfigSync,
     ConfigSyncAckMessage,
+    QuestionAskedMessage,
+    QuestionAnswered,
     TaskAssign,
     parse_server_message,
 )
@@ -112,6 +114,42 @@ class TestConfigSyncAckMessage:
             "project_count": 0,
             "error": "validation failed",
         }
+
+
+class TestQuestionAskedMessage:
+    def test_to_json(self):
+        msg = QuestionAskedMessage(
+            task_id="task-1",
+            session_id="sess-1",
+            question_id="q-1",
+            question_text="What framework?",
+        )
+        j = msg.to_json()
+        assert j == {
+            "type": "question.asked",
+            "task_id": "task-1",
+            "session_id": "sess-1",
+            "question_id": "q-1",
+            "question": {
+                "text": "What framework?",
+                "type": "free_text",
+            },
+        }
+
+
+class TestQuestionAnswered:
+    def test_parse_question_answered(self):
+        raw = {
+            "type": "question.answered",
+            "task_id": "task-1",
+            "question_id": "q-1",
+            "answer": "React",
+        }
+        msg = parse_server_message(raw)
+        assert isinstance(msg, QuestionAnswered)
+        assert msg.task_id == "task-1"
+        assert msg.question_id == "q-1"
+        assert msg.answer == "React"
 
 
 class TestTaskAssignProjectId:
