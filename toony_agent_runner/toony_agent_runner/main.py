@@ -6,9 +6,9 @@ Usage::
     toony-agent-runner --config config.yml
 
 The daemon connects to the Toony backend via WebSocket, registers itself,
-and waits for task assignments.  When a task arrives it uses the Claude
-Agent SDK to execute the prompt, streams events back to the backend,
-handles approval gates, and reports completion or failure.
+and waits for task assignments.  When a task arrives it spawns the Claude
+CLI to execute the prompt, streams events back to the backend, handles
+question/answer flows, and reports completion or failure.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from . import __version__
 from .config import ClaudeConfig, ReconnectConfig, RunnerConfig, load_config
 from .connection import BackendConnection
 from .protocol import (
-    ApprovalResponse,
+    QuestionAnswered,
     CommandExecute,
     CommandResultMessage,
     ConfigSync,
@@ -263,21 +263,21 @@ async def run(config: RunnerConfig) -> None:
                     )
                 )
 
-            elif isinstance(msg, ApprovalResponse):
+            elif isinstance(msg, QuestionAnswered):
                 logger.info(
-                    "Received approval.response for %s: %s",
+                    "Received question.answered for %s (q=%s)",
                     msg.task_id,
-                    msg.action,
+                    msg.question_id,
                 )
-                future = conn.pending_approvals.get(msg.task_id)
+                future = conn.pending_questions.get(msg.task_id)
                 if future is not None and not future.done():
                     future.set_result({
-                        "action": msg.action,
-                        "response": msg.response,
+                        "question_id": msg.question_id,
+                        "answer": msg.answer,
                     })
                 else:
                     logger.warning(
-                        "No pending approval for task %s", msg.task_id
+                        "No pending question for task %s", msg.task_id
                     )
 
             elif isinstance(msg, HeartbeatAck):
