@@ -1,23 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { ApprovalGateCard } from "@/components/toony-agents/approval-gate-card";
+import { AgentQuestionCard } from "@/components/toony-agents/agent-question-card";
 import type { TaskEventItem as TaskEventItemType } from "@/types";
 
 interface TaskEventItemProps {
   event: TaskEventItemType;
-  onApprove?: () => void;
-  onReject?: () => void;
+  onAnswer?: (questionId: string, answer: string) => void;
   onMessage?: (text: string) => void;
-  isApprovalResolved?: boolean;
+  isAnswered?: boolean;
 }
 
 export function TaskEventItem({
   event,
-  onApprove,
-  onReject,
-  onMessage,
-  isApprovalResolved,
+  onAnswer,
+  isAnswered,
 }: TaskEventItemProps) {
   const [showToolResult, setShowToolResult] = useState(false);
 
@@ -80,36 +77,31 @@ export function TaskEventItem({
         </div>
       );
 
-    case "APPROVAL_NEEDED": {
+    case "QUESTION_ASKED": {
       const data = event.data as {
-        question?: string;
-        options?: { label: string; description: string }[];
+        text?: string;
+        question_id?: string;
       };
       return (
         <div className="py-2">
-          <ApprovalGateCard
-            question={String(data.question ?? "Approval required")}
-            options={data.options}
-            onApprove={onApprove ?? (() => {})}
-            onReject={onReject ?? (() => {})}
-            onMessage={onMessage ?? (() => {})}
-            isResolved={isApprovalResolved ?? false}
+          <AgentQuestionCard
+            question={String(data.text ?? "Agent has a question")}
+            questionId={String(data.question_id ?? "")}
+            onAnswer={onAnswer ?? (() => {})}
+            isAnswered={isAnswered ?? false}
           />
         </div>
       );
     }
 
-    case "APPROVAL_RESPONSE":
+    case "QUESTION_ANSWERED":
       return (
         <div className="py-1">
           <span className="text-slate-400 text-sm">
-            User responded:{" "}
+            Your answer:{" "}
             <span className="font-medium text-slate-200">
-              {String(event.data.action ?? "")}
+              {String(event.data.answer ?? "")}
             </span>
-            {event.data.response
-              ? ` — "${String(event.data.response)}"`
-              : ""}
           </span>
         </div>
       );
