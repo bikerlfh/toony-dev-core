@@ -17,7 +17,7 @@ export function useToonyAgentWebSocket({
   onEvent,
 }: UseToonyAgentWebSocketOptions): {
   readyState: WsReadyState;
-  sendApproval: (taskId: string, action: string, response: string) => void;
+  sendAnswer: (taskId: string, questionId: string, answer: string) => void;
   sendReply: (taskId: string, message: string) => void;
   cancelTask: (taskId: string) => void;
   sendConfigSync: () => void;
@@ -44,13 +44,13 @@ export function useToonyAgentWebSocket({
     onMessage: handleMessage,
   });
 
-  const sendApproval = useCallback(
-    (taskId: string, action: string, response: string) => {
+  const sendAnswer = useCallback(
+    (taskId: string, questionId: string, answer: string) => {
       send({
-        type: "approval.response",
+        type: "question.answered",
         task_id: taskId,
-        action,
-        response,
+        question_id: questionId,
+        answer,
       });
     },
     [send],
@@ -74,5 +74,5 @@ export function useToonyAgentWebSocket({
     send({ type: "config.sync.request" });
   }, [send]);
 
-  return { readyState, sendApproval, sendReply, cancelTask, sendConfigSync };
+  return { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync };
 }
