@@ -11,10 +11,9 @@ import type {
 interface TaskLiveOutputProps {
   events: TaskEventItemType[];
   taskStatus: AgentTaskStatus;
-  onApprove: (sequence: number) => void;
-  onReject: (sequence: number) => void;
+  onAnswer: (questionId: string, answer: string) => void;
   onMessage: (text: string) => void;
-  approvedSequences: Set<number>;
+  answeredSequences: Set<number>;
   canReply?: boolean;
 }
 
@@ -27,10 +26,9 @@ const INACTIVE_STATUSES: AgentTaskStatus[] = [
 export function TaskLiveOutput({
   events,
   taskStatus,
-  onApprove,
-  onReject,
+  onAnswer,
   onMessage,
-  approvedSequences,
+  answeredSequences,
   canReply,
 }: TaskLiveOutputProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -55,24 +53,14 @@ export function TaskLiveOutput({
             <TaskEventItem
               key={event.id}
               event={event}
-              onApprove={
-                event.event_type === "APPROVAL_NEEDED"
-                  ? () => onApprove(event.sequence)
+              onAnswer={
+                event.event_type === "QUESTION_ASKED"
+                  ? onAnswer
                   : undefined
               }
-              onReject={
-                event.event_type === "APPROVAL_NEEDED"
-                  ? () => onReject(event.sequence)
-                  : undefined
-              }
-              onMessage={
-                event.event_type === "APPROVAL_NEEDED"
-                  ? onMessage
-                  : undefined
-              }
-              isApprovalResolved={
-                event.event_type === "APPROVAL_NEEDED"
-                  ? approvedSequences.has(event.sequence)
+              isAnswered={
+                event.event_type === "QUESTION_ASKED"
+                  ? answeredSequences.has(event.sequence)
                   : undefined
               }
             />
