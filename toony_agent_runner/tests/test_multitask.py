@@ -58,18 +58,18 @@ class TestConfigMaxConcurrentTasks:
 # Approval routing tests
 # ---------------------------------------------------------------------------
 
-class TestApprovalRoutingByTaskId:
+class TestQuestionRoutingByTaskId:
     def test_separate_futures_per_task(self):
         conn = _make_conn()
         loop = asyncio.new_event_loop()
         try:
             f1: asyncio.Future[dict] = loop.create_future()
             f2: asyncio.Future[dict] = loop.create_future()
-            conn.pending_approvals["task-aaa"] = f1
-            conn.pending_approvals["task-bbb"] = f2
+            conn.pending_questions["task-aaa"] = f1
+            conn.pending_questions["task-bbb"] = f2
 
             # Resolve only task-aaa
-            conn.pending_approvals["task-aaa"].set_result({"action": "approve"})
+            conn.pending_questions["task-aaa"].set_result({"action": "approve"})
 
             assert f1.done()
             assert not f2.done()
@@ -83,11 +83,11 @@ class TestApprovalRoutingByTaskId:
         try:
             f1: asyncio.Future[dict] = loop.create_future()
             f2: asyncio.Future[dict] = loop.create_future()
-            conn.pending_approvals["task-aaa"] = f1
-            conn.pending_approvals["task-bbb"] = f2
+            conn.pending_questions["task-aaa"] = f1
+            conn.pending_questions["task-bbb"] = f2
 
             # Resolve task-bbb
-            future = conn.pending_approvals.get("task-bbb")
+            future = conn.pending_questions.get("task-bbb")
             assert future is not None
             future.set_result({"action": "reject", "response": "no"})
 
@@ -99,7 +99,7 @@ class TestApprovalRoutingByTaskId:
 
     def test_missing_task_returns_none(self):
         conn = _make_conn()
-        assert conn.pending_approvals.get("nonexistent") is None
+        assert conn.pending_questions.get("nonexistent") is None
 
 
 # ---------------------------------------------------------------------------

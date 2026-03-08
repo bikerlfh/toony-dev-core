@@ -86,7 +86,7 @@ def load_config(path: str) -> RunnerConfig:
                 "allowed_tools", _DEFAULT_ALLOWED_TOOLS
             ),
             disallowed_tools=claude_raw.get(
-                "disallowed_tools", ClaudeConfig.disallowed_tools
+                "disallowed_tools", []
             ),
         ),
         reconnect=ReconnectConfig(
