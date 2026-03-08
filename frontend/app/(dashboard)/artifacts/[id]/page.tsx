@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { getArtifact, updateGlobalArtifact } from "@/lib/api/artifacts";
 import { ArtifactStatusBadge } from "@/components/artifact-status-badge";
 import { ArtifactTypeBadge } from "@/components/artifact-type-badge";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ArtifactDetail, ArtifactStatus } from "@/types/artifacts";
 
 const STATUS_ACTIONS: Partial<Record<ArtifactStatus, { label: string; next: ArtifactStatus; variant: string }[]>> = {
@@ -108,8 +110,10 @@ export default function ArtifactDetailPage() {
 
           {/* Markdown content */}
           <div className="mt-6 rounded-xl border border-slate-800/60 bg-slate-900 p-6">
-            <div className="prose prose-invert max-w-none text-sm text-slate-300 whitespace-pre-wrap">
-              {artifact.content}
+            <div className="prose prose-invert prose-sm max-w-none prose-headings:text-slate-200 prose-p:text-slate-300 prose-a:text-indigo-400 prose-strong:text-slate-200 prose-code:text-indigo-300 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {artifact.content}
+              </ReactMarkdown>
             </div>
           </div>
         </div>
