@@ -31,7 +31,7 @@ const TASK_STATUS_STYLES: Record<AgentTaskStatus, { dot: string; text: string; b
   QUEUED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
   ASSIGNED: { dot: "bg-blue-400", text: "text-blue-400", bg: "bg-blue-500/15" },
   RUNNING: { dot: "bg-amber-400", text: "text-amber-400", bg: "bg-amber-500/15" },
-  AWAITING_APPROVAL: { dot: "bg-purple-400", text: "text-purple-400", bg: "bg-purple-500/15" },
+  WAITING_FOR_ANSWER: { dot: "bg-purple-400", text: "text-purple-400", bg: "bg-purple-500/15" },
   COMPLETED: { dot: "bg-emerald-400", text: "text-emerald-400", bg: "bg-emerald-500/15" },
   FAILED: { dot: "bg-red-400", text: "text-red-400", bg: "bg-red-500/15" },
   CANCELLED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
@@ -41,7 +41,7 @@ const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
-  AWAITING_APPROVAL: "Approval",
+  WAITING_FOR_ANSWER: "Waiting",
   COMPLETED: "Completed",
   FAILED: "Failed",
   CANCELLED: "Cancelled",
@@ -56,7 +56,7 @@ const TASK_FILTER_OPTIONS: { value: TaskFilter; label: string }[] = [
   { value: "FAILED", label: "Failed" },
 ];
 
-const ACTIVE_STATUSES: AgentTaskStatus[] = ["QUEUED", "ASSIGNED", "RUNNING", "AWAITING_APPROVAL"];
+const ACTIVE_STATUSES: AgentTaskStatus[] = ["QUEUED", "ASSIGNED", "RUNNING", "WAITING_FOR_ANSWER"];
 
 /* ── Helpers ──────────────────────────────────────────── */
 
@@ -171,7 +171,7 @@ export default function ToonyAgentDetailPage() {
     []
   );
 
-  const { readyState, sendApproval, sendReply, cancelTask, sendConfigSync } =
+  const { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync } =
     useToonyAgentWebSocket({
       agentId: agent?.id ?? null,
       onEvent: handleWsEvent,
