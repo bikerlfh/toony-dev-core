@@ -14,9 +14,7 @@ logger = logging.getLogger("toony_agent_runner")
 _DEFAULT_ALLOWED_TOOLS = [
     "Read", "Edit", "Write", "Bash", "Grep", "Glob",
     "WebFetch", "WebSearch", "NotebookEdit",
-    # NOTE: AskUserQuestion is intentionally excluded from this list.
-    # Approval gating is handled by a PreToolUse hook (not can_use_tool)
-    # which fires for ALL tool uses regardless of permission settings.
+    "AskUserQuestion",
 ]
 
 
@@ -29,6 +27,7 @@ class ClaudeConfig:
     oauth_token: str = ""
     permission_mode: str = "acceptEdits"
     allowed_tools: list[str] = field(default_factory=lambda: list(_DEFAULT_ALLOWED_TOOLS))
+    disallowed_tools: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -85,6 +84,9 @@ def load_config(path: str) -> RunnerConfig:
             ),
             allowed_tools=claude_raw.get(
                 "allowed_tools", _DEFAULT_ALLOWED_TOOLS
+            ),
+            disallowed_tools=claude_raw.get(
+                "disallowed_tools", ClaudeConfig.disallowed_tools
             ),
         ),
         reconnect=ReconnectConfig(
