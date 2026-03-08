@@ -27,7 +27,7 @@ const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
   QUEUED: "bg-slate-500/15 text-slate-400",
   ASSIGNED: "bg-blue-500/15 text-blue-400",
   RUNNING: "bg-amber-500/15 text-amber-400",
-  AWAITING_APPROVAL: "bg-purple-500/15 text-purple-400",
+  WAITING_FOR_ANSWER: "bg-purple-500/15 text-purple-400",
   COMPLETED: "bg-emerald-500/15 text-emerald-400",
   FAILED: "bg-red-500/15 text-red-400",
   CANCELLED: "bg-slate-500/15 text-slate-400",
@@ -37,7 +37,7 @@ const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
-  AWAITING_APPROVAL: "Awaiting Approval",
+  WAITING_FOR_ANSWER: "Waiting for Answer",
   COMPLETED: "Completed",
   FAILED: "Failed",
   CANCELLED: "Cancelled",
@@ -54,7 +54,7 @@ export default function TaskViewPage() {
   const [taskStatus, setTaskStatus] = useState<AgentTaskStatus>("QUEUED");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [events, setEvents] = useState<TaskEventItem[]>([]);
-  const [approvedSequences, setApprovedSequences] = useState<Set<number>>(
+  const [answeredSequences, setAnsweredSequences] = useState<Set<number>>(
     new Set()
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -75,21 +75,21 @@ export default function TaskViewPage() {
       setSessionId(taskData.session_id ?? null);
       setEvents(eventsData.results);
 
-      // Mark already-resolved approval gates
+      // Mark already-answered questions
       const resolved = new Set<number>();
-      const approvalSequences: number[] = [];
+      const questionSequences: number[] = [];
       for (const ev of eventsData.results) {
-        if (ev.event_type === "APPROVAL_NEEDED") {
-          approvalSequences.push(ev.sequence);
+        if (ev.event_type === "QUESTION_ASKED") {
+          questionSequences.push(ev.sequence);
         }
-        if (ev.event_type === "APPROVAL_RESPONSE") {
-          // The last approval sequence before this response
-          if (approvalSequences.length > 0) {
-            resolved.add(approvalSequences[approvalSequences.length - 1]);
+        if (ev.event_type === "QUESTION_ANSWERED") {
+          // The last question sequence before this answer
+          if (questionSequences.length > 0) {
+            resolved.add(questionSequences[questionSequences.length - 1]);
           }
         }
       }
-      setApprovedSequences(resolved);
+      setAnsweredSequences(resolved);
     } finally {
       setIsLoading(false);
     }
@@ -127,14 +127,13 @@ export default function TaskViewPage() {
           return [...prev, newEvent];
         });
       } else if (
-        event.type === "approval.needed" &&
+        event.type === "question.asked" &&
         event.task_id === taskId
       ) {
-        // Also append as a task event if not already present via task.event
         const newEvent: TaskEventItem = {
-          id: `ws-approval-${event.sequence}`,
-          event_type: "APPROVAL_NEEDED",
-          data: event.data as Record<string, unknown>,
+          id: `ws-question-${event.sequence}`,
+          event_type: "QUESTION_ASKED",
+          data: { question_id: event.question_id, text: event.text },
           sequence: event.sequence,
           created_at: new Date().toISOString(),
         };
@@ -147,38 +146,34 @@ export default function TaskViewPage() {
     [taskId]
   );
 
-  const { sendApproval, sendReply, cancelTask: wsCancelTask } =
+  const { sendAnswer, sendReply, cancelTask: wsCancelTask } =
     useToonyAgentWebSocket({
       agentId: agent?.id ?? null,
       onEvent: handleWsEvent,
     });
 
-  // Handlers for approval gates
-  const handleApprove = useCallback(
-    (sequence: number) => {
-      sendApproval(taskId, "approve", "");
-      setApprovedSequences((prev) => new Set(prev).add(sequence));
+  // Handler for answering questions
+  const handleAnswer = useCallback(
+    (questionId: string, answer: string) => {
+      sendAnswer(taskId, questionId, answer);
+      // Find the sequence of this question to mark as answered
+      const questionEvent = events.find(
+        (e) => e.event_type === "QUESTION_ASKED" && (e.data as { question_id?: string }).question_id === questionId
+      );
+      if (questionEvent) {
+        setAnsweredSequences((prev) => new Set(prev).add(questionEvent.sequence));
+      }
     },
-    [taskId, sendApproval]
-  );
-
-  const handleReject = useCallback(
-    (sequence: number) => {
-      sendApproval(taskId, "reject", "");
-      setApprovedSequences((prev) => new Set(prev).add(sequence));
-    },
-    [taskId, sendApproval]
+    [taskId, sendAnswer, events]
   );
 
   const handleMessage = useCallback(
     (text: string) => {
       if (taskStatus === "COMPLETED" && sessionId) {
         sendReply(taskId, text);
-      } else {
-        sendApproval(taskId, "message", text);
       }
     },
-    [taskId, taskStatus, sessionId, sendApproval, sendReply]
+    [taskId, taskStatus, sessionId, sendReply]
   );
 
   // Cancel task via REST API
@@ -195,10 +190,10 @@ export default function TaskViewPage() {
     }
   }
 
-  // Memoize approvedSequences as a Set for the child
-  const approvedSequencesSet = useMemo(
-    () => approvedSequences,
-    [approvedSequences]
+  // Memoize answeredSequences as a Set for the child
+  const answeredSequencesSet = useMemo(
+    () => answeredSequences,
+    [answeredSequences]
   );
 
   if (isLoading) {
@@ -210,7 +205,7 @@ export default function TaskViewPage() {
   }
 
   const isActive =
-    taskStatus === "RUNNING" || taskStatus === "AWAITING_APPROVAL";
+    taskStatus === "RUNNING" || taskStatus === "WAITING_FOR_ANSWER";
   const canReply = taskStatus === "COMPLETED" && !!sessionId;
 
   return (
@@ -279,10 +274,9 @@ export default function TaskViewPage() {
           <TaskLiveOutput
             events={events}
             taskStatus={taskStatus}
-            onApprove={handleApprove}
-            onReject={handleReject}
+            onAnswer={handleAnswer}
             onMessage={handleMessage}
-            approvedSequences={approvedSequencesSet}
+            answeredSequences={answeredSequencesSet}
             canReply={canReply}
           />
         </div>
