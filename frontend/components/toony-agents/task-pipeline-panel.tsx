@@ -11,14 +11,14 @@ interface PipelineStage {
   icon: string;
   startTime: string;
   eventCount: number;
-  hasApprovalGate: boolean;
+  hasQuestion: boolean;
 }
 
 const EXPLORING_TOOLS = ["Read", "Grep", "Glob"];
 const IMPLEMENTING_TOOLS = ["Edit", "Write"];
 
 function classifyEvent(event: TaskEventItem): string | null {
-  if (event.event_type === "APPROVAL_NEEDED") return "__GATE__";
+  if (event.event_type === "QUESTION_ASKED") return "__GATE__";
 
   if (event.event_type === "TOOL_USE") {
     const toolName = String(event.data.tool_name ?? "");
@@ -72,9 +72,9 @@ export function TaskPipelinePanel({
       if (!classification) continue;
 
       if (classification === "__GATE__") {
-        // Mark the current stage as having an approval gate, or add one
+        // Mark the current stage as having a question
         if (result.length > 0) {
-          result[result.length - 1].hasApprovalGate = true;
+          result[result.length - 1].hasQuestion = true;
         }
         continue;
       }
@@ -86,7 +86,7 @@ export function TaskPipelinePanel({
           icon: stageIcon(classification),
           startTime: event.created_at,
           eventCount: 1,
-          hasApprovalGate: false,
+          hasQuestion: false,
         });
         currentStageName = classification;
       } else {
@@ -181,9 +181,9 @@ export function TaskPipelinePanel({
                         </span>
                       )}
                     </div>
-                    {stage.hasApprovalGate && (
-                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
-                        <span>Gate</span>
+                    {stage.hasQuestion && (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs text-indigo-400">
+                        <span>Question</span>
                       </div>
                     )}
                   </div>
