@@ -148,7 +148,7 @@ export type {
   ToonyAgentStatusWsEvent,
   TaskStatusWsEvent,
   TaskEventWsEvent,
-  ApprovalNeededWsEvent,
+  QuestionAskedWsEvent,
   ToonyAgentWsEvent,
 } from "./toony-agents";
 
