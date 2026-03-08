@@ -151,6 +151,25 @@ def _get_max_event_sequence(task_id):
     return result["sequence__max"] or 0
 
 
+@database_sync_to_async
+def _create_task_question(task_id, question_id, text, session_id):
+    from toony_agents.models import AgentTaskQuestion
+    return AgentTaskQuestion.objects.create(
+        task_id=task_id,
+        question_id=question_id,
+        text=text,
+        session_id=session_id,
+    )
+
+
+@database_sync_to_async
+def _answer_task_question(question_id, answer):
+    from toony_agents.models import AgentTaskQuestion
+    return AgentTaskQuestion.objects.filter(
+        question_id=question_id,
+    ).update(answer=answer, answered_at=timezone.now())
+
+
 _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
@@ -281,7 +300,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
-        elif msg_type == "approval.needed":
+        elif msg_type == "question.asked":
             task_id = content.get("task_id")
             if not task_id:
                 await self.send_json({"type": "error", "message": "task_id is required"})
@@ -289,22 +308,32 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             if not await _validate_task_ownership(task_id, self.agent_id):
                 await self.send_json({"type": "error", "message": "Task not found for this agent"})
                 return
-            data = content.get("data", {})
+            question_id = content.get("question_id", "")
+            question = content.get("question", {})
+            session_id = content.get("session_id", "")
+            question_text = question.get("text", "") if isinstance(question, dict) else str(question)
             sequence = content.get("sequence", 0)
+
             await _update_task_status(
-                task_id, AgentTaskStatus.AWAITING_APPROVAL,
+                task_id, AgentTaskStatus.WAITING_FOR_ANSWER,
                 toony_agent_id=self.agent_id,
             )
+            await _create_task_question(
+                task_id, question_id, question_text, session_id,
+            )
             await _create_task_event(
-                task_id, TaskEventType.APPROVAL_NEEDED, data, sequence,
+                task_id, TaskEventType.QUESTION_ASKED,
+                {"question_id": question_id, "text": question_text},
+                sequence,
             )
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
-                    "type": "approval_needed",
+                    "type": "question_asked",
                     "data": {
                         "task_id": task_id,
-                        "data": data,
+                        "question_id": question_id,
+                        "text": question_text,
                         "sequence": sequence,
                     },
                 },
@@ -389,12 +418,12 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
     # Group handlers (receive from frontend consumer via channel layer)
 
-    async def approval_response(self, event):
+    async def question_answered(self, event):
         await self.send_json({
-            "type": "approval.response",
+            "type": "question.answered",
             "task_id": event["data"]["task_id"],
-            "action": event["data"]["action"],
-            "response": event["data"]["response"],
+            "question_id": event["data"]["question_id"],
+            "answer": event["data"]["answer"],
         })
 
     async def task_cancel(self, event):
@@ -465,37 +494,31 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
         msg_type = content.get("type")
         runner_group = f"toony_agent_runner_{self.agent_id}"
 
-        if msg_type == "approval.response":
+        if msg_type == "question.answered":
             task_id = content.get("task_id")
-            if not task_id:
-                await self.send_json({"type": "error", "message": "task_id is required"})
+            question_id = content.get("question_id")
+            answer = content.get("answer", "")
+            if not task_id or not question_id:
+                await self.send_json({"type": "error", "message": "task_id and question_id are required"})
                 return
             if not await _validate_task_org_member(task_id, self.user):
                 await self.send_json({"type": "error", "message": "Task not found"})
                 return
-            action = content.get("action", "approve")
-            response = content.get("response", "")
+            await _answer_task_question(question_id, answer)
             await _create_task_event(
-                task_id, TaskEventType.APPROVAL_RESPONSE,
-                {"action": action, "response": response},
+                task_id, TaskEventType.QUESTION_ANSWERED,
+                {"question_id": question_id, "answer": answer},
                 content.get("sequence", 0),
             )
-            if action == "reject":
-                await _update_task_status(
-                    task_id, AgentTaskStatus.CANCELLED,
-                )
-            else:
-                await _update_task_status(
-                    task_id, AgentTaskStatus.RUNNING,
-                )
+            await _update_task_status(task_id, AgentTaskStatus.RUNNING)
             await self.channel_layer.group_send(
                 runner_group,
                 {
-                    "type": "approval_response",
+                    "type": "question_answered",
                     "data": {
                         "task_id": task_id,
-                        "action": action,
-                        "response": response,
+                        "question_id": question_id,
+                        "answer": answer,
                     },
                 },
             )
@@ -596,8 +619,8 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
     async def task_event(self, event):
         await self.send_json({"type": "task.event", **event["data"]})
 
-    async def approval_needed(self, event):
-        await self.send_json({"type": "approval.needed", **event["data"]})
+    async def question_asked(self, event):
+        await self.send_json({"type": "question.asked", **event["data"]})
 
     async def config_sync_status(self, event):
         await self.send_json({"type": "config.sync.status", **event["data"]})
