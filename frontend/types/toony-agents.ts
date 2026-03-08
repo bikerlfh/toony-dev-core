@@ -3,7 +3,7 @@ export type AgentTaskStatus =
   | "QUEUED"
   | "ASSIGNED"
   | "RUNNING"
-  | "AWAITING_APPROVAL"
+  | "WAITING_FOR_ANSWER"
   | "COMPLETED"
   | "FAILED"
   | "CANCELLED";
@@ -11,8 +11,8 @@ export type TaskEventType =
   | "LOG"
   | "TOOL_USE"
   | "TOOL_RESULT"
-  | "APPROVAL_NEEDED"
-  | "APPROVAL_RESPONSE"
+  | "QUESTION_ASKED"
+  | "QUESTION_ANSWERED"
   | "REPLY"
   | "STATUS_CHANGE"
   | "ERROR";
@@ -126,14 +126,11 @@ export interface TaskEventWsEvent {
   sequence: number;
 }
 
-export interface ApprovalNeededWsEvent {
-  type: "approval.needed";
+export interface QuestionAskedWsEvent {
+  type: "question.asked";
   task_id: string;
-  data: {
-    stage?: string;
-    question: string;
-    options?: { label: string; description: string }[];
-  };
+  question_id: string;
+  text: string;
   sequence: number;
 }
 
@@ -149,5 +146,5 @@ export type ToonyAgentWsEvent =
   | ToonyAgentStatusWsEvent
   | TaskStatusWsEvent
   | TaskEventWsEvent
-  | ApprovalNeededWsEvent
+  | QuestionAskedWsEvent
   | ConfigSyncStatusWsEvent;
