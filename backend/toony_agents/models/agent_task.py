@@ -8,7 +8,7 @@ class AgentTaskStatus(models.TextChoices):
     QUEUED = "QUEUED", "Queued"
     ASSIGNED = "ASSIGNED", "Assigned"
     RUNNING = "RUNNING", "Running"
-    AWAITING_APPROVAL = "AWAITING_APPROVAL", "Awaiting Approval"
+    WAITING_FOR_ANSWER = "WAITING_FOR_ANSWER", "Waiting for Answer"
     COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
     CANCELLED = "CANCELLED", "Cancelled"
