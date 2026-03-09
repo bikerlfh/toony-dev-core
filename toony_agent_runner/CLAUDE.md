@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`toony_agent_runner` is a Python asyncio daemon that bridges Claude Code with the Toony Dev Core backend. It connects via WebSocket, receives task assignments, executes them via the Claude Agent SDK, streams events in real-time, handles approval gates natively, and reports task completion/failure.
+`toony_agent_runner` is a Python asyncio daemon that bridges Claude Code with the Toony Dev Core backend. It connects via WebSocket, receives task assignments, executes them by spawning the Claude CLI (`claude -p --output-format stream-json`), streams events in real-time, handles question/answer flows, and reports task completion/failure.
 
 ## Commands
 
@@ -25,23 +25,26 @@ PYENV_VERSION=toony_agent_runner_venv pyenv exec pytest tests/test_multitask.py 
 PYENV_VERSION=toony_agent_runner_venv pyenv exec pytest tests/test_multitask.py::TestConfigMaxConcurrentTasks::test_default_is_one -v  # single test
 ```
 
-Python 3.11+ required. Dependencies: `websockets>=12.0`, `pyyaml>=6.0`, `claude-agent-sdk>=0.1.40`.
+Python 3.11+ required. Dependencies: `websockets>=12.0`, `pyyaml>=6.0`. Requires `claude` CLI installed and available on PATH.
 
 ## Architecture
 
-Four modules with clear separation of concerns:
+Modules with clear separation of concerns:
 
 ```
-main.py --- Orchestrator: CLI entry, config loading, main event loop, task execution via SDK
+main.py --- Orchestrator: CLI entry, config loading, main event loop, message dispatch
+  |
+  |-- task_executor.py --- Spawns Claude CLI via cli_executor, streams events back to backend,
+  |                         handles question detection and task completion/failure
+  |
+  |-- cli_executor.py --- Builds CLI commands, spawns `claude -p --output-format stream-json` subprocess,
+  |                        yields parsed JSON events, extracts questions/tools/text from assistant events
   |
   |-- connection.py --- BackendConnection: WebSocket client, reconnection w/ exponential backoff, message buffering
   |
-  |-- stream_parser.py --- Classifies SDK StreamEvent objects (LOG/TOOL_USE/TOOL_RESULT/ERROR/STATUS_CHANGE),
-  |                         extracts event data with tool-specific key filtering
-  |
   +-- protocol.py --- Dataclass message types with to_json() serialization
-  |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, ApprovalNeeded, TaskCompleted, TaskFailed
-  |                    Incoming: TaskAssign, ApprovalResponse, TaskCancel, TaskReply, HeartbeatAck
+  |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, QuestionAsked, TaskCompleted, TaskFailed
+  |                    Incoming: TaskAssign, QuestionAnswered, TaskCancel, TaskReply, HeartbeatAck
   |
   +-- commands/         --- Command execution: registry of filesystem/download/git/script handlers,
                              sandboxed to working_directory, dispatched independently of Claude tasks
@@ -51,18 +54,19 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, task execu
 
 1. Load YAML config -> connect WebSocket (API key via `?key=` query param) -> send `register` with host metadata
 2. Idle loop: send heartbeats every 30s, wait for `task.assign`
-3. On task: create `ClaudeSDKClient` with `PreToolUse` hook -> stream `StreamEvent` objects -> send `task.event` messages
-4. If `AskUserQuestion` tool called: SDK fires `PreToolUse` hook -> runner sends `approval.needed` to backend, awaits `approval.response`, returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
-5. SDK finishes: `ResultMessage` received -> send `task.completed` or `task.failed`
-6. On `command.execute`: look up `command_key` in `COMMAND_REGISTRY`, execute handler with args (sandboxed to `working_dir`), send `command.result` with success/error
-7. On SIGINT/SIGTERM: interrupt SDK client, close connection, exit
+3. On task: spawn `claude -p --output-format stream-json` subprocess -> parse JSON lines from stdout -> send `task.event` messages
+4. If `AskUserQuestion` tool detected in assistant event: send `question.asked` to backend, CLI finishes (task stays WAITING_FOR_ANSWER)
+5. On `question.answered`: resume conversation via `claude -p --resume <session_id>` with the user's answer
+6. CLI exits with result event -> send `task.completed` or `task.failed`
+7. On `command.execute`: look up `command_key` in `COMMAND_REGISTRY`, execute handler with args (sandboxed to `working_dir`), send `command.result` with success/error
+8. On SIGINT/SIGTERM: terminate CLI processes, close connection, exit
 
 ### Key Design Decisions
 
-- **Claude Agent SDK**: Uses `ClaudeSDKClient` (streaming mode with interrupt support) for task execution and session resume via `ClaudeAgentOptions(resume=session_id)` for task replies.
-- **Approval gates via PreToolUse hook**: A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQuestion` call — regardless of permission mode. The hook bridges to the backend WebSocket, awaits the user's response, and always returns `permissionDecision: "deny"` with the answer as `permissionDecisionReason` (since there is no terminal for the CLI to render the question). A separate `can_use_tool` callback (`_auto_approve_tool`) always returns `PermissionResultAllow` to enable the bidirectional stdio control protocol required for hooks.
-- **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The SDK continues executing during disconnection.
-- **Concurrent task execution**: Runner supports `max_concurrent_tasks` (default 1). Task state (`active_tasks`, `cancel_events`, `pending_approvals`) is keyed by `task_id`. Tasks beyond capacity are ignored (stay QUEUED on backend).
+- **Direct CLI invocation**: Uses `claude -p --output-format stream-json` subprocess instead of the Claude Agent SDK. The CLI loads skills from `~/.claude/skills/` and `~/.agents/skills/`, which the SDK does not support.
+- **Question/answer via AskUserQuestion detection**: The runner detects `AskUserQuestion` tool_use blocks in assistant stream events. When found, it sends `question.asked` to the backend and lets the CLI finish. The user's answer arrives as `question.answered`, which resumes the session via `--resume`.
+- **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The CLI continues executing during disconnection.
+- **Concurrent task execution**: Runner supports `max_concurrent_tasks` (default 1). Task state (`active_tasks`, `cancel_events`) is keyed by `task_id`. Tasks beyond capacity are ignored (stay QUEUED on backend).
 
 ### WebSocket Protocol
 
@@ -74,12 +78,12 @@ All messages are JSON with a `type` field. Authentication is via `?key=tok_ta_..
 | Out | `heartbeat` | Keepalive (30s interval) |
 | Out | `task.accepted` | Acknowledge task receipt |
 | Out | `task.event` | Stream Claude event (with sequence number) |
-| Out | `approval.needed` | Relay AskUserQuestion to user |
+| Out | `question.asked` | Relay AskUserQuestion to user |
 | Out | `task.completed` / `task.failed` | Final status |
 | In | `task.assign` | Backend assigns task (task_id, title, prompt) |
 | In | `task.cancel` | Request task cancellation |
 | In | `task.reply` | Resume conversation with session_id |
-| In | `approval.response` | User approve/reject decision |
+| In | `question.answered` | User's answer to a question |
 | In | `command.execute` | Backend sends a direct command (key + args) |
 | Out | `command.result` | Runner reports command execution result |
 | In | `heartbeat.ack` | Backend acknowledges heartbeat |
