@@ -79,13 +79,18 @@ export function TaskEventItem({
 
     case "QUESTION_ASKED": {
       const data = event.data as {
-        text?: string;
+        question?: { text?: string; type?: string; header?: string; options?: { label: string; description?: string }[]; multi_select?: boolean };
         question_id?: string;
+        text?: string;
       };
+      const question = data.question;
+      const questionText = question?.text ?? data.text ?? "Agent has a question";
       return (
         <div className="py-2">
           <AgentQuestionCard
-            question={String(data.text ?? "Agent has a question")}
+            question={questionText}
+            header={question?.header}
+            options={question?.options}
             questionId={String(data.question_id ?? "")}
             onAnswer={onAnswer ?? (() => {})}
             isAnswered={isAnswered ?? false}

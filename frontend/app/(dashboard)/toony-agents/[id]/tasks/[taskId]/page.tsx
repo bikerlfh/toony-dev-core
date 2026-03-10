@@ -133,7 +133,7 @@ export default function TaskViewPage() {
         const newEvent: TaskEventItem = {
           id: `ws-question-${event.sequence}`,
           event_type: "QUESTION_ASKED",
-          data: { question_id: event.question_id, text: event.text },
+          data: { question_id: event.question_id, question: event.question },
           sequence: event.sequence,
           created_at: new Date().toISOString(),
         };

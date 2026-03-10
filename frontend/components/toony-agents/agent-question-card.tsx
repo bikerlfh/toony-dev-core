@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 
+interface QuestionOption {
+  label: string;
+  description?: string;
+}
+
 interface AgentQuestionCardProps {
   question: string;
+  header?: string;
+  options?: QuestionOption[];
   questionId: string;
   onAnswer: (questionId: string, answer: string) => void;
   isAnswered: boolean;
@@ -12,6 +19,8 @@ interface AgentQuestionCardProps {
 
 export function AgentQuestionCard({
   question,
+  header,
+  options,
   questionId,
   onAnswer,
   isAnswered,
@@ -24,6 +33,10 @@ export function AgentQuestionCard({
     if (!text) return;
     onAnswer(questionId, text);
     setAnswerText("");
+  }
+
+  function handleOptionClick(label: string) {
+    onAnswer(questionId, label);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -41,7 +54,7 @@ export function AgentQuestionCard({
     <div className={cardClass}>
       <div className="mb-2 flex items-center gap-2">
         <span className="text-indigo-400 text-sm font-medium">
-          Agent Question
+          {header ?? "Agent Question"}
         </span>
       </div>
 
@@ -51,6 +64,27 @@ export function AgentQuestionCard({
         <div className="mt-2 rounded-md bg-slate-800/50 px-3 py-2">
           <span className="text-xs text-slate-500">Your answer: </span>
           <span className="text-sm text-slate-300">{previousAnswer}</span>
+        </div>
+      )}
+
+      {!isAnswered && options && options.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {options.map((opt) => (
+            <button
+              key={opt.label}
+              onClick={() => handleOptionClick(opt.label)}
+              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-left transition-colors hover:border-indigo-500/50 hover:bg-indigo-500/10"
+            >
+              <span className="block text-sm font-medium text-slate-200">
+                {opt.label}
+              </span>
+              {opt.description && (
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  {opt.description}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       )}
 
