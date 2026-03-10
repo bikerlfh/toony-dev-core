@@ -39,7 +39,7 @@ ignore = [
 known-first-party = [
     "accounts", "organizations", "projects", "agents",
     "workflows", "importers", "common", "config",
-    "toony_agents",
+    "toony_agents", "workspace",
 ]
 
 [tool.ruff.format]
