@@ -1,17 +1,8 @@
 import uuid
 
 import pytest
-from channels.db import database_sync_to_async
 from django.utils import timezone
 
-from toony_agents.consumers import (
-    _answer_task_question,
-    _create_task_event,
-    _create_task_question,
-    _get_max_event_sequence,
-    _get_question_session_id,
-    _update_task_status,
-)
 from toony_agents.models import (
     AgentTask,
     AgentTaskQuestion,
