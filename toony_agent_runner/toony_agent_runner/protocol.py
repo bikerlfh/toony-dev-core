@@ -75,7 +75,8 @@ class QuestionAskedMessage:
     task_id: str
     session_id: str
     question_id: str
-    question_text: str
+    question_data: dict[str, Any]
+    sequence: int = 0
 
     def to_json(self) -> dict:
         return {
@@ -83,10 +84,8 @@ class QuestionAskedMessage:
             "task_id": self.task_id,
             "session_id": self.session_id,
             "question_id": self.question_id,
-            "question": {
-                "text": self.question_text,
-                "type": "free_text",
-            },
+            "question": self.question_data,
+            "sequence": self.sequence,
         }
 
 
@@ -145,6 +144,8 @@ class QuestionAnswered:
     task_id: str
     question_id: str
     answer: str
+    session_id: str = ""
+    sequence_offset: int = 0
 
 
 @dataclass
@@ -253,6 +254,8 @@ def parse_server_message(data: dict) -> IncomingMessage:
             task_id=data["task_id"],
             question_id=data["question_id"],
             answer=data.get("answer", ""),
+            session_id=data.get("session_id", ""),
+            sequence_offset=data.get("sequence_offset", 0),
         )
 
     if msg_type == "task.cancel":

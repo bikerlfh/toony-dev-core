@@ -83,10 +83,14 @@ def parse_stream_event(raw: dict[str, Any]) -> dict[str, Any]:
     return raw
 
 
-def extract_question_from_assistant(event: dict[str, Any]) -> dict[str, str] | None:
+def extract_question_from_assistant(event: dict[str, Any]) -> dict[str, Any] | None:
     """Extract AskUserQuestion data from an assistant event.
 
-    Returns {"text": "...", "question_id": "..."} or None.
+    Handles two input formats:
+    - Structured: {"questions": [{"question": "...", "header": "...", "options": [...], "multiSelect": bool}]}
+    - Simple: {"question": "..."}
+
+    Returns dict with text, header, options, multi_select, question_id, tool_use_id — or None.
     """
     if event.get("type") != "assistant":
         return None
@@ -95,9 +99,27 @@ def extract_question_from_assistant(event: dict[str, Any]) -> dict[str, str] | N
     for block in message.get("content", []):
         if block.get("type") == "tool_use" and block.get("name") == "AskUserQuestion":
             tool_input = block.get("input", {})
-            text = tool_input.get("question", str(tool_input))
+
+            # Structured format: {"questions": [{"question": "...", ...}]}
+            questions = tool_input.get("questions")
+            if isinstance(questions, list) and questions:
+                q = questions[0]
+                text = q.get("question", "")
+                header = q.get("header")
+                options = q.get("options", [])
+                multi_select = q.get("multiSelect", False)
+            else:
+                # Simple format fallback: {"question": "..."}
+                text = tool_input.get("question", str(tool_input))
+                header = None
+                options = []
+                multi_select = False
+
             return {
                 "text": text,
+                "header": header,
+                "options": options,
+                "multi_select": multi_select,
                 "question_id": str(uuid.uuid4()),
                 "tool_use_id": block.get("id", ""),
             }
@@ -180,6 +202,7 @@ async def run_claude(
                 continue
             try:
                 event = json.loads(line)
+                logger.info("Event: %s", event)
                 yield parse_stream_event(event)
             except json.JSONDecodeError:
                 logger.debug("Non-JSON line from CLI: %s", line[:200])

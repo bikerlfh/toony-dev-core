@@ -126,11 +126,24 @@ export interface TaskEventWsEvent {
   sequence: number;
 }
 
+export interface QuestionOption {
+  label: string;
+  description?: string;
+}
+
+export interface QuestionData {
+  text: string;
+  type: "free_text" | "options";
+  header?: string;
+  options?: QuestionOption[];
+  multi_select?: boolean;
+}
+
 export interface QuestionAskedWsEvent {
   type: "question.asked";
   task_id: string;
   question_id: string;
-  text: string;
+  question: QuestionData;
   sequence: number;
 }
 

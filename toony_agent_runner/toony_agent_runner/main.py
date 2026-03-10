@@ -264,21 +264,48 @@ async def run(config: RunnerConfig) -> None:
                 )
 
             elif isinstance(msg, QuestionAnswered):
+                _cleanup_finished_tasks()
                 logger.info(
-                    "Received question.answered for %s (q=%s)",
+                    "Received question.answered for %s (q=%s, session=%s)",
                     msg.task_id,
                     msg.question_id,
+                    msg.session_id,
                 )
-                future = conn.pending_questions.get(msg.task_id)
-                if future is not None and not future.done():
-                    future.set_result({
-                        "question_id": msg.question_id,
-                        "answer": msg.answer,
-                    })
-                else:
+
+                if not msg.session_id:
                     logger.warning(
-                        "No pending question for task %s", msg.task_id
+                        "No session_id in question.answered for task %s, ignoring",
+                        msg.task_id,
                     )
+                    continue
+
+                if msg.task_id in active_tasks:
+                    logger.warning(
+                        "Task %s still active, ignoring question.answered",
+                        msg.task_id,
+                    )
+                    continue
+
+                if len(active_tasks) >= max_tasks:
+                    logger.warning(
+                        "At capacity [%d/%d slots], ignoring question.answered %s",
+                        len(active_tasks), max_tasks, msg.task_id,
+                    )
+                    continue
+
+                ce = asyncio.Event()
+                cancel_events[msg.task_id] = ce
+                active_tasks[msg.task_id] = asyncio.create_task(
+                    execute_task_reply(
+                        msg.task_id,
+                        msg.answer,
+                        msg.session_id,
+                        conn,
+                        config,
+                        ce,
+                        sequence_offset=msg.sequence_offset,
+                    )
+                )
 
             elif isinstance(msg, HeartbeatAck):
                 logger.debug("Heartbeat acknowledged")

@@ -31,7 +31,7 @@ class TaskEvent(models.Model):
 
     class Meta:
         db_table = "task_events"
-        ordering = ["sequence"]
+        ordering = ["created_at"]
         indexes = [
             models.Index(fields=["task", "sequence"]),
         ]

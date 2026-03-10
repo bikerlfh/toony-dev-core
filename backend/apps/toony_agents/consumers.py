@@ -181,6 +181,18 @@ def _answer_task_question(question_id, answer):
     ).update(answer=answer, answered_at=timezone.now())
 
 
+@database_sync_to_async
+def _get_question_session_id(question_id):
+    from toony_agents.models import AgentTaskQuestion
+
+    try:
+        return AgentTaskQuestion.objects.values_list(
+            "session_id", flat=True,
+        ).get(question_id=question_id)
+    except AgentTaskQuestion.DoesNotExist:
+        return ""
+
+
 _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
@@ -347,16 +359,24 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 {"question_id": question_id, "text": question_text},
                 sequence,
             )
+            # Forward structured question data to frontend.
+            frontend_question_data = {"task_id": task_id, "question_id": question_id, "sequence": sequence}
+            if isinstance(question, dict):
+                frontend_question_data["question"] = question
+            else:
+                frontend_question_data["question"] = {"text": question_text, "type": "free_text"}
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {
+                    "type": "task_status",
+                    "data": {"task_id": task_id, "status": "WAITING_FOR_ANSWER"},
+                },
+            )
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
                     "type": "question_asked",
-                    "data": {
-                        "task_id": task_id,
-                        "question_id": question_id,
-                        "text": question_text,
-                        "sequence": sequence,
-                    },
+                    "data": frontend_question_data,
                 },
             )
 
@@ -450,6 +470,8 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 "task_id": event["data"]["task_id"],
                 "question_id": event["data"]["question_id"],
                 "answer": event["data"]["answer"],
+                "session_id": event["data"].get("session_id", ""),
+                "sequence_offset": event["data"].get("sequence_offset", 0),
             }
         )
 
@@ -539,13 +561,31 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_json({"type": "error", "message": "Task not found"})
                 return
             await _answer_task_question(question_id, answer)
+            # Fetch max sequence before creating the event so it gets the next slot.
+            max_seq = await _get_max_event_sequence(task_id)
+            answer_seq = max_seq + 1
             await _create_task_event(
                 task_id,
                 TaskEventType.QUESTION_ANSWERED,
                 {"question_id": question_id, "answer": answer},
-                content.get("sequence", 0),
+                answer_seq,
             )
             await _update_task_status(task_id, AgentTaskStatus.RUNNING)
+            # Broadcast QUESTION_ANSWERED event to frontend.
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "task_event",
+                    "data": {
+                        "task_id": task_id,
+                        "event_type": TaskEventType.QUESTION_ANSWERED,
+                        "data": {"question_id": question_id, "answer": answer},
+                        "sequence": answer_seq,
+                    },
+                },
+            )
+            # Fetch session_id and sequence_offset for the runner to resume.
+            session_id = await _get_question_session_id(question_id)
             await self.channel_layer.group_send(
                 runner_group,
                 {
@@ -554,6 +594,8 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                         "task_id": task_id,
                         "question_id": question_id,
                         "answer": answer,
+                        "session_id": session_id,
+                        "sequence_offset": answer_seq + 1,
                     },
                 },
             )

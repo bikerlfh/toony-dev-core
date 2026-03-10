@@ -28,16 +28,27 @@ export function TaskEventItem({
         </div>
       );
 
-    case "TOOL_USE":
+    case "TOOL_USE": {
+      const toolName = String(event.data.tool_name ?? "");
+      const input = (event.data.input ?? {}) as Record<string, unknown>;
+      const toolDetail =
+        input.description ? String(input.description) :
+        input.file_path ? String(input.file_path) :
+        input.pattern ? String(input.pattern) :
+        input.command ? String(input.command) :
+        input.query ? String(input.query) :
+        input.url ? String(input.url) :
+        "";
       return (
         <div className="py-0.5">
           <span className="text-indigo-400 font-mono text-sm">
             {"▸ "}
-            {String(event.data.tool_name ?? "")}
-            {event.data.file_path ? ` ${String(event.data.file_path)}` : ""}
+            {toolName}
+            {toolDetail ? `: ${toolDetail}` : ""}
           </span>
         </div>
       );
+    }
 
     case "TOOL_RESULT": {
       const resultText = String(event.data.result ?? event.data.output ?? "");
@@ -79,13 +90,18 @@ export function TaskEventItem({
 
     case "QUESTION_ASKED": {
       const data = event.data as {
-        text?: string;
+        question?: { text?: string; type?: string; header?: string; options?: { label: string; description?: string }[]; multi_select?: boolean };
         question_id?: string;
+        text?: string;
       };
+      const question = data.question;
+      const questionText = question?.text ?? data.text ?? "Agent has a question";
       return (
         <div className="py-2">
           <AgentQuestionCard
-            question={String(data.text ?? "Agent has a question")}
+            question={questionText}
+            header={question?.header}
+            options={question?.options}
             questionId={String(data.question_id ?? "")}
             onAnswer={onAnswer ?? (() => {})}
             isAnswered={isAnswered ?? false}

@@ -73,12 +73,12 @@ export default function TaskViewPage() {
       setTask(taskData);
       setTaskStatus(taskData.status);
       setSessionId(taskData.session_id ?? null);
-      setEvents(eventsData.results);
+      setEvents(eventsData);
 
       // Mark already-answered questions
       const resolved = new Set<number>();
       const questionSequences: number[] = [];
-      for (const ev of eventsData.results) {
+      for (const ev of eventsData) {
         if (ev.event_type === "QUESTION_ASKED") {
           questionSequences.push(ev.sequence);
         }
@@ -131,9 +131,9 @@ export default function TaskViewPage() {
         event.task_id === taskId
       ) {
         const newEvent: TaskEventItem = {
-          id: `ws-question-${event.sequence}`,
+          id: `ws-question-${event.question_id}`,
           event_type: "QUESTION_ASKED",
-          data: { question_id: event.question_id, text: event.text },
+          data: { question_id: event.question_id, question: event.question },
           sequence: event.sequence,
           created_at: new Date().toISOString(),
         };
@@ -141,6 +141,7 @@ export default function TaskViewPage() {
           if (prev.some((e) => e.id === newEvent.id)) return prev;
           return [...prev, newEvent];
         });
+        setTaskStatus("WAITING_FOR_ANSWER");
       }
     },
     [taskId]

@@ -117,12 +117,19 @@ class TestConfigSyncAckMessage:
 
 
 class TestQuestionAskedMessage:
-    def test_to_json(self):
+    def test_to_json_with_options(self):
         msg = QuestionAskedMessage(
             task_id="task-1",
             session_id="sess-1",
             question_id="q-1",
-            question_text="What framework?",
+            question_data={
+                "text": "What framework?",
+                "type": "options",
+                "header": "Setup",
+                "options": [{"label": "React", "description": "Frontend lib"}],
+                "multi_select": False,
+            },
+            sequence=3,
         )
         j = msg.to_json()
         assert j == {
@@ -132,9 +139,28 @@ class TestQuestionAskedMessage:
             "question_id": "q-1",
             "question": {
                 "text": "What framework?",
+                "type": "options",
+                "header": "Setup",
+                "options": [{"label": "React", "description": "Frontend lib"}],
+                "multi_select": False,
+            },
+            "sequence": 3,
+        }
+
+    def test_to_json_free_text(self):
+        msg = QuestionAskedMessage(
+            task_id="task-1",
+            session_id="sess-1",
+            question_id="q-1",
+            question_data={
+                "text": "What's your name?",
                 "type": "free_text",
             },
-        }
+        )
+        j = msg.to_json()
+        assert j["question"]["type"] == "free_text"
+        assert j["question"]["text"] == "What's your name?"
+        assert j["sequence"] == 0  # default
 
 
 class TestQuestionAnswered:
@@ -144,12 +170,28 @@ class TestQuestionAnswered:
             "task_id": "task-1",
             "question_id": "q-1",
             "answer": "React",
+            "session_id": "sess-abc",
+            "sequence_offset": 5,
         }
         msg = parse_server_message(raw)
         assert isinstance(msg, QuestionAnswered)
         assert msg.task_id == "task-1"
         assert msg.question_id == "q-1"
         assert msg.answer == "React"
+        assert msg.session_id == "sess-abc"
+        assert msg.sequence_offset == 5
+
+    def test_parse_question_answered_defaults(self):
+        raw = {
+            "type": "question.answered",
+            "task_id": "task-1",
+            "question_id": "q-1",
+            "answer": "React",
+        }
+        msg = parse_server_message(raw)
+        assert isinstance(msg, QuestionAnswered)
+        assert msg.session_id == ""
+        assert msg.sequence_offset == 0
 
 
 class TestTaskAssignProjectId:

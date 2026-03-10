@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from typing import Any
 
 from .cli_executor import (
     extract_question_from_assistant,
@@ -65,21 +66,36 @@ async def execute_task(
                 # Check for AskUserQuestion.
                 question = extract_question_from_assistant(event)
                 if question:
+                    # Build structured question data for the backend.
+                    q_data: dict[str, Any] = {"text": question["text"]}
+                    if question.get("options"):
+                        q_data["type"] = "options"
+                        q_data["options"] = question["options"]
+                        q_data["multi_select"] = question.get("multi_select", False)
+                    else:
+                        q_data["type"] = "free_text"
+                    if question.get("header"):
+                        q_data["header"] = question["header"]
+
+                    sequence += 1
                     await conn.send(
                         QuestionAskedMessage(
                             task_id=task_id,
                             session_id=session_id or "",
                             question_id=question["question_id"],
-                            question_text=question["text"],
+                            question_data=q_data,
+                            sequence=sequence,
                         ).to_json()
                     )
                     logger.info(
                         "Question asked for task %s: %s",
                         task_id, question["text"][:100],
                     )
-                    # Don't return here — the CLI will emit a result event
-                    # after AskUserQuestion since it's in -p mode.
-                    # But we still forward tool events from this message.
+                    # Stop processing — task is now WAITING_FOR_ANSWER.
+                    # The CLI will continue running (tool denial + fallback text + result)
+                    # but we ignore remaining events. The process cleans up via
+                    # run_claude's finally block.
+                    return
 
                 # Forward tool_use events (excluding AskUserQuestion).
                 for tool_event in extract_tool_events(event):
@@ -180,14 +196,31 @@ async def execute_task_reply(
             if etype == "assistant":
                 question = extract_question_from_assistant(event)
                 if question:
+                    q_data: dict[str, Any] = {"text": question["text"]}
+                    if question.get("options"):
+                        q_data["type"] = "options"
+                        q_data["options"] = question["options"]
+                        q_data["multi_select"] = question.get("multi_select", False)
+                    else:
+                        q_data["type"] = "free_text"
+                    if question.get("header"):
+                        q_data["header"] = question["header"]
+
+                    sequence += 1
                     await conn.send(
                         QuestionAskedMessage(
                             task_id=task_id,
                             session_id=new_session_id or session_id,
                             question_id=question["question_id"],
-                            question_text=question["text"],
+                            question_data=q_data,
+                            sequence=sequence,
                         ).to_json()
                     )
+                    logger.info(
+                        "Question asked for task reply %s: %s",
+                        task_id, question["text"][:100],
+                    )
+                    return
 
                 for tool_event in extract_tool_events(event):
                     sequence += 1
