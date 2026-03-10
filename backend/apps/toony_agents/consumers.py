@@ -368,6 +368,13 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
+                    "type": "task_status",
+                    "data": {"task_id": task_id, "status": "WAITING_FOR_ANSWER"},
+                },
+            )
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {
                     "type": "question_asked",
                     "data": frontend_question_data,
                 },

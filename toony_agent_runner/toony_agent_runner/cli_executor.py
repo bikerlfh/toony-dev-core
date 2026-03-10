@@ -202,6 +202,7 @@ async def run_claude(
                 continue
             try:
                 event = json.loads(line)
+                logger.info("Event: %s", event)
                 yield parse_stream_event(event)
             except json.JSONDecodeError:
                 logger.debug("Non-JSON line from CLI: %s", line[:200])

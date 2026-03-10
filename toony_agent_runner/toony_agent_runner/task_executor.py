@@ -77,12 +77,14 @@ async def execute_task(
                     if question.get("header"):
                         q_data["header"] = question["header"]
 
+                    sequence += 1
                     await conn.send(
                         QuestionAskedMessage(
                             task_id=task_id,
                             session_id=session_id or "",
                             question_id=question["question_id"],
                             question_data=q_data,
+                            sequence=sequence,
                         ).to_json()
                     )
                     logger.info(
@@ -204,12 +206,14 @@ async def execute_task_reply(
                     if question.get("header"):
                         q_data["header"] = question["header"]
 
+                    sequence += 1
                     await conn.send(
                         QuestionAskedMessage(
                             task_id=task_id,
                             session_id=new_session_id or session_id,
                             question_id=question["question_id"],
                             question_data=q_data,
+                            sequence=sequence,
                         ).to_json()
                     )
                     logger.info(

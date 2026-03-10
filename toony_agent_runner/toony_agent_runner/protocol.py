@@ -76,6 +76,7 @@ class QuestionAskedMessage:
     session_id: str
     question_id: str
     question_data: dict[str, Any]
+    sequence: int = 0
 
     def to_json(self) -> dict:
         return {
@@ -84,6 +85,7 @@ class QuestionAskedMessage:
             "session_id": self.session_id,
             "question_id": self.question_id,
             "question": self.question_data,
+            "sequence": self.sequence,
         }
 
 

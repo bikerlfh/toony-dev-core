@@ -129,6 +129,7 @@ class TestQuestionAskedMessage:
                 "options": [{"label": "React", "description": "Frontend lib"}],
                 "multi_select": False,
             },
+            sequence=3,
         )
         j = msg.to_json()
         assert j == {
@@ -143,6 +144,7 @@ class TestQuestionAskedMessage:
                 "options": [{"label": "React", "description": "Frontend lib"}],
                 "multi_select": False,
             },
+            "sequence": 3,
         }
 
     def test_to_json_free_text(self):
@@ -158,6 +160,7 @@ class TestQuestionAskedMessage:
         j = msg.to_json()
         assert j["question"]["type"] == "free_text"
         assert j["question"]["text"] == "What's your name?"
+        assert j["sequence"] == 0  # default
 
 
 class TestQuestionAnswered:

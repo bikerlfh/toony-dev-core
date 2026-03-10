@@ -131,7 +131,7 @@ export default function TaskViewPage() {
         event.task_id === taskId
       ) {
         const newEvent: TaskEventItem = {
-          id: `ws-question-${event.sequence}`,
+          id: `ws-question-${event.question_id}`,
           event_type: "QUESTION_ASKED",
           data: { question_id: event.question_id, question: event.question },
           sequence: event.sequence,
@@ -141,6 +141,7 @@ export default function TaskViewPage() {
           if (prev.some((e) => e.id === newEvent.id)) return prev;
           return [...prev, newEvent];
         });
+        setTaskStatus("WAITING_FOR_ANSWER");
       }
     },
     [taskId]

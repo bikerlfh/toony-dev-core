@@ -99,6 +99,9 @@ format-check: ## Check backend formatting (dry run)
 lint-frontend: ## Run Next.js linter
 	$(COMPOSE) exec frontend npm run lint
 
+run-toony-agent: ## Run Toony Agent
+	cd toony_agent_runner && toony-agent-runner --config config.yml
+
 # ──────────────────────────────────────────────
 # Database
 # ──────────────────────────────────────────────
