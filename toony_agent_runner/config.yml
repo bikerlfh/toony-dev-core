@@ -7,7 +7,8 @@ claude:
   output_format: "stream-json"
   working_directory: "."
   max_task_timeout: 7200  # 2 hours
-  max_concurrent_tasks: 1
+  max_concurrent_tasks: 50
+  permission_mode: "bypassPermissions" # acceptEdits
 
 reconnect:
   max_retries: -1

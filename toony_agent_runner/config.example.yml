@@ -12,7 +12,7 @@ claude:
   approval_timeout: 600
   max_concurrent_tasks: 1    # max Claude tasks running simultaneously (default: 1)
   # oauth_token: ""  # or set CLAUDE_CODE_OAUTH_TOKEN env var
-  permission_mode: "acceptEdits"
+  permission_mode: "acceptEdits" # bypassPermissions
   # allowed_tools:
   #   - Read
   #   - Edit
