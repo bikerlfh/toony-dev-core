@@ -73,12 +73,12 @@ export default function TaskViewPage() {
       setTask(taskData);
       setTaskStatus(taskData.status);
       setSessionId(taskData.session_id ?? null);
-      setEvents(eventsData.results);
+      setEvents(eventsData);
 
       // Mark already-answered questions
       const resolved = new Set<number>();
       const questionSequences: number[] = [];
-      for (const ev of eventsData.results) {
+      for (const ev of eventsData) {
         if (ev.event_type === "QUESTION_ASKED") {
           questionSequences.push(ev.sequence);
         }

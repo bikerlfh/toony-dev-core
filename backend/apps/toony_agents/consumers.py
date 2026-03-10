@@ -561,16 +561,31 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_json({"type": "error", "message": "Task not found"})
                 return
             await _answer_task_question(question_id, answer)
+            # Fetch max sequence before creating the event so it gets the next slot.
+            max_seq = await _get_max_event_sequence(task_id)
+            answer_seq = max_seq + 1
             await _create_task_event(
                 task_id,
                 TaskEventType.QUESTION_ANSWERED,
                 {"question_id": question_id, "answer": answer},
-                content.get("sequence", 0),
+                answer_seq,
             )
             await _update_task_status(task_id, AgentTaskStatus.RUNNING)
+            # Broadcast QUESTION_ANSWERED event to frontend.
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "task_event",
+                    "data": {
+                        "task_id": task_id,
+                        "event_type": TaskEventType.QUESTION_ANSWERED,
+                        "data": {"question_id": question_id, "answer": answer},
+                        "sequence": answer_seq,
+                    },
+                },
+            )
             # Fetch session_id and sequence_offset for the runner to resume.
             session_id = await _get_question_session_id(question_id)
-            max_seq = await _get_max_event_sequence(task_id)
             await self.channel_layer.group_send(
                 runner_group,
                 {
@@ -580,7 +595,7 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                         "question_id": question_id,
                         "answer": answer,
                         "session_id": session_id,
-                        "sequence_offset": max_seq + 1,
+                        "sequence_offset": answer_seq + 1,
                     },
                 },
             )

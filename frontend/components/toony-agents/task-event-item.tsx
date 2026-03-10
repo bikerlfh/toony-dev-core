@@ -28,16 +28,27 @@ export function TaskEventItem({
         </div>
       );
 
-    case "TOOL_USE":
+    case "TOOL_USE": {
+      const toolName = String(event.data.tool_name ?? "");
+      const input = (event.data.input ?? {}) as Record<string, unknown>;
+      const toolDetail =
+        input.description ? String(input.description) :
+        input.file_path ? String(input.file_path) :
+        input.pattern ? String(input.pattern) :
+        input.command ? String(input.command) :
+        input.query ? String(input.query) :
+        input.url ? String(input.url) :
+        "";
       return (
         <div className="py-0.5">
           <span className="text-indigo-400 font-mono text-sm">
             {"▸ "}
-            {String(event.data.tool_name ?? "")}
-            {event.data.file_path ? ` ${String(event.data.file_path)}` : ""}
+            {toolName}
+            {toolDetail ? `: ${toolDetail}` : ""}
           </span>
         </div>
       );
+    }
 
     case "TOOL_RESULT": {
       const resultText = String(event.data.result ?? event.data.output ?? "");

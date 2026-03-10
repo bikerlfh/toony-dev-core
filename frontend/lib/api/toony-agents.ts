@@ -153,10 +153,10 @@ export async function listTaskEvents(
   agentId: string,
   taskId: string,
   afterSequence?: number
-): Promise<PaginatedResponse<TaskEventItem>> {
+): Promise<TaskEventItem[]> {
   const params: Record<string, string> = {};
   if (afterSequence !== undefined) params.after_sequence = String(afterSequence);
-  const { data } = await api.get<PaginatedResponse<TaskEventItem>>(
+  const { data } = await api.get<TaskEventItem[]>(
     `/toony-agents/${agentId}/tasks/${taskId}/events/`,
     { params }
   );

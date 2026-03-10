@@ -22,4 +22,4 @@ def list_task_events(task, *, after_sequence=None):
     qs = TaskEvent.objects.filter(task=task)
     if after_sequence is not None:
         qs = qs.filter(sequence__gt=after_sequence)
-    return qs.order_by("sequence")
+    return qs.order_by("created_at")

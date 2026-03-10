@@ -112,7 +112,7 @@ class AgentTaskCancelView(APIView):
         return Response(AgentTaskDetailSerializer(task).data)
 
 
-class TaskEventListView(PaginatedViewMixin, APIView):
+class TaskEventListView(APIView):
     permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
 
     def get(self, request, agent_id, task_id):
@@ -131,4 +131,5 @@ class TaskEventListView(PaginatedViewMixin, APIView):
         after = request.query_params.get("after_sequence")
         after_seq = int(after) if after else None
         events = list_task_events(task, after_sequence=after_seq)
-        return self.paginate(events, TaskEventSerializer, request)
+        data = TaskEventSerializer(events, many=True, context={"request": request}).data
+        return Response(data)
