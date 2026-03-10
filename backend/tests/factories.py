@@ -1,10 +1,10 @@
 import factory
-from django.utils import timezone
-
 from django.core.files.base import ContentFile
+from django.utils import timezone
 
 from accounts.models import User, UserAPIKey
 from accounts.models.membership import MembershipRole, OrganizationMembership
+from agents.models import Skill, SubAgent
 from organizations.models import Organization, OrganizationSettings
 from projects.models import (
     Cycle,
@@ -17,10 +17,9 @@ from projects.models import (
     ProjectMembership,
     ProjectSettings,
 )
+from toony_agents.models import AgentTask, ToonyAgent, ToonyAgentKey
+from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 from workspace.models import Label, Team, TeamMembership
-from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent, ToonyAgentKey
-from agents.models import SubAgent, Skill
-from workflows.models import Workflow, WorkflowNode, WorkflowEdge
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -141,9 +140,7 @@ class CycleFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Cycle {n}")
     number = factory.Sequence(lambda n: n + 1)
     start_date = factory.LazyFunction(lambda: timezone.now().date())
-    end_date = factory.LazyFunction(
-        lambda: (timezone.now() + timezone.timedelta(days=14)).date()
-    )
+    end_date = factory.LazyFunction(lambda: (timezone.now() + timezone.timedelta(days=14)).date())
 
 
 class IssueFactory(factory.django.DjangoModelFactory):
@@ -264,6 +261,4 @@ class IssueDocumentFactory(factory.django.DjangoModelFactory):
     original_filename = factory.Sequence(lambda n: f"document_{n}.pdf")
     file_size = 1024
     content_type = "application/pdf"
-    file = factory.LazyAttribute(
-        lambda obj: ContentFile(b"fake file content", name=obj.original_filename)
-    )
+    file = factory.LazyAttribute(lambda obj: ContentFile(b"fake file content", name=obj.original_filename))

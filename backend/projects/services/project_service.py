@@ -14,9 +14,7 @@ def create_project(organization, name, slug, creator, **kwargs):
     issue_prefix = kwargs.pop("issue_prefix")
 
     if get_project_by_slug(organization, slug):
-        raise ConflictError(
-            "A project with this slug already exists in the organization."
-        )
+        raise ConflictError("A project with this slug already exists in the organization.")
 
     with transaction.atomic():
         project = Project.objects.create(
@@ -65,12 +63,15 @@ def delete_project(project):
 
 def add_project_member(project, user, role=ProjectMemberRole.CONTRIBUTOR):
     existing = ProjectMembership.objects.filter(
-        project=project, user=user,
+        project=project,
+        user=user,
     ).first()
     if existing:
         raise ConflictError("User is already a member of this project.")
     return ProjectMembership.objects.create(
-        project=project, user=user, role=role,
+        project=project,
+        user=user,
+        role=role,
     )
 
 

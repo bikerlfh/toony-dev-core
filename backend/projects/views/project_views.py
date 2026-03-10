@@ -6,13 +6,13 @@ from rest_framework.views import APIView
 
 from accounts.selectors import get_user_by_email
 from common.mixins import PaginatedViewMixin
-from organizations.permissions import get_membership, MANAGER_ROLES
+from organizations.permissions import MANAGER_ROLES, get_membership
 from projects.permissions import IsProjectAccessible
 from projects.selectors import (
+    get_project_membership,
     get_project_settings,
     list_project_members,
     list_user_projects,
-    get_project_membership,
 )
 from projects.serializers.input import (
     AddProjectMemberSerializer,
@@ -136,7 +136,8 @@ class ProjectMemberDetailView(APIView):
         serializer.is_valid(raise_exception=True)
 
         membership = update_project_member_role(
-            membership, new_role=serializer.validated_data["role"],
+            membership,
+            new_role=serializer.validated_data["role"],
         )
         output = ProjectMembershipSerializer(membership).data
         return Response(output, status=status.HTTP_200_OK)
@@ -169,7 +170,8 @@ class ProjectSettingsView(APIView):
         serializer.is_valid(raise_exception=True)
 
         settings_obj = update_project_settings(
-            settings_obj, **serializer.validated_data,
+            settings_obj,
+            **serializer.validated_data,
         )
         output = ProjectSettingsSerializer(settings_obj).data
         return Response(output, status=status.HTTP_200_OK)

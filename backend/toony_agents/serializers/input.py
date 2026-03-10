@@ -12,7 +12,8 @@ class UpdateToonyAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     metadata = serializers.JSONField(required=False)
     organization_ids = serializers.ListField(
-        child=serializers.UUIDField(), required=False,
+        child=serializers.UUIDField(),
+        required=False,
     )
 
 

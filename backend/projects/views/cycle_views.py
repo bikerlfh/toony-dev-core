@@ -24,7 +24,8 @@ class CycleListCreateView(PaginatedViewMixin, APIView):
         serializer.is_valid(raise_exception=True)
 
         cycle = create_cycle(
-            project=request.project, **serializer.validated_data,
+            project=request.project,
+            **serializer.validated_data,
         )
         output = CycleSerializer(cycle).data
         return Response(output, status=status.HTTP_201_CREATED)

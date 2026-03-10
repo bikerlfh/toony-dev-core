@@ -18,17 +18,25 @@ def list_organization_projects(organization, *, search=None):
 
 
 def get_project_by_slug(organization, project_slug):
-    return Project.objects.filter(
-        organization=organization,
-        slug=project_slug,
-    ).select_related("lead").first()
+    return (
+        Project.objects.filter(
+            organization=organization,
+            slug=project_slug,
+        )
+        .select_related("lead")
+        .first()
+    )
 
 
 def get_project_by_id(project_id):
     """Look up a project by UUID with select_related."""
-    return Project.objects.filter(
-        id=project_id,
-    ).select_related("lead", "organization").first()
+    return (
+        Project.objects.filter(
+            id=project_id,
+        )
+        .select_related("lead", "organization")
+        .first()
+    )
 
 
 def list_user_projects(user, *, search=None):
@@ -52,16 +60,24 @@ def list_user_projects(user, *, search=None):
 
 
 def list_project_members(project):
-    return ProjectMembership.objects.filter(
-        project=project,
-    ).select_related("user").order_by("-joined_at")
+    return (
+        ProjectMembership.objects.filter(
+            project=project,
+        )
+        .select_related("user")
+        .order_by("-joined_at")
+    )
 
 
 def get_project_membership(project, user):
-    return ProjectMembership.objects.filter(
-        project=project,
-        user=user,
-    ).select_related("user").first()
+    return (
+        ProjectMembership.objects.filter(
+            project=project,
+            user=user,
+        )
+        .select_related("user")
+        .first()
+    )
 
 
 def get_project_settings(project):

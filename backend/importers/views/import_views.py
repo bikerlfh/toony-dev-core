@@ -4,8 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
-from organizations.permissions import IsOrganizationAdmin
-from projects.selectors.project_selector import get_project_by_slug
 from importers.selectors import (
     get_import_job_by_id,
     list_import_mappings,
@@ -19,6 +17,8 @@ from importers.serializers.output import (
     ImportMappingSerializer,
 )
 from importers.services import list_external_projects, start_import
+from organizations.permissions import IsOrganizationAdmin
+from projects.selectors.project_selector import get_project_by_slug
 
 
 class ImportJobListCreateView(PaginatedViewMixin, APIView):

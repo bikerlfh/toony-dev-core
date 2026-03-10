@@ -23,5 +23,7 @@ urlpatterns = [
     path("<uuid:org_id>/credentials/", CredentialListCreateView.as_view(), name="credentials-list-create"),
     path("<uuid:org_id>/credentials/<uuid:credential_id>/", CredentialDetailView.as_view(), name="credential-detail"),
     path("<uuid:org_id>/integrations/", IntegrationListCreateView.as_view(), name="integrations-list-create"),
-    path("<uuid:org_id>/integrations/<uuid:integration_id>/", IntegrationDetailView.as_view(), name="integration-detail"),
+    path(
+        "<uuid:org_id>/integrations/<uuid:integration_id>/", IntegrationDetailView.as_view(), name="integration-detail"
+    ),
 ]

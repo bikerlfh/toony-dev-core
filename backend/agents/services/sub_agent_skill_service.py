@@ -1,5 +1,5 @@
-from common.exceptions import ConflictError
 from agents.models import SubAgentSkill
+from common.exceptions import ConflictError
 
 
 def assign_skill(sub_agent, skill, priority=0, custom_config=None):

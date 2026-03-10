@@ -6,11 +6,11 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from organizations.models import Organization
 from projects.models import Issue, Project
-from workspace.models import Label
 from workflows.selectors import get_workflow_by_id, list_workflows
 from workflows.serializers.input import CreateWorkflowSerializer, UpdateWorkflowSerializer
 from workflows.serializers.output import WorkflowDetailSerializer, WorkflowListSerializer
 from workflows.services import create_workflow, delete_workflow, update_workflow
+from workspace.models import Label
 
 
 class WorkflowListCreateView(PaginatedViewMixin, APIView):

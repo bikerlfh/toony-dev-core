@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
 from accounts.serializers.output import UserDetailSerializer
-from agents.models import SubAgent, SubAgentSkill, Skill, SkillVersion
-
+from agents.models import Skill, SkillVersion, SubAgent, SubAgentSkill
 
 # --- SubAgent ---
+
 
 class SubAgentListSerializer(serializers.ModelSerializer):
     organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
@@ -54,6 +54,7 @@ class SubAgentDetailSerializer(serializers.ModelSerializer):
 
 
 # --- Skill ---
+
 
 class SkillListSerializer(serializers.ModelSerializer):
     organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
@@ -106,6 +107,7 @@ class SkillDetailSerializer(serializers.ModelSerializer):
 
 # --- SubAgentSkill ---
 
+
 class SubAgentSkillSerializer(serializers.ModelSerializer):
     skill = SkillListSerializer(read_only=True)
 
@@ -123,6 +125,7 @@ class SubAgentSkillSerializer(serializers.ModelSerializer):
 
 
 # --- SkillVersion ---
+
 
 class SkillVersionSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)

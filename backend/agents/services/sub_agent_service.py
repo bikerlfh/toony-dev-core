@@ -1,8 +1,8 @@
 import json
 
-from common.exceptions import ConflictError
 from agents.models import SubAgent
 from agents.selectors import get_sub_agent_by_slug
+from common.exceptions import ConflictError
 
 
 def create_sub_agent(organization, created_by, name, slug, **kwargs):
@@ -25,8 +25,16 @@ def create_sub_agent(organization, created_by, name, slug, **kwargs):
 
 def update_sub_agent(sub_agent, **kwargs):
     allowed_fields = {
-        "name", "description", "markdown", "version", "status", "agent_type",
-        "capabilities", "encrypted_configuration", "is_external", "external_command",
+        "name",
+        "description",
+        "markdown",
+        "version",
+        "status",
+        "agent_type",
+        "capabilities",
+        "encrypted_configuration",
+        "is_external",
+        "external_command",
         "tags",
     }
 

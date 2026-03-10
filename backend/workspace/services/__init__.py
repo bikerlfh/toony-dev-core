@@ -3,6 +3,10 @@ from workspace.services.label_service import (
     delete_label,
     update_label,
 )
+from workspace.services.project_team_service import (
+    add_project_team,
+    remove_project_team,
+)
 from workspace.services.team_service import (
     add_team_member,
     create_team,
@@ -10,10 +14,6 @@ from workspace.services.team_service import (
     remove_team_member,
     update_team,
     update_team_member_role,
-)
-from workspace.services.project_team_service import (
-    add_project_team,
-    remove_project_team,
 )
 
 __all__ = [

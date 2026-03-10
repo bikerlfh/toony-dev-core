@@ -3,9 +3,6 @@ from rest_framework import status
 
 from tests.factories import (
     IssueFactory,
-    MembershipFactory,
-    OrganizationFactory,
-    OrganizationSettingsFactory,
     ProjectFactory,
     ProjectMembershipFactory,
     ProjectSettingsFactory,
@@ -22,9 +19,7 @@ class TestUserIssueList:
         response = api_client.get(URL)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_list_issues_across_projects(
-        self, authenticated_client, user, organization
-    ):
+    def test_list_issues_across_projects(self, authenticated_client, user, organization):
         # Create two projects with issues
         p1 = ProjectFactory(organization=organization, lead=user)
         ProjectSettingsFactory(project=p1)
@@ -41,9 +36,7 @@ class TestUserIssueList:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) == 2
 
-    def test_excludes_issues_from_non_member_projects(
-        self, authenticated_client, user, organization
-    ):
+    def test_excludes_issues_from_non_member_projects(self, authenticated_client, user, organization):
         # Project user is NOT a member of
         other_user = UserFactory()
         p_other = ProjectFactory(organization=organization, lead=other_user)
@@ -91,12 +84,8 @@ class TestUserIssueList:
         assert len(response.data["results"]) == 1
         assert str(response.data["results"][0]["project_id"]) == str(p1.id)
 
-    def test_response_includes_project_info(
-        self, authenticated_client, user, organization
-    ):
-        p = ProjectFactory(
-            organization=organization, lead=user, color="#FF0000", icon="bug"
-        )
+    def test_response_includes_project_info(self, authenticated_client, user, organization):
+        p = ProjectFactory(organization=organization, lead=user, color="#FF0000", icon="bug")
         ProjectSettingsFactory(project=p)
         ProjectMembershipFactory(project=p, user=user, role="LEAD")
         IssueFactory(project=p, reporter=user)

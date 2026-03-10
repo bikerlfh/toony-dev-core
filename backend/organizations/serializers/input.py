@@ -50,6 +50,7 @@ class UpdateOrganizationSettingsSerializer(serializers.Serializer):
 
 # --- Credential ---
 
+
 class CreateCredentialSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     provider = serializers.ChoiceField(choices=CredentialProvider.choices)
@@ -68,6 +69,7 @@ class UpdateCredentialSerializer(serializers.Serializer):
 
 
 # --- Integration ---
+
 
 class CreateIntegrationSerializer(serializers.Serializer):
     provider = serializers.ChoiceField(choices=IntegrationProvider.choices)

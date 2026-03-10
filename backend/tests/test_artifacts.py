@@ -18,8 +18,10 @@ class TestIssueArtifactList:
     def test_list_artifacts(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         IssueArtifactFactory(issue=issue, agent_task=task)
         IssueArtifactFactory(issue=issue, agent_task=task)
@@ -32,8 +34,10 @@ class TestIssueArtifactList:
     def test_create_artifact(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
 
         url = artifacts_url(project.id, issue.id)
@@ -52,8 +56,10 @@ class TestIssueArtifactList:
     def test_create_artifact_with_approval(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
 
         url = artifacts_url(project.id, issue.id)
@@ -74,8 +80,10 @@ class TestIssueArtifactDetail:
     def test_get_artifact(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         artifact = IssueArtifactFactory(issue=issue, agent_task=task)
 
@@ -90,37 +98,39 @@ class TestIssueArtifactDetail:
     def test_update_artifact_status(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         artifact = IssueArtifactFactory(issue=issue, agent_task=task)
 
         url = artifact_detail_url(project.id, issue.id, artifact.id)
-        response = authenticated_client.patch(
-            url, {"status": "PENDING_APPROVAL"}, format="json"
-        )
+        response = authenticated_client.patch(url, {"status": "PENDING_APPROVAL"}, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["status"] == "PENDING_APPROVAL"
 
     def test_invalid_status_transition(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         artifact = IssueArtifactFactory(issue=issue, agent_task=task)
         # DRAFT -> APPROVED is not valid
         url = artifact_detail_url(project.id, issue.id, artifact.id)
-        response = authenticated_client.patch(
-            url, {"status": "APPROVED"}, format="json"
-        )
+        response = authenticated_client.patch(url, {"status": "APPROVED"}, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_delete_artifact(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         artifact = IssueArtifactFactory(issue=issue, agent_task=task)
 
@@ -133,8 +143,10 @@ class TestGlobalArtifactEndpoints:
     def test_list_all_artifacts(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         IssueArtifactFactory(issue=issue, agent_task=task)
 
@@ -145,8 +157,10 @@ class TestGlobalArtifactEndpoints:
     def test_list_artifacts_with_filters(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         IssueArtifactFactory(issue=issue, agent_task=task, artifact_type="PLAN")
         IssueArtifactFactory(issue=issue, agent_task=task, artifact_type="DESIGN_DOC")
@@ -159,8 +173,10 @@ class TestGlobalArtifactEndpoints:
     def test_get_artifact_global(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         artifact = IssueArtifactFactory(issue=issue, agent_task=task)
 
@@ -173,12 +189,16 @@ class TestArtifactSupersede:
     def test_creating_same_type_supersedes_approved(self, authenticated_client, organization, project, issue):
         agent = ToonyAgentFactory(registered_by=issue.reporter)
         task = AgentTaskFactory(
-            organization=organization, project=project,
-            toony_agent=agent, created_by=issue.reporter,
+            organization=organization,
+            project=project,
+            toony_agent=agent,
+            created_by=issue.reporter,
         )
         first = IssueArtifactFactory(
-            issue=issue, agent_task=task,
-            artifact_type="PLAN", status="APPROVED",
+            issue=issue,
+            agent_task=task,
+            artifact_type="PLAN",
+            status="APPROVED",
         )
 
         url = artifacts_url(project.id, issue.id)

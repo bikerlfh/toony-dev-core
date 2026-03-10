@@ -82,7 +82,8 @@ class IssueListCreateView(PaginatedViewMixin, APIView):
         if milestone_id:
             try:
                 kwargs["milestone"] = Milestone.objects.get(
-                    id=milestone_id, project=request.project,
+                    id=milestone_id,
+                    project=request.project,
                 )
             except Milestone.DoesNotExist:
                 raise NotFound("Milestone not found.")
@@ -91,7 +92,8 @@ class IssueListCreateView(PaginatedViewMixin, APIView):
         if cycle_id:
             try:
                 kwargs["cycle"] = Cycle.objects.get(
-                    id=cycle_id, project=request.project,
+                    id=cycle_id,
+                    project=request.project,
                 )
             except Cycle.DoesNotExist:
                 raise NotFound("Cycle not found.")
@@ -157,7 +159,8 @@ class IssueDetailView(APIView):
             if milestone_id:
                 try:
                     kwargs["milestone"] = Milestone.objects.get(
-                        id=milestone_id, project=request.project,
+                        id=milestone_id,
+                        project=request.project,
                     )
                 except Milestone.DoesNotExist:
                     raise NotFound("Milestone not found.")
@@ -169,7 +172,8 @@ class IssueDetailView(APIView):
             if cycle_id:
                 try:
                     kwargs["cycle"] = Cycle.objects.get(
-                        id=cycle_id, project=request.project,
+                        id=cycle_id,
+                        project=request.project,
                     )
                 except Cycle.DoesNotExist:
                     raise NotFound("Cycle not found.")
@@ -188,9 +192,15 @@ class IssueDetailView(APIView):
 
         # Pass through remaining fields
         allowed = {
-            "title", "description", "status", "priority",
-            "estimate", "due_date", "sort_order",
-            "external_tracker_name", "external_tracker_url",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "external_tracker_name",
+            "external_tracker_url",
             "external_tracker_id",
         }
         for field in allowed:
@@ -247,9 +257,11 @@ class IssueCommentDetailView(APIView):
             raise NotFound("Issue not found.")
 
         from projects.models import IssueComment
+
         try:
             return IssueComment.objects.select_related("author").get(
-                id=comment_id, issue=issue,
+                id=comment_id,
+                issue=issue,
             )
         except IssueComment.DoesNotExist:
             raise NotFound("Comment not found.")
@@ -283,6 +295,7 @@ class IssueActivityListView(PaginatedViewMixin, APIView):
 
 class UserIssueListView(PaginatedViewMixin, APIView):
     """List issues across all projects the authenticated user belongs to."""
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -307,7 +320,8 @@ class IssueFullDetailView(APIView):
             raise NotFound("Issue not found.")
 
         if not ProjectMembership.objects.filter(
-            project=issue.project, user=request.user,
+            project=issue.project,
+            user=request.user,
         ).exists():
             raise PermissionDenied("You are not a member of this project.")
 

@@ -15,12 +15,12 @@ from tests.factories import (
     ProjectFactory,
     ProjectMembershipFactory,
     ProjectSettingsFactory,
+    SkillFactory,
+    SubAgentFactory,
     TeamFactory,
     TeamMembershipFactory,
     ToonyAgentFactory,
     UserFactory,
-    SubAgentFactory,
-    SkillFactory,
     WorkflowFactory,
 )
 

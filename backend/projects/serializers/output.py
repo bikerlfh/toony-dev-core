@@ -36,6 +36,7 @@ class _OrganizationSerializer(serializers.ModelSerializer):
 
 # --- Project ---
 
+
 class ProjectListSerializer(serializers.ModelSerializer):
     lead = UserDetailSerializer(read_only=True)
     organization = _OrganizationSerializer(read_only=True)
@@ -114,9 +115,7 @@ class ProjectMembershipSerializer(serializers.ModelSerializer):
 
 
 class ProjectSettingsSerializer(serializers.ModelSerializer):
-    repository_credential = serializers.UUIDField(
-        source="repository_credential_id", read_only=True
-    )
+    repository_credential = serializers.UUIDField(source="repository_credential_id", read_only=True)
 
     class Meta:
         model = ProjectSettings
@@ -137,6 +136,7 @@ class ProjectSettingsSerializer(serializers.ModelSerializer):
 
 # --- Milestone ---
 
+
 class MilestoneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Milestone
@@ -155,6 +155,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
 
 # --- Cycle ---
 
+
 class CycleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cycle
@@ -172,6 +173,7 @@ class CycleSerializer(serializers.ModelSerializer):
 
 
 # --- Issue ---
+
 
 class IssueListSerializer(serializers.ModelSerializer):
     assignee = UserDetailSerializer(read_only=True)
@@ -198,6 +200,7 @@ class IssueListSerializer(serializers.ModelSerializer):
 
 class _IssueProjectSerializer(serializers.ModelSerializer):
     """Minimal project info embedded in cross-project issue listings."""
+
     class Meta:
         model = Project
         fields = ["id", "name", "icon", "color"]
@@ -236,7 +239,9 @@ class IssueDetailSerializer(serializers.ModelSerializer):
     milestone = MilestoneSerializer(read_only=True)
     cycle = CycleSerializer(read_only=True)
     parent_identifier = serializers.CharField(
-        source="parent.identifier", read_only=True, default=None,
+        source="parent.identifier",
+        read_only=True,
+        default=None,
     )
     sub_issue_count = serializers.SerializerMethodField()
 
@@ -273,6 +278,7 @@ class IssueDetailSerializer(serializers.ModelSerializer):
 
 # --- Comment ---
 
+
 class IssueCommentSerializer(serializers.ModelSerializer):
     author = UserDetailSerializer(read_only=True)
 
@@ -290,6 +296,7 @@ class IssueCommentSerializer(serializers.ModelSerializer):
 
 
 # --- Activity ---
+
 
 class IssueActivitySerializer(serializers.ModelSerializer):
     user = UserDetailSerializer(read_only=True)
@@ -310,6 +317,7 @@ class IssueActivitySerializer(serializers.ModelSerializer):
 
 # --- Resource ---
 
+
 class ProjectResourceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectResource
@@ -325,6 +333,7 @@ class ProjectResourceSerializer(serializers.ModelSerializer):
 
 
 # --- Artifact ---
+
 
 class IssueArtifactListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -379,6 +388,7 @@ class IssueArtifactDetailSerializer(serializers.ModelSerializer):
 
 # --- IssueDocument ---
 
+
 class _DocumentUploaderSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -419,7 +429,9 @@ class IssueFullDetailSerializer(serializers.ModelSerializer):
     milestone = MilestoneSerializer(read_only=True)
     cycle = CycleSerializer(read_only=True)
     parent_identifier = serializers.CharField(
-        source="parent.identifier", read_only=True, default=None,
+        source="parent.identifier",
+        read_only=True,
+        default=None,
     )
     sub_issue_count = serializers.SerializerMethodField()
     comments = IssueCommentSerializer(many=True, read_only=True)

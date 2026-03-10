@@ -42,9 +42,7 @@ class TestRegisterRemoved:
 class TestTokenRefresh:
     def test_refresh_valid(self, api_client):
         UserFactory(username="refreshuser")
-        login = api_client.post(
-            LOGIN_URL, {"username": "refreshuser", "password": "testpass123"}
-        )
+        login = api_client.post(LOGIN_URL, {"username": "refreshuser", "password": "testpass123"})
         refresh_token = login.data["refresh"]
         response = api_client.post(REFRESH_URL, {"refresh": refresh_token})
         assert response.status_code == status.HTTP_200_OK

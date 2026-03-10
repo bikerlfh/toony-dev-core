@@ -6,6 +6,4 @@ def list_organization_integrations(organization):
 
 
 def get_integration_by_id(organization, integration_id):
-    return IntegrationConfig.objects.filter(
-        organization=organization, id=integration_id
-    ).first()
+    return IntegrationConfig.objects.filter(organization=organization, id=integration_id).first()

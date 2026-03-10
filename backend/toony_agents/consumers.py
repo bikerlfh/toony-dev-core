@@ -12,13 +12,12 @@ from toony_agents.models import (
     ToonyAgent,
     ToonyAgentStatus,
 )
-from toony_agents.services.toony_agent_service import (
-    verify_api_key as _sync_verify_api_key,
-)
 from toony_agents.selectors.workspace_config_selector import (
     get_agent_workspace_config as _sync_get_workspace_config,
 )
-
+from toony_agents.services.toony_agent_service import (
+    verify_api_key as _sync_verify_api_key,
+)
 
 # -- Async DB helpers ----------------------------------------------------------
 
@@ -62,7 +61,8 @@ def _update_task_status(task_id, new_status, **kwargs):
         updates["error"] = kwargs["error"]
     if kwargs.get("toony_agent_id"):
         return AgentTask.objects.filter(
-            id=task_id, toony_agent_id=kwargs["toony_agent_id"],
+            id=task_id,
+            toony_agent_id=kwargs["toony_agent_id"],
         ).update(**updates)
     return AgentTask.objects.filter(id=task_id).update(**updates)
 
@@ -71,7 +71,8 @@ def _update_task_status(task_id, new_status, **kwargs):
 def _mark_task_running_if_assigned(task_id):
     """Atomically transition task from ASSIGNED to RUNNING. Returns True if transitioned."""
     rows = AgentTask.objects.filter(
-        id=task_id, status=AgentTaskStatus.ASSIGNED,
+        id=task_id,
+        status=AgentTaskStatus.ASSIGNED,
     ).update(status=AgentTaskStatus.RUNNING, started_at=timezone.now())
     return rows > 0
 
@@ -100,11 +101,14 @@ def _get_queued_tasks(agent_id):
 def _is_org_member(user, agent_id):
     org_ids = list(
         ToonyAgent.objects.filter(id=agent_id).values_list(
-            "organizations__id", flat=True,
+            "organizations__id",
+            flat=True,
         )
     )
     return OrganizationMembership.objects.filter(
-        user=user, organization_id__in=org_ids, is_active=True,
+        user=user,
+        organization_id__in=org_ids,
+        is_active=True,
     ).exists()
 
 
@@ -112,7 +116,8 @@ def _is_org_member(user, agent_id):
 def _validate_task_ownership(task_id, agent_id):
     """Check that a task belongs to the given agent."""
     return AgentTask.objects.filter(
-        id=task_id, toony_agent_id=agent_id,
+        id=task_id,
+        toony_agent_id=agent_id,
     ).exists()
 
 
@@ -121,13 +126,16 @@ def _validate_task_org_member(task_id, user):
     """Check that a task belongs to an org the user is a member of."""
     org_ids = list(
         AgentTask.objects.filter(id=task_id).values_list(
-            "organization_id", flat=True,
+            "organization_id",
+            flat=True,
         )
     )
     if not org_ids:
         return False
     return OrganizationMembership.objects.filter(
-        user=user, organization_id__in=org_ids, is_active=True,
+        user=user,
+        organization_id__in=org_ids,
+        is_active=True,
     ).exists()
 
 
@@ -147,6 +155,7 @@ def _get_task_session_info(task_id):
 @database_sync_to_async
 def _get_max_event_sequence(task_id):
     from django.db.models import Max
+
     result = TaskEvent.objects.filter(task_id=task_id).aggregate(Max("sequence"))
     return result["sequence__max"] or 0
 
@@ -154,6 +163,7 @@ def _get_max_event_sequence(task_id):
 @database_sync_to_async
 def _create_task_question(task_id, question_id, text, session_id):
     from toony_agents.models import AgentTaskQuestion
+
     return AgentTaskQuestion.objects.create(
         task_id=task_id,
         question_id=question_id,
@@ -165,6 +175,7 @@ def _create_task_question(task_id, question_id, text, session_id):
 @database_sync_to_async
 def _answer_task_question(question_id, answer):
     from toony_agents.models import AgentTaskQuestion
+
     return AgentTaskQuestion.objects.filter(
         question_id=question_id,
     ).update(answer=answer, answered_at=timezone.now())
@@ -181,9 +192,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         query_string = self.scope.get("query_string", b"").decode()
-        params = dict(
-            p.split("=", 1) for p in query_string.split("&") if "=" in p
-        )
+        params = dict(p.split("=", 1) for p in query_string.split("&") if "=" in p)
         raw_key = params.get("key", "")
 
         self.toony_agent = await _verify_api_key(raw_key)
@@ -202,7 +211,8 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
         if hasattr(self, "agent_id"):
             await _set_agent_status(self.agent_id, ToonyAgentStatus.OFFLINE)
             await self.channel_layer.group_discard(
-                self.runner_group, self.channel_name,
+                self.runner_group,
+                self.channel_name,
             )
             # Notify frontend
             await self.channel_layer.group_send(
@@ -216,8 +226,10 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
         if msg_type == "register":
             metadata = content.get("metadata", {})
             await _set_agent_status(
-                self.agent_id, ToonyAgentStatus.ONLINE,
-                last_connected_at=True, metadata=metadata,
+                self.agent_id,
+                ToonyAgentStatus.ONLINE,
+                last_connected_at=True,
+                metadata=metadata,
             )
             await self.channel_layer.group_send(
                 self.frontend_group,
@@ -228,10 +240,12 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             )
             # Send workspace config sync.
             workspace_config = await _get_workspace_config(self.agent_id)
-            await self.send_json({
-                "type": "config.sync",
-                "organizations": workspace_config,
-            })
+            await self.send_json(
+                {
+                    "type": "config.sync",
+                    "organizations": workspace_config,
+                }
+            )
             # Send any queued tasks
             queued = await _get_queued_tasks(self.agent_id)
             for task in queued:
@@ -258,7 +272,9 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_json({"type": "error", "message": "Task not found for this agent"})
                 return
             await _update_task_status(
-                task_id, AgentTaskStatus.ASSIGNED, toony_agent_id=self.agent_id,
+                task_id,
+                AgentTaskStatus.ASSIGNED,
+                toony_agent_id=self.agent_id,
             )
             await self.channel_layer.group_send(
                 self.frontend_group,
@@ -315,14 +331,19 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             sequence = content.get("sequence", 0)
 
             await _update_task_status(
-                task_id, AgentTaskStatus.WAITING_FOR_ANSWER,
+                task_id,
+                AgentTaskStatus.WAITING_FOR_ANSWER,
                 toony_agent_id=self.agent_id,
             )
             await _create_task_question(
-                task_id, question_id, question_text, session_id,
+                task_id,
+                question_id,
+                question_text,
+                session_id,
             )
             await _create_task_event(
-                task_id, TaskEventType.QUESTION_ASKED,
+                task_id,
+                TaskEventType.QUESTION_ASKED,
                 {"question_id": question_id, "text": question_text},
                 sequence,
             )
@@ -350,8 +371,10 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             result = content.get("result", "")
             session_id = content.get("session_id")
             await _update_task_status(
-                task_id, AgentTaskStatus.COMPLETED,
-                result=result, toony_agent_id=self.agent_id,
+                task_id,
+                AgentTaskStatus.COMPLETED,
+                result=result,
+                toony_agent_id=self.agent_id,
             )
             if session_id:
                 await _update_task_session_id(task_id, session_id)
@@ -378,8 +401,10 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 return
             error = content.get("error", "")
             await _update_task_status(
-                task_id, AgentTaskStatus.FAILED,
-                error=error, toony_agent_id=self.agent_id,
+                task_id,
+                AgentTaskStatus.FAILED,
+                error=error,
+                toony_agent_id=self.agent_id,
             )
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
             await self.channel_layer.group_send(
@@ -419,18 +444,22 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
     # Group handlers (receive from frontend consumer via channel layer)
 
     async def question_answered(self, event):
-        await self.send_json({
-            "type": "question.answered",
-            "task_id": event["data"]["task_id"],
-            "question_id": event["data"]["question_id"],
-            "answer": event["data"]["answer"],
-        })
+        await self.send_json(
+            {
+                "type": "question.answered",
+                "task_id": event["data"]["task_id"],
+                "question_id": event["data"]["question_id"],
+                "answer": event["data"]["answer"],
+            }
+        )
 
     async def task_cancel(self, event):
-        await self.send_json({
-            "type": "task.cancel",
-            "task_id": event["data"]["task_id"],
-        })
+        await self.send_json(
+            {
+                "type": "task.cancel",
+                "task_id": event["data"]["task_id"],
+            }
+        )
 
     async def task_assign(self, event):
         msg = {
@@ -444,21 +473,25 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(msg)
 
     async def task_reply(self, event):
-        await self.send_json({
-            "type": "task.reply",
-            "task_id": event["data"]["task_id"],
-            "message": event["data"]["message"],
-            "session_id": event["data"]["session_id"],
-            "sequence_offset": event["data"].get("sequence_offset", 0),
-        })
+        await self.send_json(
+            {
+                "type": "task.reply",
+                "task_id": event["data"]["task_id"],
+                "message": event["data"]["message"],
+                "session_id": event["data"]["session_id"],
+                "sequence_offset": event["data"].get("sequence_offset", 0),
+            }
+        )
 
     async def config_sync_request(self, event):
         """Frontend requested config sync — query fresh data and send to runner."""
         workspace_config = await _get_workspace_config(self.agent_id)
-        await self.send_json({
-            "type": "config.sync",
-            "organizations": workspace_config,
-        })
+        await self.send_json(
+            {
+                "type": "config.sync",
+                "organizations": workspace_config,
+            }
+        )
 
 
 # -- Frontend-facing consumer --------------------------------------------------
@@ -487,7 +520,8 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, code):
         if hasattr(self, "group_name"):
             await self.channel_layer.group_discard(
-                self.group_name, self.channel_name,
+                self.group_name,
+                self.channel_name,
             )
 
     async def receive_json(self, content, **kwargs):
@@ -506,7 +540,8 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 return
             await _answer_task_question(question_id, answer)
             await _create_task_event(
-                task_id, TaskEventType.QUESTION_ANSWERED,
+                task_id,
+                TaskEventType.QUESTION_ANSWERED,
                 {"question_id": question_id, "answer": answer},
                 content.get("sequence", 0),
             )
@@ -557,7 +592,8 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
             reply_seq = max_seq + 1
             # Create REPLY event
             await _create_task_event(
-                task_id, TaskEventType.REPLY,
+                task_id,
+                TaskEventType.REPLY,
                 {"message": message},
                 reply_seq,
             )

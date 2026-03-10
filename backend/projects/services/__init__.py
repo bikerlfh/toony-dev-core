@@ -3,11 +3,11 @@ from projects.services.artifact_service import (
     delete_artifact,
     update_artifact,
 )
+from projects.services.cycle_service import create_cycle, delete_cycle, update_cycle
 from projects.services.document_service import (
     create_issue_document,
     delete_issue_document,
 )
-from projects.services.cycle_service import create_cycle, delete_cycle, update_cycle
 from projects.services.issue_service import (
     create_comment,
     create_issue,
@@ -21,11 +21,6 @@ from projects.services.milestone_service import (
     delete_milestone,
     update_milestone,
 )
-from projects.services.resource_service import (
-    create_resource,
-    delete_resource,
-    update_resource,
-)
 from projects.services.project_service import (
     add_project_member,
     create_project,
@@ -34,6 +29,11 @@ from projects.services.project_service import (
     update_project,
     update_project_member_role,
     update_project_settings,
+)
+from projects.services.resource_service import (
+    create_resource,
+    delete_resource,
+    update_resource,
 )
 
 __all__ = [

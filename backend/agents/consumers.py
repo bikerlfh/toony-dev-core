@@ -9,9 +9,7 @@ from agents.models import SubAgent
 @database_sync_to_async
 def _get_sub_agent_org_id(sub_agent_id):
     try:
-        return str(
-            SubAgent.objects.values_list("organization_id", flat=True).get(id=sub_agent_id)
-        )
+        return str(SubAgent.objects.values_list("organization_id", flat=True).get(id=sub_agent_id))
     except SubAgent.DoesNotExist:
         return None
 
@@ -55,9 +53,7 @@ class SubAgentConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         if hasattr(self, "group_name"):
-            await self.channel_layer.group_discard(
-                self.group_name, self.channel_name
-            )
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
         msg_type = content.get("type")

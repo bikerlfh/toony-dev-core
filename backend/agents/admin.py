@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from agents.models import SubAgent, SubAgentSkill, Skill, SkillVersion
+from agents.models import Skill, SkillVersion, SubAgent, SubAgentSkill
 
 
 @admin.register(SubAgent)

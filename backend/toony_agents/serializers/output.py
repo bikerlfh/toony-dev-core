@@ -7,8 +7,14 @@ class ToonyAgentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ToonyAgent
         fields = [
-            "id", "name", "slug", "status", "last_heartbeat",
-            "last_connected_at", "metadata", "created_at",
+            "id",
+            "name",
+            "slug",
+            "status",
+            "last_heartbeat",
+            "last_connected_at",
+            "metadata",
+            "created_at",
         ]
         read_only_fields = fields
 
@@ -20,9 +26,17 @@ class ToonyAgentDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ToonyAgent
         fields = [
-            "id", "name", "slug", "status", "last_heartbeat",
-            "last_connected_at", "metadata", "registered_by",
-            "organizations", "created_at", "updated_at",
+            "id",
+            "name",
+            "slug",
+            "status",
+            "last_heartbeat",
+            "last_connected_at",
+            "metadata",
+            "registered_by",
+            "organizations",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 
@@ -36,48 +50,67 @@ class ToonyAgentDetailSerializer(serializers.ModelSerializer):
         }
 
     def get_organizations(self, obj):
-        return [
-            {"id": str(o.id), "name": o.name, "slug": o.slug}
-            for o in obj.organizations.all()
-        ]
+        return [{"id": str(o.id), "name": o.name, "slug": o.slug} for o in obj.organizations.all()]
 
 
 class ToonyAgentKeySerializer(serializers.ModelSerializer):
     class Meta:
         model = ToonyAgentKey
         fields = [
-            "id", "key_prefix", "name", "is_active",
-            "last_used_at", "expires_at", "created_at",
+            "id",
+            "key_prefix",
+            "name",
+            "is_active",
+            "last_used_at",
+            "expires_at",
+            "created_at",
         ]
         read_only_fields = fields
 
 
 class AgentTaskListSerializer(serializers.ModelSerializer):
     toony_agent_slug = serializers.CharField(
-        source="toony_agent.slug", default=None,
+        source="toony_agent.slug",
+        default=None,
     )
 
     class Meta:
         model = AgentTask
         fields = [
-            "id", "title", "status", "toony_agent_slug",
-            "started_at", "completed_at", "created_at",
+            "id",
+            "title",
+            "status",
+            "toony_agent_slug",
+            "started_at",
+            "completed_at",
+            "created_at",
         ]
         read_only_fields = fields
 
 
 class AgentTaskDetailSerializer(serializers.ModelSerializer):
     toony_agent_slug = serializers.CharField(
-        source="toony_agent.slug", default=None,
+        source="toony_agent.slug",
+        default=None,
     )
     created_by = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentTask
         fields = [
-            "id", "title", "prompt", "status", "toony_agent_slug",
-            "result", "error", "session_id", "started_at", "completed_at",
-            "created_by", "created_at", "updated_at",
+            "id",
+            "title",
+            "prompt",
+            "status",
+            "toony_agent_slug",
+            "result",
+            "error",
+            "session_id",
+            "started_at",
+            "completed_at",
+            "created_by",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 

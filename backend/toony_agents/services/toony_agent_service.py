@@ -3,14 +3,16 @@ import secrets
 
 from django.db import transaction
 
-from common.broadcast import broadcast
 from toony_agents.models import ToonyAgent, ToonyAgentKey
 
 
 def create_toony_agent(registered_by, name, slug, **kwargs):
     with transaction.atomic():
         agent = ToonyAgent.objects.create(
-            name=name, slug=slug, registered_by=registered_by, **kwargs,
+            name=name,
+            slug=slug,
+            registered_by=registered_by,
+            **kwargs,
         )
     return agent
 
@@ -37,8 +39,11 @@ def generate_api_key(toony_agent, created_by, name="default"):
     key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
     key_prefix = raw_key[:12]
     key = ToonyAgentKey.objects.create(
-        toony_agent=toony_agent, key_hash=key_hash, key_prefix=key_prefix,
-        name=name, created_by=created_by,
+        toony_agent=toony_agent,
+        key_hash=key_hash,
+        key_prefix=key_prefix,
+        name=name,
+        created_by=created_by,
     )
     return key, raw_key
 
@@ -53,11 +58,13 @@ def verify_api_key(raw_key):
     key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
     try:
         key = ToonyAgentKey.objects.select_related("toony_agent").get(
-            key_hash=key_hash, is_active=True,
+            key_hash=key_hash,
+            is_active=True,
         )
     except ToonyAgentKey.DoesNotExist:
         return None
     from django.utils import timezone
+
     if key.expires_at and key.expires_at < timezone.now():
         return None
     key.last_used_at = timezone.now()

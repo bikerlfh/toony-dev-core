@@ -13,7 +13,6 @@ urlpatterns = [
     # Labels
     path("labels/", LabelListCreateView.as_view(), name="workspace-label-list"),
     path("labels/<uuid:label_id>/", LabelDetailView.as_view(), name="workspace-label-detail"),
-
     # Teams
     path("teams/", TeamListCreateView.as_view(), name="workspace-team-list"),
     path("teams/<uuid:team_id>/", TeamDetailView.as_view(), name="workspace-team-detail"),

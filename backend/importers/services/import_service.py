@@ -5,9 +5,8 @@ from django.utils import timezone
 from importers.models import ImportJob, ImportJobStatus, ImportMapping
 from importers.plugins.registry import get_plugin
 from organizations.models import IntegrationConfig
-from workspace.models import Label
 from projects.services.issue_service import create_issue
-
+from workspace.models import Label
 
 STATUS_MAP = {
     "Backlog": "BACKLOG",
@@ -140,11 +139,13 @@ def _run_import(import_job, plugin, external_project_id, user):
 
             imported_count += 1
         except Exception as exc:
-            errors.append({
-                "external_id": ext_issue.id,
-                "title": ext_issue.title,
-                "error": str(exc),
-            })
+            errors.append(
+                {
+                    "external_id": ext_issue.id,
+                    "title": ext_issue.title,
+                    "error": str(exc),
+                }
+            )
 
         import_job.imported_items = imported_count
         import_job.progress = int(((i + 1) / max(len(external_issues), 1)) * 100)

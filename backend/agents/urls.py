@@ -1,13 +1,13 @@
 from django.urls import path
 
 from agents.views import (
+    SkillDetailView,
+    SkillListCreateView,
+    SkillVersionListView,
     SubAgentDetailView,
     SubAgentListCreateView,
     SubAgentSkillDetailView,
     SubAgentSkillListCreateView,
-    SkillDetailView,
-    SkillListCreateView,
-    SkillVersionListView,
 )
 
 app_name = "agents"

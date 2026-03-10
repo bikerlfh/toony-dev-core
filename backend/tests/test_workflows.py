@@ -1,6 +1,14 @@
 import pytest
 from rest_framework import status
-from tests.factories import SubAgentFactory, SkillFactory, WorkflowNodeFactory, WorkflowEdgeFactory, WorkflowFactory, LabelFactory
+
+from tests.factories import (
+    LabelFactory,
+    SkillFactory,
+    SubAgentFactory,
+    WorkflowEdgeFactory,
+    WorkflowFactory,
+    WorkflowNodeFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -71,9 +79,7 @@ class TestWorkflowDetail:
 
     def test_update_workflow(self, authenticated_client, workflow):
         data = {"name": "Updated Name", "is_active": False}
-        response = authenticated_client.patch(
-            workflow_url(workflow.id), data, format="json"
-        )
+        response = authenticated_client.patch(workflow_url(workflow.id), data, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["name"] == "Updated Name"
         assert response.data["is_active"] is False
@@ -131,9 +137,7 @@ class TestWorkflowNodeDetail:
     def test_update_node_position(self, authenticated_client, workflow):
         node = WorkflowNodeFactory(workflow=workflow)
         data = {"position_x": 500.0, "position_y": 600.0}
-        response = authenticated_client.patch(
-            node_url(workflow.id, node.id), data, format="json"
-        )
+        response = authenticated_client.patch(node_url(workflow.id, node.id), data, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["position_x"] == 500.0
 
@@ -251,25 +255,20 @@ class TestWorkflowResolve:
 
 
 class TestWorkflowResolveYAML:
-    def test_resolve_returns_yaml_with_format_param(
-        self, authenticated_client, project, issue, user
-    ):
+    def test_resolve_returns_yaml_with_format_param(self, authenticated_client, project, issue, user):
         """When ?format=yaml, returns YAML string."""
         wf = WorkflowFactory(created_by=user, project=project, is_active=True)
         sa = SubAgentFactory(created_by=user)
         sk = SkillFactory(created_by=user)
-        n1 = WorkflowNodeFactory(
-            workflow=wf, node_type="SUBAGENT", sub_agent=sa, skill=None, order=0
-        )
-        n2 = WorkflowNodeFactory(
-            workflow=wf, node_type="SKILL", skill=sk, sub_agent=None, order=1
-        )
+        n1 = WorkflowNodeFactory(workflow=wf, node_type="SUBAGENT", sub_agent=sa, skill=None, order=0)
+        n2 = WorkflowNodeFactory(workflow=wf, node_type="SKILL", skill=sk, sub_agent=None, order=1)
         WorkflowEdgeFactory(workflow=wf, source_node=n1, target_node=n2)
 
         response = authenticated_client.get(resolve_url(issue.id) + "?format=yaml")
         assert response.status_code == status.HTTP_200_OK
         assert response["Content-Type"] == "text/yaml"
         import yaml
+
         data = yaml.safe_load(response.content)
         assert data["name"] == wf.name
         assert len(data["nodes"]) == 2

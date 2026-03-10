@@ -8,7 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # All run inside Docker (via Makefile from repo root)
 make test                   # pytest -v
 make test-cov               # pytest --cov --cov-report=term-missing
-make lint                   # flake8 --max-line-length=120 --exclude=migrations,__pycache__
+make lint                   # ruff check .
+make format                 # ruff format .
+make format-check           # ruff format --check .
 make migrate                # python manage.py migrate
 make makemigrations         # python manage.py makemigrations
 make shell                  # python manage.py shell

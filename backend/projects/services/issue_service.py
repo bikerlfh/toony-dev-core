@@ -41,6 +41,7 @@ def update_issue(issue, user, **kwargs):
     label_ids = kwargs.pop("label_ids", None)
 
     from rest_framework.exceptions import ValidationError as DRFValidationError
+
     from projects.models.issue import IssueStatus
 
     editable_statuses = {IssueStatus.BACKLOG, IssueStatus.TODO}
@@ -50,9 +51,17 @@ def update_issue(issue, user, **kwargs):
         )
 
     tracked_fields = {
-        "title", "description", "status", "priority",
-        "assignee", "milestone", "cycle", "parent",
-        "estimate", "due_date", "sort_order",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "assignee",
+        "milestone",
+        "cycle",
+        "parent",
+        "estimate",
+        "due_date",
+        "sort_order",
     }
 
     activities = []
@@ -76,10 +85,19 @@ def update_issue(issue, user, **kwargs):
 
     with transaction.atomic():
         allowed_fields = {
-            "title", "description", "status", "priority",
-            "assignee", "milestone", "cycle", "parent",
-            "estimate", "due_date", "sort_order",
-            "external_tracker_name", "external_tracker_url",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "milestone",
+            "cycle",
+            "parent",
+            "estimate",
+            "due_date",
+            "sort_order",
+            "external_tracker_name",
+            "external_tracker_url",
             "external_tracker_id",
         }
         for field, value in kwargs.items():

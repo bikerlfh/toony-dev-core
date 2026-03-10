@@ -27,7 +27,8 @@ class ProjectTeamListCreateView(PaginatedViewMixin, APIView):
 
         try:
             team = Team.objects.get(
-                id=serializer.validated_data["team_id"], is_active=True,
+                id=serializer.validated_data["team_id"],
+                is_active=True,
             )
         except Team.DoesNotExist:
             raise NotFound("Team not found.")

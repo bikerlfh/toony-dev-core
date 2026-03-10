@@ -1,10 +1,10 @@
 from rest_framework import serializers
 
-from agents.models.sub_agent import SubAgentStatus, SubAgentType
 from agents.models.skill import SkillCategory, SkillStatus
-
+from agents.models.sub_agent import SubAgentStatus, SubAgentType
 
 # --- SubAgent ---
+
 
 class CreateSubAgentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -42,7 +42,8 @@ class UpdateSubAgentSerializer(serializers.Serializer):
     external_command = serializers.CharField(required=False, allow_blank=True)
     tags = serializers.JSONField(required=False)
     assigned_projects = serializers.ListField(
-        child=serializers.UUIDField(), required=False,
+        child=serializers.UUIDField(),
+        required=False,
     )
 
     def validate(self, attrs):
@@ -54,6 +55,7 @@ class UpdateSubAgentSerializer(serializers.Serializer):
 
 
 # --- Skill ---
+
 
 class CreateSkillSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -103,6 +105,7 @@ class UpdateSkillSerializer(serializers.Serializer):
 
 
 # --- SubAgentSkill ---
+
 
 class CreateSubAgentSkillSerializer(serializers.Serializer):
     skill = serializers.UUIDField()

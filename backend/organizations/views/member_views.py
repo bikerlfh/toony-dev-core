@@ -46,11 +46,15 @@ class MemberDetailView(APIView):
     permission_classes = [IsAuthenticated, IsOrganizationAdmin]
 
     def _get_membership(self, org, user_id):
-        membership = OrganizationMembership.objects.filter(
-            organization=org,
-            user_id=user_id,
-            is_active=True,
-        ).select_related("user").first()
+        membership = (
+            OrganizationMembership.objects.filter(
+                organization=org,
+                user_id=user_id,
+                is_active=True,
+            )
+            .select_related("user")
+            .first()
+        )
         if membership is None:
             raise NotFound("Membership not found.")
         return membership

@@ -31,32 +31,34 @@ def get_agent_workspace_config(agent_id):
             reviewers = []
             if settings:
                 reviewer_memberships = proj.memberships.filter(role="REVIEWER")
-                reviewers = [
-                    m.user.email for m in reviewer_memberships.select_related("user")
-                ]
+                reviewers = [m.user.email for m in reviewer_memberships.select_related("user")]
 
-            projects.append({
-                "id": str(proj.id),
-                "name": proj.name,
-                "slug": proj.slug,
-                "repository_url": settings.repository_url if settings else "",
-                "base_branch": settings.default_branch if settings else "main",
-                "branch_convention": settings.branch_naming_convention if settings else "",
-                "default_reviewers": reviewers,
-                "issue_prefix": settings.issue_prefix if settings else "",
-            })
+            projects.append(
+                {
+                    "id": str(proj.id),
+                    "name": proj.name,
+                    "slug": proj.slug,
+                    "repository_url": settings.repository_url if settings else "",
+                    "base_branch": settings.default_branch if settings else "main",
+                    "branch_convention": settings.branch_naming_convention if settings else "",
+                    "default_reviewers": reviewers,
+                    "issue_prefix": settings.issue_prefix if settings else "",
+                }
+            )
 
-        result.append({
-            "id": str(org.id),
-            "name": org.name,
-            "slug": org.slug,
-            "integrations": integrations,
-            "defaults": {
-                "base_branch": "main",
-                "branch_convention": "",
-                "default_reviewers": [],
-            },
-            "projects": projects,
-        })
+        result.append(
+            {
+                "id": str(org.id),
+                "name": org.name,
+                "slug": org.slug,
+                "integrations": integrations,
+                "defaults": {
+                    "base_branch": "main",
+                    "branch_convention": "",
+                    "default_reviewers": [],
+                },
+                "projects": projects,
+            }
+        )
 
     return result
