@@ -167,12 +167,28 @@ class TestQuestionAnswered:
             "task_id": "task-1",
             "question_id": "q-1",
             "answer": "React",
+            "session_id": "sess-abc",
+            "sequence_offset": 5,
         }
         msg = parse_server_message(raw)
         assert isinstance(msg, QuestionAnswered)
         assert msg.task_id == "task-1"
         assert msg.question_id == "q-1"
         assert msg.answer == "React"
+        assert msg.session_id == "sess-abc"
+        assert msg.sequence_offset == 5
+
+    def test_parse_question_answered_defaults(self):
+        raw = {
+            "type": "question.answered",
+            "task_id": "task-1",
+            "question_id": "q-1",
+            "answer": "React",
+        }
+        msg = parse_server_message(raw)
+        assert isinstance(msg, QuestionAnswered)
+        assert msg.session_id == ""
+        assert msg.sequence_offset == 0
 
 
 class TestTaskAssignProjectId:

@@ -142,6 +142,8 @@ class QuestionAnswered:
     task_id: str
     question_id: str
     answer: str
+    session_id: str = ""
+    sequence_offset: int = 0
 
 
 @dataclass
@@ -250,6 +252,8 @@ def parse_server_message(data: dict) -> IncomingMessage:
             task_id=data["task_id"],
             question_id=data["question_id"],
             answer=data.get("answer", ""),
+            session_id=data.get("session_id", ""),
+            sequence_offset=data.get("sequence_offset", 0),
         )
 
     if msg_type == "task.cancel":
