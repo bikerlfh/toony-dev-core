@@ -9,8 +9,8 @@ RUN apk add --no-cache gcc musl-dev libpq-dev \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN uv pip install --no-cache-dir --prefix=/install -r requirements.txt
+COPY requirements/ requirements/
+RUN uv pip install --no-cache-dir --prefix=/install -r requirements/base.txt
 
 # ---- Runtime ----
 FROM python:3.12-alpine
