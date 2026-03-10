@@ -125,14 +125,51 @@ class TestParseStreamEvent:
 
 
 class TestExtractQuestionFromAssistant:
-    def test_extracts_ask_user_question(self):
+    def test_extracts_structured_questions_format(self):
         from toony_agent_runner.cli_executor import extract_question_from_assistant
 
         raw = {
             "type": "assistant",
             "message": {
                 "content": [
-                    {"type": "text", "text": "Let me ask you something."},
+                    {
+                        "type": "tool_use",
+                        "name": "AskUserQuestion",
+                        "id": "tu1",
+                        "input": {
+                            "questions": [
+                                {
+                                    "question": "What framework?",
+                                    "header": "Setup",
+                                    "options": [
+                                        {"label": "React", "description": "Frontend lib"},
+                                        {"label": "Vue", "description": "Alternative"},
+                                    ],
+                                    "multiSelect": False,
+                                }
+                            ]
+                        },
+                    },
+                ],
+            },
+            "session_id": "abc",
+        }
+        question = extract_question_from_assistant(raw)
+        assert question is not None
+        assert question["text"] == "What framework?"
+        assert question["header"] == "Setup"
+        assert len(question["options"]) == 2
+        assert question["options"][0]["label"] == "React"
+        assert question["multi_select"] is False
+
+    def test_extracts_simple_question_format(self):
+        """Backwards compat: old format with top-level 'question' key."""
+        from toony_agent_runner.cli_executor import extract_question_from_assistant
+
+        raw = {
+            "type": "assistant",
+            "message": {
+                "content": [
                     {
                         "type": "tool_use",
                         "name": "AskUserQuestion",
@@ -146,6 +183,35 @@ class TestExtractQuestionFromAssistant:
         question = extract_question_from_assistant(raw)
         assert question is not None
         assert question["text"] == "What framework?"
+        assert question["header"] is None
+        assert question["options"] == []
+        assert question["multi_select"] is False
+
+    def test_extracts_structured_without_options(self):
+        from toony_agent_runner.cli_executor import extract_question_from_assistant
+
+        raw = {
+            "type": "assistant",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "name": "AskUserQuestion",
+                        "id": "tu1",
+                        "input": {
+                            "questions": [
+                                {"question": "What's your name?"}
+                            ]
+                        },
+                    },
+                ],
+            },
+            "session_id": "abc",
+        }
+        question = extract_question_from_assistant(raw)
+        assert question is not None
+        assert question["text"] == "What's your name?"
+        assert question["options"] == []
 
     def test_returns_none_for_no_question(self):
         from toony_agent_runner.cli_executor import extract_question_from_assistant
