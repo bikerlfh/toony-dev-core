@@ -117,12 +117,18 @@ class TestConfigSyncAckMessage:
 
 
 class TestQuestionAskedMessage:
-    def test_to_json(self):
+    def test_to_json_with_options(self):
         msg = QuestionAskedMessage(
             task_id="task-1",
             session_id="sess-1",
             question_id="q-1",
-            question_text="What framework?",
+            question_data={
+                "text": "What framework?",
+                "type": "options",
+                "header": "Setup",
+                "options": [{"label": "React", "description": "Frontend lib"}],
+                "multi_select": False,
+            },
         )
         j = msg.to_json()
         assert j == {
@@ -132,9 +138,26 @@ class TestQuestionAskedMessage:
             "question_id": "q-1",
             "question": {
                 "text": "What framework?",
-                "type": "free_text",
+                "type": "options",
+                "header": "Setup",
+                "options": [{"label": "React", "description": "Frontend lib"}],
+                "multi_select": False,
             },
         }
+
+    def test_to_json_free_text(self):
+        msg = QuestionAskedMessage(
+            task_id="task-1",
+            session_id="sess-1",
+            question_id="q-1",
+            question_data={
+                "text": "What's your name?",
+                "type": "free_text",
+            },
+        )
+        j = msg.to_json()
+        assert j["question"]["type"] == "free_text"
+        assert j["question"]["text"] == "What's your name?"
 
 
 class TestQuestionAnswered:

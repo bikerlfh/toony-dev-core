@@ -75,7 +75,7 @@ class QuestionAskedMessage:
     task_id: str
     session_id: str
     question_id: str
-    question_text: str
+    question_data: dict[str, Any]
 
     def to_json(self) -> dict:
         return {
@@ -83,10 +83,7 @@ class QuestionAskedMessage:
             "task_id": self.task_id,
             "session_id": self.session_id,
             "question_id": self.question_id,
-            "question": {
-                "text": self.question_text,
-                "type": "free_text",
-            },
+            "question": self.question_data,
         }
 
 
