@@ -5,21 +5,10 @@ from __future__ import annotations
 
 import asyncio
 import textwrap
-from unittest.mock import AsyncMock
 
 import pytest
 
-from toony_agent_runner.connection import BackendConnection
 from toony_agent_runner.main import ClaudeConfig, RunnerConfig, load_config
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _make_conn() -> BackendConnection:
-    """Create a BackendConnection without actually connecting."""
-    return BackendConnection(url="ws://fake", api_key="fake")
 
 
 # ---------------------------------------------------------------------------
@@ -52,54 +41,6 @@ class TestConfigMaxConcurrentTasks:
         """))
         cfg = load_config(str(config_file))
         assert cfg.claude.max_concurrent_tasks == 1
-
-
-# ---------------------------------------------------------------------------
-# Approval routing tests
-# ---------------------------------------------------------------------------
-
-class TestQuestionRoutingByTaskId:
-    def test_separate_futures_per_task(self):
-        conn = _make_conn()
-        loop = asyncio.new_event_loop()
-        try:
-            f1: asyncio.Future[dict] = loop.create_future()
-            f2: asyncio.Future[dict] = loop.create_future()
-            conn.pending_questions["task-aaa"] = f1
-            conn.pending_questions["task-bbb"] = f2
-
-            # Resolve only task-aaa
-            conn.pending_questions["task-aaa"].set_result({"action": "approve"})
-
-            assert f1.done()
-            assert not f2.done()
-            assert f1.result() == {"action": "approve"}
-        finally:
-            loop.close()
-
-    def test_resolve_specific_task(self):
-        conn = _make_conn()
-        loop = asyncio.new_event_loop()
-        try:
-            f1: asyncio.Future[dict] = loop.create_future()
-            f2: asyncio.Future[dict] = loop.create_future()
-            conn.pending_questions["task-aaa"] = f1
-            conn.pending_questions["task-bbb"] = f2
-
-            # Resolve task-bbb
-            future = conn.pending_questions.get("task-bbb")
-            assert future is not None
-            future.set_result({"action": "reject", "response": "no"})
-
-            assert not f1.done()
-            assert f2.done()
-            assert f2.result()["action"] == "reject"
-        finally:
-            loop.close()
-
-    def test_missing_task_returns_none(self):
-        conn = _make_conn()
-        assert conn.pending_questions.get("nonexistent") is None
 
 
 # ---------------------------------------------------------------------------
