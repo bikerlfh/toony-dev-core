@@ -73,7 +73,7 @@ loaddata:
 
 ## Delete all migration files and regenerate them (destructive!)
 reset-migrations:
-	$(BACKEND) find accounts organizations projects workspace agents workflows toony_agents importers \
+	$(BACKEND) find apps/accounts apps/organizations apps/projects apps/workspace apps/agents apps/workflows apps/toony_agents apps/importers \
 		-path "*/migrations/[0-9]*.py" -delete
 	$(MANAGE) makemigrations accounts organizations projects workspace agents workflows toony_agents importers
 
