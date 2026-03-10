@@ -100,10 +100,7 @@ class LinearPlugin(ImportPlugin):
                     description=issue.get("description", ""),
                     status=issue.get("state", {}).get("name", ""),
                     priority=priority_map.get(issue.get("priority", 0), "NONE"),
-                    labels=[
-                        label["name"]
-                        for label in issue.get("labels", {}).get("nodes", [])
-                    ],
+                    labels=[label["name"] for label in issue.get("labels", {}).get("nodes", [])],
                     assignee_email=issue.get("assignee", {}).get("email", "") if issue.get("assignee") else "",
                     created_at=issue.get("createdAt", ""),
                 )

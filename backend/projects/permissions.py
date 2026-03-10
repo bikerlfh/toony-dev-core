@@ -12,9 +12,13 @@ class IsProjectAccessible(BasePermission):
         if not project_id:
             return False
 
-        project = Project.objects.filter(
-            id=project_id,
-        ).select_related("lead", "organization").first()
+        project = (
+            Project.objects.filter(
+                id=project_id,
+            )
+            .select_related("lead", "organization")
+            .first()
+        )
         if project is None:
             return False
 

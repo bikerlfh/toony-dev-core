@@ -9,11 +9,7 @@ from projects.models import Project
 @database_sync_to_async
 def _get_project_org_id(project_id):
     try:
-        return str(
-            Project.objects.values_list(
-                "team__organization_id", flat=True
-            ).get(id=project_id)
-        )
+        return str(Project.objects.values_list("team__organization_id", flat=True).get(id=project_id))
     except Project.DoesNotExist:
         return None
 
@@ -52,9 +48,7 @@ class ProjectConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         if hasattr(self, "group_name"):
-            await self.channel_layer.group_discard(
-                self.group_name, self.channel_name
-            )
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
     async def receive_json(self, content, **kwargs):
         # Server-push only — ignore client messages

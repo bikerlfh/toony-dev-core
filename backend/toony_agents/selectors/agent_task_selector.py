@@ -9,9 +9,13 @@ def list_tasks_for_agent(toony_agent, *, organization=None):
 
 
 def get_task_by_id(task_id):
-    return AgentTask.objects.filter(
-        id=task_id,
-    ).select_related("toony_agent", "created_by").first()
+    return (
+        AgentTask.objects.filter(
+            id=task_id,
+        )
+        .select_related("toony_agent", "created_by")
+        .first()
+    )
 
 
 def list_task_events(task, *, after_sequence=None):

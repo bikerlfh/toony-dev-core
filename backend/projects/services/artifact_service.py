@@ -5,7 +5,6 @@ from common.broadcast import broadcast
 from projects.models import IssueArtifact
 from projects.models.artifact import ArtifactStatus
 
-
 VALID_TRANSITIONS = {
     ArtifactStatus.DRAFT: {ArtifactStatus.PENDING_APPROVAL},
     ArtifactStatus.PENDING_APPROVAL: {
@@ -29,14 +28,15 @@ VALID_TRANSITIONS = {
 
 
 def create_artifact(
-    issue, agent_task, title, artifact_type, content,
-    session_id, requires_approval=False,
+    issue,
+    agent_task,
+    title,
+    artifact_type,
+    content,
+    session_id,
+    requires_approval=False,
 ):
-    initial_status = (
-        ArtifactStatus.PENDING_APPROVAL
-        if requires_approval
-        else ArtifactStatus.DRAFT
-    )
+    initial_status = ArtifactStatus.PENDING_APPROVAL if requires_approval else ArtifactStatus.DRAFT
 
     with transaction.atomic():
         IssueArtifact.objects.filter(
@@ -71,9 +71,7 @@ def update_artifact(artifact, **kwargs):
     if new_status and new_status != artifact.status:
         allowed = VALID_TRANSITIONS.get(artifact.status, set())
         if new_status not in allowed:
-            raise DRFValidationError(
-                f"Cannot transition from {artifact.status} to {new_status}."
-            )
+            raise DRFValidationError(f"Cannot transition from {artifact.status} to {new_status}.")
         artifact.status = new_status
 
     for field in ("title", "content", "requires_approval"):

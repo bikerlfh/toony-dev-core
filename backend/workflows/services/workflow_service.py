@@ -35,7 +35,10 @@ def create_workflow(created_by, name, slug, **kwargs):
 
 def update_workflow(workflow, **kwargs):
     allowed_fields = {
-        "name", "description", "is_active", "label",
+        "name",
+        "description",
+        "is_active",
+        "label",
     }
 
     for field, value in kwargs.items():

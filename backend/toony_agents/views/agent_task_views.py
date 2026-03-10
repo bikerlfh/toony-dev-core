@@ -40,7 +40,8 @@ class AgentTaskListCreateView(PaginatedViewMixin, APIView):
         # Determine the organization for the task from the agent's orgs
         # that the user is a member of
         user_org_ids = OrganizationMembership.objects.filter(
-            user=request.user, is_active=True,
+            user=request.user,
+            is_active=True,
         ).values_list("organization_id", flat=True)
         organization = agent.organizations.filter(
             id__in=user_org_ids,
@@ -66,11 +67,14 @@ class AgentTaskDetailView(APIView):
         if task is None:
             raise NotFound("Task not found.")
         # Verify user has membership in the task's organization
-        if task.organization_id and not OrganizationMembership.objects.filter(
-            user=request.user,
-            organization_id=task.organization_id,
-            is_active=True,
-        ).exists():
+        if (
+            task.organization_id
+            and not OrganizationMembership.objects.filter(
+                user=request.user,
+                organization_id=task.organization_id,
+                is_active=True,
+            ).exists()
+        ):
             raise NotFound("Task not found.")
         return task
 
@@ -86,11 +90,14 @@ class AgentTaskCancelView(APIView):
         task = get_task_by_id(task_id)
         if task is None:
             raise NotFound("Task not found.")
-        if task.organization_id and not OrganizationMembership.objects.filter(
-            user=request.user,
-            organization_id=task.organization_id,
-            is_active=True,
-        ).exists():
+        if (
+            task.organization_id
+            and not OrganizationMembership.objects.filter(
+                user=request.user,
+                organization_id=task.organization_id,
+                is_active=True,
+            ).exists()
+        ):
             raise NotFound("Task not found.")
         if task.status in (
             AgentTaskStatus.COMPLETED,
@@ -112,11 +119,14 @@ class TaskEventListView(PaginatedViewMixin, APIView):
         task = get_task_by_id(task_id)
         if task is None:
             raise NotFound("Task not found.")
-        if task.organization_id and not OrganizationMembership.objects.filter(
-            user=request.user,
-            organization_id=task.organization_id,
-            is_active=True,
-        ).exists():
+        if (
+            task.organization_id
+            and not OrganizationMembership.objects.filter(
+                user=request.user,
+                organization_id=task.organization_id,
+                is_active=True,
+            ).exists()
+        ):
             raise NotFound("Task not found.")
         after = request.query_params.get("after_sequence")
         after_seq = int(after) if after else None

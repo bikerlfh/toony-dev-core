@@ -14,11 +14,19 @@ def get_next_identifier(project):
 
 
 def list_project_issues(project, *, filters=None, search=None):
-    qs = Issue.objects.filter(
-        project=project,
-    ).select_related(
-        "assignee", "reporter", "milestone", "cycle", "parent",
-    ).prefetch_related("labels")
+    qs = (
+        Issue.objects.filter(
+            project=project,
+        )
+        .select_related(
+            "assignee",
+            "reporter",
+            "milestone",
+            "cycle",
+            "parent",
+        )
+        .prefetch_related("labels")
+    )
 
     if search:
         vector = SearchVector("title", weight="A") + SearchVector("description", weight="B")
@@ -46,41 +54,73 @@ def list_project_issues(project, *, filters=None, search=None):
 
 
 def get_issue_by_identifier(identifier):
-    return Issue.objects.filter(
-        identifier=identifier,
-    ).select_related(
-        "project", "assignee", "reporter", "milestone", "cycle", "parent",
-    ).prefetch_related("labels").first()
+    return (
+        Issue.objects.filter(
+            identifier=identifier,
+        )
+        .select_related(
+            "project",
+            "assignee",
+            "reporter",
+            "milestone",
+            "cycle",
+            "parent",
+        )
+        .prefetch_related("labels")
+        .first()
+    )
 
 
 def get_issue_by_id(issue_id):
     """Look up an issue by UUID with select_related and prefetch_related."""
-    return Issue.objects.filter(
-        id=issue_id,
-    ).select_related(
-        "assignee", "reporter", "milestone", "cycle", "parent",
-    ).prefetch_related("labels").first()
+    return (
+        Issue.objects.filter(
+            id=issue_id,
+        )
+        .select_related(
+            "assignee",
+            "reporter",
+            "milestone",
+            "cycle",
+            "parent",
+        )
+        .prefetch_related("labels")
+        .first()
+    )
 
 
 def list_issue_comments(issue):
-    return IssueComment.objects.filter(
-        issue=issue,
-    ).select_related("author").order_by("created_at")
+    return (
+        IssueComment.objects.filter(
+            issue=issue,
+        )
+        .select_related("author")
+        .order_by("created_at")
+    )
 
 
 def list_issue_activities(issue):
-    return IssueActivity.objects.filter(
-        issue=issue,
-    ).select_related("user").order_by("-created_at")
+    return (
+        IssueActivity.objects.filter(
+            issue=issue,
+        )
+        .select_related("user")
+        .order_by("-created_at")
+    )
 
 
 def list_user_issues(user, *, filters=None, search=None):
     """List issues across all projects the user is a member of."""
-    qs = Issue.objects.filter(
-        project__memberships__user=user,
-    ).select_related(
-        "assignee", "project",
-    ).prefetch_related("labels")
+    qs = (
+        Issue.objects.filter(
+            project__memberships__user=user,
+        )
+        .select_related(
+            "assignee",
+            "project",
+        )
+        .prefetch_related("labels")
+    )
 
     if search:
         vector = SearchVector("title", weight="A") + SearchVector("description", weight="B")
@@ -105,17 +145,27 @@ def get_issue_full_detail(issue_id_or_identifier):
     """Fetch a single issue with all related data prefetched."""
     try:
         import uuid
+
         uuid.UUID(issue_id_or_identifier)
         lookup = {"id": issue_id_or_identifier}
     except ValueError:
         lookup = {"identifier__iexact": issue_id_or_identifier}
 
-    return Issue.objects.select_related(
-        "project", "assignee", "reporter", "milestone", "cycle", "parent",
-    ).prefetch_related(
-        "labels",
-        Prefetch("comments", queryset=IssueComment.objects.select_related("author").order_by("created_at")),
-        Prefetch("activities", queryset=IssueActivity.objects.select_related("user").order_by("-created_at")),
-        Prefetch("artifacts", queryset=IssueArtifact.objects.select_related("agent_task").order_by("-created_at")),
-        Prefetch("documents", queryset=IssueDocument.objects.select_related("uploaded_by").order_by("-created_at")),
-    ).get(**lookup)
+    return (
+        Issue.objects.select_related(
+            "project",
+            "assignee",
+            "reporter",
+            "milestone",
+            "cycle",
+            "parent",
+        )
+        .prefetch_related(
+            "labels",
+            Prefetch("comments", queryset=IssueComment.objects.select_related("author").order_by("created_at")),
+            Prefetch("activities", queryset=IssueActivity.objects.select_related("user").order_by("-created_at")),
+            Prefetch("artifacts", queryset=IssueArtifact.objects.select_related("agent_task").order_by("-created_at")),
+            Prefetch("documents", queryset=IssueDocument.objects.select_related("uploaded_by").order_by("-created_at")),
+        )
+        .get(**lookup)
+    )

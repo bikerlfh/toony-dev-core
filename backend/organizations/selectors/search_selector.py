@@ -51,10 +51,7 @@ def global_search(organization, query, *, limit=5):
     )
 
     # Labels — simple icontains since names are short
-    label_qs = (
-        Label.objects.filter(name__icontains=query)
-        .order_by("name")[:limit]
-    )
+    label_qs = Label.objects.filter(name__icontains=query).order_by("name")[:limit]
 
     return {
         "issues": list(issue_qs),

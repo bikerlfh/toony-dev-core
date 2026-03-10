@@ -24,7 +24,8 @@ class MilestoneListCreateView(PaginatedViewMixin, APIView):
         serializer.is_valid(raise_exception=True)
 
         milestone = create_milestone(
-            project=request.project, **serializer.validated_data,
+            project=request.project,
+            **serializer.validated_data,
         )
         output = MilestoneSerializer(milestone).data
         return Response(output, status=status.HTTP_201_CREATED)

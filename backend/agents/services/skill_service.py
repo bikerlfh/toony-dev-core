@@ -1,6 +1,6 @@
-from common.exceptions import ConflictError
 from agents.models import Skill, SkillVersion
 from agents.selectors import get_skill_by_slug
+from common.exceptions import ConflictError
 
 
 def create_skill(organization, created_by, name, slug, **kwargs):
@@ -29,9 +29,18 @@ def create_skill(organization, created_by, name, slug, **kwargs):
 
 def update_skill(skill, updated_by=None, **kwargs):
     allowed_fields = {
-        "name", "description", "version", "status", "markdown",
-        "category", "input_schema", "output_schema", "compatible_agent_types",
-        "is_external", "external_command", "tags",
+        "name",
+        "description",
+        "version",
+        "status",
+        "markdown",
+        "category",
+        "input_schema",
+        "output_schema",
+        "compatible_agent_types",
+        "is_external",
+        "external_command",
+        "tags",
     }
 
     content_changed = False

@@ -3,14 +3,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.mixins import PaginatedViewMixin
 from accounts.models import OrganizationMembership
-from organizations.models import Organization
 from agents.selectors import (
     get_skill_by_id,
+    list_skill_versions,
     list_skills_for_organization,
     list_skills_for_user,
-    list_skill_versions,
 )
 from agents.serializers.input import CreateSkillSerializer, UpdateSkillSerializer
 from agents.serializers.output import (
@@ -19,6 +17,8 @@ from agents.serializers.output import (
     SkillVersionSerializer,
 )
 from agents.services import create_skill, delete_skill, update_skill
+from common.mixins import PaginatedViewMixin
+from organizations.models import Organization
 
 
 class SkillListCreateView(PaginatedViewMixin, APIView):
@@ -34,7 +34,9 @@ class SkillListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},
@@ -59,7 +61,9 @@ class SkillListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},

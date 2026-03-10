@@ -50,9 +50,7 @@ class TestOrganizationDetail:
 
     def test_update_organization(self, authenticated_client, organization):
         data = {"name": "Updated Org"}
-        response = authenticated_client.put(
-            org_url(organization.id), data, format="json"
-        )
+        response = authenticated_client.put(org_url(organization.id), data, format="json")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["name"] == "Updated Org"
 
@@ -75,24 +73,16 @@ class TestOrganizationMembers:
     def test_add_member(self, authenticated_client, organization):
         new_user = UserFactory()
         data = {"email": new_user.email, "role": "MEMBER"}
-        response = authenticated_client.post(
-            members_url(organization.id), data, format="json"
-        )
+        response = authenticated_client.post(members_url(organization.id), data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_remove_member(self, authenticated_client, organization):
         member_user = UserFactory()
-        MembershipFactory(
-            user=member_user, organization=organization, role="MEMBER"
-        )
-        response = authenticated_client.delete(
-            member_url(organization.id, member_user.id)
-        )
+        MembershipFactory(user=member_user, organization=organization, role="MEMBER")
+        response = authenticated_client.delete(member_url(organization.id, member_user.id))
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_add_existing_member(self, authenticated_client, organization, user):
         data = {"email": user.email, "role": "MEMBER"}
-        response = authenticated_client.post(
-            members_url(organization.id), data, format="json"
-        )
+        response = authenticated_client.post(members_url(organization.id), data, format="json")
         assert response.status_code == status.HTTP_409_CONFLICT

@@ -50,7 +50,8 @@ def add_team_member(team, user, role=TeamRole.MEMBER):
 def update_team_member_role(membership, new_role):
     if membership.role == TeamRole.LEAD and new_role != TeamRole.LEAD:
         lead_count = TeamMembership.objects.filter(
-            team=membership.team, role=TeamRole.LEAD,
+            team=membership.team,
+            role=TeamRole.LEAD,
         ).count()
         if lead_count <= 1:
             raise ConflictError("Cannot remove the last team lead.")
@@ -62,7 +63,8 @@ def update_team_member_role(membership, new_role):
 def remove_team_member(membership):
     if membership.role == TeamRole.LEAD:
         lead_count = TeamMembership.objects.filter(
-            team=membership.team, role=TeamRole.LEAD,
+            team=membership.team,
+            role=TeamRole.LEAD,
         ).count()
         if lead_count <= 1:
             raise ConflictError("Cannot remove the last team lead.")

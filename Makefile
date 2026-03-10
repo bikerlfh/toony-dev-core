@@ -1,6 +1,6 @@
 .PHONY: help build up down up-backend up-frontend logs logs-backend logs-frontend \
        makemigrations migrate createsuperuser shell reset-db reset-migrations \
-       dumpdata loaddata test lint format \
+       dumpdata loaddata test lint format format-check \
        build-prod up-prod down-prod \
        clean
 
@@ -87,8 +87,14 @@ test: ## Run backend tests
 test-cov: ## Run backend tests with coverage
 	$(BACKEND) pytest --cov --cov-report=term-missing
 
-lint: ## Run flake8 linter
-	$(BACKEND) flake8 --max-line-length=120 --exclude=migrations,__pycache__ .
+lint: ## Run ruff linter
+	$(BACKEND) ruff check . --fix
+
+format: ## Format backend code with ruff
+	$(BACKEND) ruff format .
+
+format-check: ## Check backend formatting (dry run)
+	$(BACKEND) ruff format --check .
 
 lint-frontend: ## Run Next.js linter
 	$(COMPOSE) exec frontend npm run lint

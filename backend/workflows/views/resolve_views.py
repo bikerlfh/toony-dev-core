@@ -74,9 +74,14 @@ class WorkflowResolveView(APIView):
     content_negotiation_class = _IgnoreFormatQueryParam
 
     def get(self, request, issue_id):
-        issue = Issue.objects.filter(id=issue_id).select_related(
-            "project__organization",
-        ).prefetch_related("labels").first()
+        issue = (
+            Issue.objects.filter(id=issue_id)
+            .select_related(
+                "project__organization",
+            )
+            .prefetch_related("labels")
+            .first()
+        )
 
         if not issue:
             return Response({"detail": "Issue not found."}, status=status.HTTP_404_NOT_FOUND)

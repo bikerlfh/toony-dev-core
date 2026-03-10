@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 from workspace.models import TeamRole
 
-
 # --- Label ---
+
 
 class CreateLabelSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -18,6 +18,7 @@ class UpdateLabelSerializer(serializers.Serializer):
 
 
 # --- Team ---
+
 
 class CreateTeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -44,6 +45,7 @@ class UpdateTeamMemberRoleSerializer(serializers.Serializer):
 
 
 # --- ProjectTeam ---
+
 
 class AddProjectTeamSerializer(serializers.Serializer):
     team_id = serializers.UUIDField()

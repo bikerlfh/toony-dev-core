@@ -114,6 +114,7 @@ class GlobalArtifactDetailView(APIView):
 
     def _check_access(self, artifact, user):
         from projects.models import ProjectMembership
+
         has_access = ProjectMembership.objects.filter(
             project=artifact.issue.project,
             user=user,

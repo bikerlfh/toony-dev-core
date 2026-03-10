@@ -9,7 +9,6 @@ from common.mixins import PaginatedViewMixin
 from organizations.models import Organization
 from toony_agents.permissions import IsToonyAgentOrgMember
 from toony_agents.selectors import (
-    get_toony_agent_by_id,
     list_agent_keys,
     list_toony_agents_for_organization,
     list_toony_agents_for_user,
@@ -46,7 +45,9 @@ class ToonyAgentListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},
@@ -71,7 +72,9 @@ class ToonyAgentListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},
@@ -79,7 +82,8 @@ class ToonyAgentListCreateView(PaginatedViewMixin, APIView):
                 )
 
         agent = create_toony_agent(
-            registered_by=request.user, **serializer.validated_data,
+            registered_by=request.user,
+            **serializer.validated_data,
         )
         if organization:
             agent.organizations.add(organization)
@@ -120,7 +124,9 @@ class ToonyAgentKeyListCreateView(PaginatedViewMixin, APIView):
         serializer = GenerateKeySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         key_obj, raw_key = generate_api_key(
-            agent, request.user, name=serializer.validated_data["name"],
+            agent,
+            request.user,
+            name=serializer.validated_data["name"],
         )
         output = ToonyAgentKeySerializer(key_obj).data
         output["raw_key"] = raw_key

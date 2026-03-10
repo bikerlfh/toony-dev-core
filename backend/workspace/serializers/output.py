@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.serializers.output import UserDetailSerializer
-from workspace.models import Label, Team, TeamMembership, ProjectTeam
+from workspace.models import Label, ProjectTeam, Team, TeamMembership
 
 
 class LabelSerializer(serializers.ModelSerializer):

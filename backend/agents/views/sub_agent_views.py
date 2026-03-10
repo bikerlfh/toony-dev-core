@@ -3,9 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.mixins import PaginatedViewMixin
 from accounts.models import OrganizationMembership
-from organizations.models import Organization
 from agents.selectors import (
     get_sub_agent_by_id,
     list_sub_agents_for_organization,
@@ -14,6 +12,8 @@ from agents.selectors import (
 from agents.serializers.input import CreateSubAgentSerializer, UpdateSubAgentSerializer
 from agents.serializers.output import SubAgentDetailSerializer, SubAgentListSerializer
 from agents.services import create_sub_agent, delete_sub_agent, update_sub_agent
+from common.mixins import PaginatedViewMixin
+from organizations.models import Organization
 
 
 class SubAgentListCreateView(PaginatedViewMixin, APIView):
@@ -29,7 +29,9 @@ class SubAgentListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},
@@ -54,7 +56,9 @@ class SubAgentListCreateView(PaginatedViewMixin, APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
             if not OrganizationMembership.objects.filter(
-                user=request.user, organization=organization, is_active=True,
+                user=request.user,
+                organization=organization,
+                is_active=True,
             ).exists():
                 return Response(
                     {"detail": "You are not a member of this organization."},

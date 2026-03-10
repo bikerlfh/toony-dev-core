@@ -6,6 +6,4 @@ def list_organization_credentials(organization):
 
 
 def get_credential_by_id(organization, credential_id):
-    return RepositoryCredential.objects.filter(
-        organization=organization, id=credential_id
-    ).first()
+    return RepositoryCredential.objects.filter(organization=organization, id=credential_id).first()

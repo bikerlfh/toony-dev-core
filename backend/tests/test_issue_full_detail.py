@@ -31,9 +31,7 @@ class TestIssueFullDetail:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["identifier"] == issue.identifier
 
-    def test_includes_comments(
-        self, authenticated_client, organization, project, issue, user
-    ):
+    def test_includes_comments(self, authenticated_client, organization, project, issue, user):
         IssueCommentFactory(issue=issue, author=user, body="First comment")
         IssueCommentFactory(issue=issue, author=user, body="Second comment")
         url = full_detail_url(issue.id)
@@ -42,36 +40,28 @@ class TestIssueFullDetail:
         assert len(response.data["comments"]) == 2
         assert response.data["comments"][0]["body"] == "First comment"
 
-    def test_includes_activities(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_includes_activities(self, authenticated_client, organization, project, issue):
         url = full_detail_url(issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert "activities" in response.data
         assert isinstance(response.data["activities"], list)
 
-    def test_includes_artifacts(
-        self, authenticated_client, organization, project, issue, artifact
-    ):
+    def test_includes_artifacts(self, authenticated_client, organization, project, issue, artifact):
         url = full_detail_url(issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["artifacts"]) == 1
         assert response.data["artifacts"][0]["title"] == artifact.title
 
-    def test_includes_documents(
-        self, authenticated_client, organization, project, issue, issue_document
-    ):
+    def test_includes_documents(self, authenticated_client, organization, project, issue, issue_document):
         url = full_detail_url(issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["documents"]) == 1
         assert response.data["documents"][0]["original_filename"] == issue_document.original_filename
 
-    def test_empty_collections(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_empty_collections(self, authenticated_client, organization, project, issue):
         url = full_detail_url(issue.id)
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_200_OK

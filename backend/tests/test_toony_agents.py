@@ -1,8 +1,6 @@
 import pytest
 from rest_framework import status
 
-from tests.factories import ToonyAgentFactory, ToonyAgentKeyFactory, AgentTaskFactory
-
 pytestmark = pytest.mark.django_db
 
 
@@ -10,9 +8,7 @@ class TestToonyAgentModel:
     def test_create_toony_agent(self, user):
         from toony_agents.models import ToonyAgent, ToonyAgentStatus
 
-        agent = ToonyAgent.objects.create(
-            name="Test Bot", slug="test-bot", registered_by=user
-        )
+        agent = ToonyAgent.objects.create(name="Test Bot", slug="test-bot", registered_by=user)
         assert agent.status == ToonyAgentStatus.OFFLINE
         assert agent.metadata == {}
         assert str(agent) == "Test Bot (OFFLINE)"
@@ -20,9 +16,7 @@ class TestToonyAgentModel:
     def test_toony_agent_organizations_m2m(self, user, organization):
         from toony_agents.models import ToonyAgent
 
-        agent = ToonyAgent.objects.create(
-            name="Multi-Org Bot", slug="multi-org-bot", registered_by=user
-        )
+        agent = ToonyAgent.objects.create(name="Multi-Org Bot", slug="multi-org-bot", registered_by=user)
         agent.organizations.add(organization)
         assert organization in agent.organizations.all()
         assert agent in organization.toony_agents.all()
@@ -30,9 +24,7 @@ class TestToonyAgentModel:
     def test_create_agent_task(self, user, organization):
         from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent
 
-        agent = ToonyAgent.objects.create(
-            name="Bot", slug="task-model-bot", registered_by=user
-        )
+        agent = ToonyAgent.objects.create(name="Bot", slug="task-model-bot", registered_by=user)
         task = AgentTask.objects.create(
             organization=organization,
             toony_agent=agent,
@@ -51,9 +43,7 @@ class TestToonyAgentModel:
             ToonyAgent,
         )
 
-        agent = ToonyAgent.objects.create(
-            name="Bot", slug="event-bot", registered_by=user
-        )
+        agent = ToonyAgent.objects.create(name="Bot", slug="event-bot", registered_by=user)
         task = AgentTask.objects.create(
             organization=organization,
             toony_agent=agent,
@@ -73,8 +63,9 @@ class TestToonyAgentModel:
 
 class TestToonyAgentService:
     def test_generate_api_key(self, user):
-        from toony_agents.services import generate_api_key, verify_api_key
         from toony_agents.models import ToonyAgent
+        from toony_agents.services import generate_api_key, verify_api_key
+
         agent = ToonyAgent.objects.create(name="Bot", slug="svc-bot", registered_by=user)
         key_obj, raw_key = generate_api_key(agent, user, name="test-key")
         assert raw_key.startswith("tok_ta_")
@@ -84,8 +75,9 @@ class TestToonyAgentService:
         assert verify_api_key("tok_ta_invalid") is None
 
     def test_revoke_api_key(self, user):
-        from toony_agents.services import generate_api_key, revoke_api_key, verify_api_key
         from toony_agents.models import ToonyAgent
+        from toony_agents.services import generate_api_key, revoke_api_key, verify_api_key
+
         agent = ToonyAgent.objects.create(name="Bot", slug="revoke-bot", registered_by=user)
         key_obj, raw_key = generate_api_key(agent, user)
         revoke_api_key(key_obj)
@@ -94,35 +86,47 @@ class TestToonyAgentService:
 
 class TestAgentTaskService:
     def test_create_task(self, user, organization):
+        from toony_agents.models import AgentTaskStatus, ToonyAgent
         from toony_agents.services import create_agent_task
-        from toony_agents.models import ToonyAgent, AgentTaskStatus
+
         agent = ToonyAgent.objects.create(name="Bot", slug="task-svc-bot", registered_by=user)
         task = create_agent_task(
-            organization=organization, toony_agent=agent, created_by=user,
-            title="Fix bug", prompt="Fix the login bug",
+            organization=organization,
+            toony_agent=agent,
+            created_by=user,
+            title="Fix bug",
+            prompt="Fix the login bug",
         )
         assert task.status == AgentTaskStatus.QUEUED
         assert task.toony_agent == agent
 
     def test_update_task_status(self, user, organization):
+        from toony_agents.models import AgentTaskStatus, ToonyAgent
         from toony_agents.services import create_agent_task, update_task_status
-        from toony_agents.models import ToonyAgent, AgentTaskStatus
+
         agent = ToonyAgent.objects.create(name="Bot", slug="status-svc-bot", registered_by=user)
         task = create_agent_task(
-            organization=organization, toony_agent=agent, created_by=user,
-            title="Task", prompt="Do something",
+            organization=organization,
+            toony_agent=agent,
+            created_by=user,
+            title="Task",
+            prompt="Do something",
         )
         task = update_task_status(task, AgentTaskStatus.RUNNING)
         assert task.status == AgentTaskStatus.RUNNING
         assert task.started_at is not None
 
     def test_create_task_event(self, user, organization):
+        from toony_agents.models import TaskEventType, ToonyAgent
         from toony_agents.services import create_agent_task, create_task_event
-        from toony_agents.models import ToonyAgent, TaskEventType
+
         agent = ToonyAgent.objects.create(name="Bot", slug="event-svc-bot", registered_by=user)
         task = create_agent_task(
-            organization=organization, toony_agent=agent, created_by=user,
-            title="Task", prompt="Do it",
+            organization=organization,
+            toony_agent=agent,
+            created_by=user,
+            title="Task",
+            prompt="Do it",
         )
         event = create_task_event(task, TaskEventType.LOG, {"msg": "hello"}, 1)
         assert event.event_type == TaskEventType.LOG
@@ -160,8 +164,11 @@ class TestToonyAgentAPI:
 
     def test_list_toony_agents(self, authenticated_client, organization, user):
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="list-bot", registered_by=user,
+            name="Bot",
+            slug="list-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         url = toony_agents_url()
@@ -170,8 +177,11 @@ class TestToonyAgentAPI:
 
     def test_get_toony_agent(self, authenticated_client, organization, user):
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="get-bot", registered_by=user,
+            name="Bot",
+            slug="get-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         url = toony_agent_url(agent.id)
@@ -181,8 +191,11 @@ class TestToonyAgentAPI:
 
     def test_generate_api_key(self, authenticated_client, organization, user):
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="key-bot", registered_by=user,
+            name="Bot",
+            slug="key-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         url = keys_url(agent.id)
@@ -193,8 +206,11 @@ class TestToonyAgentAPI:
 
     def test_create_task(self, authenticated_client, organization, user):
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="task-api-bot", registered_by=user,
+            name="Bot",
+            slug="task-api-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         url = tasks_url(agent.id)
@@ -223,8 +239,11 @@ class TestToonyAgentAPI:
     def test_nonmember_denied_detail(self, api_client, organization, other_user, user):
         """Non-member accessing a specific agent gets 403."""
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="deny-bot", registered_by=user,
+            name="Bot",
+            slug="deny-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         api_client.force_authenticate(user=other_user)
@@ -234,8 +253,11 @@ class TestToonyAgentAPI:
 
     def test_get_toony_agent_includes_organizations(self, authenticated_client, organization, user):
         from toony_agents.models import ToonyAgent
+
         agent = ToonyAgent.objects.create(
-            name="Bot", slug="org-fields-bot", registered_by=user,
+            name="Bot",
+            slug="org-fields-bot",
+            registered_by=user,
         )
         agent.organizations.add(organization)
         url = toony_agent_url(agent.id)

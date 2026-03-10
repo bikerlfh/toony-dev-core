@@ -36,10 +36,7 @@ def update_member_role(membership, new_role):
             is_active=True,
         ).count()
         if owner_count <= 1:
-            raise ValidationError(
-                "Cannot change role of the last owner. "
-                "Assign another owner first."
-            )
+            raise ValidationError("Cannot change role of the last owner. Assign another owner first.")
 
     membership.role = new_role
     membership.save()
@@ -54,10 +51,7 @@ def remove_member(membership):
             is_active=True,
         ).count()
         if owner_count <= 1:
-            raise ValidationError(
-                "Cannot remove the last owner. "
-                "Assign another owner first."
-            )
+            raise ValidationError("Cannot remove the last owner. Assign another owner first.")
 
     membership.is_active = False
     membership.save()

@@ -25,6 +25,11 @@ def list_team_members(team):
 
 
 def get_team_membership(team, user):
-    return TeamMembership.objects.filter(
-        team=team, user=user,
-    ).select_related("user").first()
+    return (
+        TeamMembership.objects.filter(
+            team=team,
+            user=user,
+        )
+        .select_related("user")
+        .first()
+    )

@@ -1,16 +1,12 @@
 from rest_framework import serializers
 
 from accounts.serializers.output import UserDetailSerializer
-from workflows.models import Workflow, WorkflowNode, WorkflowEdge
+from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 
 
 class WorkflowNodeListSerializer(serializers.ModelSerializer):
-    sub_agent_slug = serializers.SlugRelatedField(
-        source="sub_agent", slug_field="slug", read_only=True
-    )
-    skill_slug = serializers.SlugRelatedField(
-        source="skill", slug_field="slug", read_only=True
-    )
+    sub_agent_slug = serializers.SlugRelatedField(source="sub_agent", slug_field="slug", read_only=True)
+    skill_slug = serializers.SlugRelatedField(source="skill", slug_field="slug", read_only=True)
 
     class Meta:
         model = WorkflowNode

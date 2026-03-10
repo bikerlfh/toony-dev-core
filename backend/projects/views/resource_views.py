@@ -27,7 +27,8 @@ class ResourceListCreateView(PaginatedViewMixin, APIView):
         serializer.is_valid(raise_exception=True)
 
         resource = create_resource(
-            project=request.project, **serializer.validated_data,
+            project=request.project,
+            **serializer.validated_data,
         )
         output = ProjectResourceSerializer(resource).data
         return Response(output, status=status.HTTP_201_CREATED)

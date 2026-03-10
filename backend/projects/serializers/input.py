@@ -14,8 +14,8 @@ from projects.models import (
     ResourceType,
 )
 
-
 # --- Project ---
+
 
 class CreateProjectSerializer(serializers.Serializer):
     organization_id = serializers.UUIDField()
@@ -23,13 +23,17 @@ class CreateProjectSerializer(serializers.Serializer):
     slug = serializers.SlugField(max_length=255)
     description = serializers.CharField(required=False, default="")
     short_summary = serializers.CharField(
-        max_length=255, required=False, default="",
+        max_length=255,
+        required=False,
+        default="",
     )
     status = serializers.ChoiceField(
-        choices=ProjectStatus.choices, required=False,
+        choices=ProjectStatus.choices,
+        required=False,
     )
     priority = serializers.ChoiceField(
-        choices=ProjectPriority.choices, required=False,
+        choices=ProjectPriority.choices,
+        required=False,
     )
     start_date = serializers.DateField(required=False, allow_null=True)
     target_date = serializers.DateField(required=False, allow_null=True)
@@ -40,13 +44,17 @@ class UpdateProjectSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     description = serializers.CharField(required=False)
     short_summary = serializers.CharField(
-        max_length=255, required=False, allow_blank=True,
+        max_length=255,
+        required=False,
+        allow_blank=True,
     )
     status = serializers.ChoiceField(
-        choices=ProjectStatus.choices, required=False,
+        choices=ProjectStatus.choices,
+        required=False,
     )
     priority = serializers.ChoiceField(
-        choices=ProjectPriority.choices, required=False,
+        choices=ProjectPriority.choices,
+        required=False,
     )
     start_date = serializers.DateField(required=False, allow_null=True)
     target_date = serializers.DateField(required=False, allow_null=True)
@@ -71,21 +79,27 @@ class UpdateProjectSettingsSerializer(serializers.Serializer):
     repository_url = serializers.URLField(required=False, allow_blank=True)
     default_branch = serializers.CharField(max_length=255, required=False)
     branch_naming_convention = serializers.CharField(
-        max_length=255, required=False, allow_blank=True,
+        max_length=255,
+        required=False,
+        allow_blank=True,
     )
     required_reviewers_count = serializers.IntegerField(
-        min_value=0, required=False,
+        min_value=0,
+        required=False,
     )
     auto_close_completed_issues = serializers.BooleanField(required=False)
     issue_prefix = serializers.CharField(
-        max_length=10, required=False,
+        max_length=10,
+        required=False,
     )
     estimation_method = serializers.ChoiceField(
-        choices=EstimationMethod.choices, required=False,
+        choices=EstimationMethod.choices,
+        required=False,
     )
 
 
 # --- Milestone ---
+
 
 class CreateMilestoneSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -99,12 +113,14 @@ class UpdateMilestoneSerializer(serializers.Serializer):
     description = serializers.CharField(required=False)
     target_date = serializers.DateField(required=False, allow_null=True)
     status = serializers.ChoiceField(
-        choices=MilestoneStatus.choices, required=False,
+        choices=MilestoneStatus.choices,
+        required=False,
     )
     sort_order = serializers.IntegerField(required=False)
 
 
 # --- Cycle ---
+
 
 class CreateCycleSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -117,27 +133,33 @@ class UpdateCycleSerializer(serializers.Serializer):
     start_date = serializers.DateField(required=False)
     end_date = serializers.DateField(required=False)
     status = serializers.ChoiceField(
-        choices=CycleStatus.choices, required=False,
+        choices=CycleStatus.choices,
+        required=False,
     )
 
 
 # --- Issue ---
 
+
 class CreateIssueSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500)
     description = serializers.CharField(required=False, default="")
     status = serializers.ChoiceField(
-        choices=IssueStatus.choices, required=False,
+        choices=IssueStatus.choices,
+        required=False,
     )
     priority = serializers.ChoiceField(
-        choices=IssuePriority.choices, required=False,
+        choices=IssuePriority.choices,
+        required=False,
     )
     assignee_id = serializers.UUIDField(required=False, allow_null=True)
     milestone_id = serializers.UUIDField(required=False, allow_null=True)
     cycle_id = serializers.UUIDField(required=False, allow_null=True)
     parent_identifier = serializers.CharField(max_length=30, required=False)
     label_ids = serializers.ListField(
-        child=serializers.UUIDField(), required=False, default=list,
+        child=serializers.UUIDField(),
+        required=False,
+        default=list,
     )
     estimate = serializers.IntegerField(required=False, allow_null=True)
     due_date = serializers.DateField(required=False, allow_null=True)
@@ -148,31 +170,39 @@ class UpdateIssueSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500, required=False)
     description = serializers.CharField(required=False)
     status = serializers.ChoiceField(
-        choices=IssueStatus.choices, required=False,
+        choices=IssueStatus.choices,
+        required=False,
     )
     priority = serializers.ChoiceField(
-        choices=IssuePriority.choices, required=False,
+        choices=IssuePriority.choices,
+        required=False,
     )
     assignee_id = serializers.UUIDField(required=False, allow_null=True)
     milestone_id = serializers.UUIDField(required=False, allow_null=True)
     cycle_id = serializers.UUIDField(required=False, allow_null=True)
     parent_identifier = serializers.CharField(max_length=30, required=False, allow_null=True)
     label_ids = serializers.ListField(
-        child=serializers.UUIDField(), required=False,
+        child=serializers.UUIDField(),
+        required=False,
     )
     estimate = serializers.IntegerField(required=False, allow_null=True)
     due_date = serializers.DateField(required=False, allow_null=True)
     sort_order = serializers.IntegerField(required=False)
     external_tracker_name = serializers.CharField(
-        max_length=100, required=False, allow_blank=True,
+        max_length=100,
+        required=False,
+        allow_blank=True,
     )
     external_tracker_url = serializers.URLField(required=False, allow_blank=True)
     external_tracker_id = serializers.CharField(
-        max_length=255, required=False, allow_blank=True,
+        max_length=255,
+        required=False,
+        allow_blank=True,
     )
 
 
 # --- Comment ---
+
 
 class CreateCommentSerializer(serializers.Serializer):
     body = serializers.CharField()
@@ -183,6 +213,7 @@ class UpdateCommentSerializer(serializers.Serializer):
 
 
 # --- Resource ---
+
 
 class CreateProjectResourceSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
@@ -197,6 +228,7 @@ class UpdateProjectResourceSerializer(serializers.Serializer):
 
 
 # --- Artifact ---
+
 
 class CreateArtifactSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500)
@@ -231,8 +263,18 @@ ALLOWED_DOCUMENT_TYPES = {
 }
 
 ALLOWED_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png", ".gif", ".webp",
-    ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".csv", ".txt",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".csv",
+    ".txt",
 }
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -247,15 +289,12 @@ class UploadIssueDocumentSerializer(serializers.Serializer):
         ext = os.path.splitext(file.name)[1].lower()
         if ext not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
-                f"File type '{ext}' is not allowed. "
-                f"Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+                f"File type '{ext}' is not allowed. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
             )
 
         content_type = file.content_type or ""
         if content_type not in ALLOWED_DOCUMENT_TYPES:
-            raise serializers.ValidationError(
-                f"Content type '{content_type}' is not allowed."
-            )
+            raise serializers.ValidationError(f"Content type '{content_type}' is not allowed.")
 
         if file.size > MAX_FILE_SIZE:
             raise serializers.ValidationError(

@@ -2,18 +2,12 @@ from projects.models import IssueArtifact
 
 
 def list_issue_artifacts(issue):
-    return (
-        IssueArtifact.objects
-        .filter(issue=issue)
-        .select_related("agent_task")
-        .order_by("-created_at")
-    )
+    return IssueArtifact.objects.filter(issue=issue).select_related("agent_task").order_by("-created_at")
 
 
 def list_all_artifacts(user, *, filters=None):
     qs = (
-        IssueArtifact.objects
-        .filter(issue__project__memberships__user=user)
+        IssueArtifact.objects.filter(issue__project__memberships__user=user)
         .select_related("issue", "agent_task")
         .order_by("-created_at")
         .distinct()
@@ -31,9 +25,4 @@ def list_all_artifacts(user, *, filters=None):
 
 
 def get_artifact_by_id(artifact_id):
-    return (
-        IssueArtifact.objects
-        .select_related("issue", "agent_task")
-        .filter(id=artifact_id)
-        .first()
-    )
+    return IssueArtifact.objects.select_related("issue", "agent_task").filter(id=artifact_id).first()

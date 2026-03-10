@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from workflows.models import Workflow, WorkflowNode, WorkflowEdge
+from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 
 
 class WorkflowNodeInline(admin.TabularInline):

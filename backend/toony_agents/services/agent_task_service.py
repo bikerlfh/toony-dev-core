@@ -2,22 +2,27 @@ from django.db import transaction
 from django.utils import timezone
 
 from common.broadcast import broadcast
-from toony_agents.models import AgentTask, AgentTaskStatus, TaskEvent, TaskEventType
+from toony_agents.models import AgentTask, AgentTaskStatus, TaskEvent
 
 
 def create_agent_task(organization, toony_agent, created_by, title, prompt):
     with transaction.atomic():
         task = AgentTask.objects.create(
-            organization=organization, toony_agent=toony_agent,
-            title=title, prompt=prompt, created_by=created_by,
+            organization=organization,
+            toony_agent=toony_agent,
+            title=title,
+            prompt=prompt,
+            created_by=created_by,
         )
     broadcast(
-        f"toony_agent_{toony_agent.id}", "task_status",
+        f"toony_agent_{toony_agent.id}",
+        "task_status",
         {"task_id": str(task.id), "status": task.status},
     )
     # Notify runner so it picks up the task immediately
     broadcast(
-        f"toony_agent_runner_{toony_agent.id}", "task_assign",
+        f"toony_agent_runner_{toony_agent.id}",
+        "task_assign",
         {"task_id": str(task.id), "prompt": task.prompt, "title": task.title},
     )
     return task
@@ -35,7 +40,8 @@ def update_task_status(task, new_status, **kwargs):
         task.error = kwargs["error"]
     task.save()
     broadcast(
-        f"toony_agent_{task.toony_agent_id}", "task_status",
+        f"toony_agent_{task.toony_agent_id}",
+        "task_status",
         {"task_id": str(task.id), "status": task.status},
     )
     return task
@@ -43,10 +49,14 @@ def update_task_status(task, new_status, **kwargs):
 
 def create_task_event(task, event_type, data, sequence):
     event = TaskEvent.objects.create(
-        task=task, event_type=event_type, data=data, sequence=sequence,
+        task=task,
+        event_type=event_type,
+        data=data,
+        sequence=sequence,
     )
     broadcast(
-        f"toony_agent_{task.toony_agent_id}", "task_event",
+        f"toony_agent_{task.toony_agent_id}",
+        "task_event",
         {"task_id": str(task.id), "event_type": event_type, "data": data, "sequence": sequence},
     )
     return event

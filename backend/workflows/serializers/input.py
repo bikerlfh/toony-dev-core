@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from workflows.models.workflow_node import WorkflowNodeType
+
 
 class CreateWorkflowSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
@@ -19,9 +21,6 @@ class UpdateWorkflowSerializer(serializers.Serializer):
     label = serializers.UUIDField(required=False, allow_null=True)
 
 
-from workflows.models.workflow_node import WorkflowNodeType
-
-
 class CreateWorkflowNodeSerializer(serializers.Serializer):
     node_type = serializers.ChoiceField(choices=WorkflowNodeType.choices)
     sub_agent = serializers.UUIDField(required=False, allow_null=True)
@@ -34,13 +33,9 @@ class CreateWorkflowNodeSerializer(serializers.Serializer):
     def validate(self, attrs):
         node_type = attrs.get("node_type")
         if node_type == "SUBAGENT" and not attrs.get("sub_agent"):
-            raise serializers.ValidationError(
-                {"sub_agent": "Required when node_type is SUBAGENT."}
-            )
+            raise serializers.ValidationError({"sub_agent": "Required when node_type is SUBAGENT."})
         if node_type == "SKILL" and not attrs.get("skill"):
-            raise serializers.ValidationError(
-                {"skill": "Required when node_type is SKILL."}
-            )
+            raise serializers.ValidationError({"skill": "Required when node_type is SKILL."})
         return attrs
 
 

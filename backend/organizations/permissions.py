@@ -4,11 +4,15 @@ from accounts.models import MembershipRole, OrganizationMembership
 
 
 def get_membership(user, org_id):
-    return OrganizationMembership.objects.filter(
-        user=user,
-        organization_id=org_id,
-        is_active=True,
-    ).select_related("organization").first()
+    return (
+        OrganizationMembership.objects.filter(
+            user=user,
+            organization_id=org_id,
+            is_active=True,
+        )
+        .select_related("organization")
+        .first()
+    )
 
 
 ADMIN_ROLES = {MembershipRole.OWNER, MembershipRole.ADMIN}

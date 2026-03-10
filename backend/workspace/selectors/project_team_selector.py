@@ -9,5 +9,6 @@ def list_project_teams(project):
 
 def get_project_team(project, team):
     return ProjectTeam.objects.filter(
-        project=project, team=team,
+        project=project,
+        team=team,
     ).first()

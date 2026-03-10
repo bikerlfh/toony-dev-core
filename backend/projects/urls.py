@@ -22,7 +22,7 @@ from projects.views import (
     ResourceDetailView,
     ResourceListCreateView,
 )
-from workspace.views import ProjectTeamListCreateView, ProjectTeamDetailView
+from workspace.views import ProjectTeamDetailView, ProjectTeamListCreateView
 
 app_name = "projects"
 
@@ -48,13 +48,41 @@ urlpatterns = [
     # Issues
     path("<uuid:project_id>/issues/", IssueListCreateView.as_view(), name="issue-list-create"),
     path("<uuid:project_id>/issues/<uuid:issue_id>/", IssueDetailView.as_view(), name="issue-detail"),
-    path("<uuid:project_id>/issues/<uuid:issue_id>/comments/", IssueCommentListCreateView.as_view(), name="issue-comment-list-create"),
-    path("<uuid:project_id>/issues/<uuid:issue_id>/comments/<uuid:comment_id>/", IssueCommentDetailView.as_view(), name="issue-comment-detail"),
-    path("<uuid:project_id>/issues/<uuid:issue_id>/activities/", IssueActivityListView.as_view(), name="issue-activity-list"),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/comments/",
+        IssueCommentListCreateView.as_view(),
+        name="issue-comment-list-create",
+    ),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/comments/<uuid:comment_id>/",
+        IssueCommentDetailView.as_view(),
+        name="issue-comment-detail",
+    ),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/activities/",
+        IssueActivityListView.as_view(),
+        name="issue-activity-list",
+    ),
     # Artifacts
-    path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/", IssueArtifactListCreateView.as_view(), name="issue-artifact-list-create"),
-    path("<uuid:project_id>/issues/<uuid:issue_id>/artifacts/<uuid:artifact_id>/", IssueArtifactDetailView.as_view(), name="issue-artifact-detail"),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/artifacts/",
+        IssueArtifactListCreateView.as_view(),
+        name="issue-artifact-list-create",
+    ),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/artifacts/<uuid:artifact_id>/",
+        IssueArtifactDetailView.as_view(),
+        name="issue-artifact-detail",
+    ),
     # Documents
-    path("<uuid:project_id>/issues/<uuid:issue_id>/documents/", IssueDocumentListCreateView.as_view(), name="issue-document-list-create"),
-    path("<uuid:project_id>/issues/<uuid:issue_id>/documents/<uuid:document_id>/", IssueDocumentDetailView.as_view(), name="issue-document-detail"),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/documents/",
+        IssueDocumentListCreateView.as_view(),
+        name="issue-document-list-create",
+    ),
+    path(
+        "<uuid:project_id>/issues/<uuid:issue_id>/documents/<uuid:document_id>/",
+        IssueDocumentDetailView.as_view(),
+        name="issue-document-detail",
+    ),
 ]

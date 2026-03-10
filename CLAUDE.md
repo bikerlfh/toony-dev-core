@@ -25,7 +25,7 @@ make loaddata file="all" # Load fixture data from fixtures/all.json
 
 make test               # Run backend tests (pytest -v)
 make test-cov           # Run tests with coverage report
-make lint               # Backend linting (flake8)
+make lint               # Backend linting (ruff check)
 make lint-frontend      # Frontend linting (next lint)
 
 make shell              # Django shell inside container
@@ -100,7 +100,7 @@ WebSocket via Django Channels + Redis. JWT passed as `?token=` query param. Fron
 
 - Docker Compose: postgres:16, redis:7, backend (uvicorn --reload), frontend (next dev)
 - Production: gunicorn + uvicorn workers, standalone Next.js, nginx reverse proxy
-- CI: GitHub Actions — backend lint + test (with postgres service), frontend lint + build
+- CI: GitHub Actions — backend lint (ruff) + test (with postgres service), frontend lint + build
 
 ## Environment Variables
 

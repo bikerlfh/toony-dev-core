@@ -18,14 +18,15 @@ class APIKeyAuthentication(BaseAuthentication):
         if not auth_header.startswith(f"{self.keyword} "):
             return None
 
-        token = auth_header[len(self.keyword) + 1:]
+        token = auth_header[len(self.keyword) + 1 :]
         if not token.startswith("toony_"):
             return None
 
         key_hash = hashlib.sha256(token.encode()).hexdigest()
         try:
             api_key = UserAPIKey.objects.select_related("user").get(
-                key_hash=key_hash, is_active=True,
+                key_hash=key_hash,
+                is_active=True,
             )
         except UserAPIKey.DoesNotExist:
             raise AuthenticationFailed("Invalid or revoked API key.")

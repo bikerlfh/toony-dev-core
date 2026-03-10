@@ -147,7 +147,8 @@ class TeamMemberDetailView(APIView):
         serializer.is_valid(raise_exception=True)
 
         membership = update_team_member_role(
-            membership, new_role=serializer.validated_data["role"],
+            membership,
+            new_role=serializer.validated_data["role"],
         )
         output = TeamMembershipSerializer(membership).data
         return Response(output, status=status.HTTP_200_OK)

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from agents.models import SubAgent, Skill
+from agents.models import Skill, SubAgent
 from workflows.selectors import get_workflow_by_id, get_workflow_node_by_id, list_workflow_nodes
 from workflows.serializers.input import CreateWorkflowNodeSerializer, UpdateWorkflowNodeSerializer
 from workflows.serializers.output import WorkflowNodeListSerializer

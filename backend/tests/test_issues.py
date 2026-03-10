@@ -37,9 +37,7 @@ class TestIssueList:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["title"] == "New Issue"
 
-    def test_create_issue_with_labels(
-        self, authenticated_client, organization, project
-    ):
+    def test_create_issue_with_labels(self, authenticated_client, organization, project):
         label = LabelFactory()
         url = issues_url(project.id)
         data = {
@@ -50,9 +48,7 @@ class TestIssueList:
         assert response.status_code == status.HTTP_201_CREATED
         assert len(response.data["labels"]) == 1
 
-    def test_create_issue_missing_title(
-        self, authenticated_client, organization, project
-    ):
+    def test_create_issue_missing_title(self, authenticated_client, organization, project):
         url = issues_url(project.id)
         data = {"description": "No title"}
         response = authenticated_client.post(url, data, format="json")
@@ -64,9 +60,7 @@ class TestIssueList:
         response = api_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_auto_increment_identifier(
-        self, authenticated_client, organization, project
-    ):
+    def test_auto_increment_identifier(self, authenticated_client, organization, project):
         url = issues_url(project.id)
         r1 = authenticated_client.post(url, {"title": "First"}, format="json")
         r2 = authenticated_client.post(url, {"title": "Second"}, format="json")
@@ -107,9 +101,7 @@ class TestIssueDetail:
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_title_allowed_in_backlog(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_update_title_allowed_in_backlog(self, authenticated_client, organization, project, issue):
         issue.status = "BACKLOG"
         issue.save()
         url = issue_url(project.id, issue.id)
@@ -118,9 +110,7 @@ class TestIssueDetail:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["title"] == "New Title"
 
-    def test_update_title_allowed_in_todo(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_update_title_allowed_in_todo(self, authenticated_client, organization, project, issue):
         issue.status = "TODO"
         issue.save()
         url = issue_url(project.id, issue.id)
@@ -129,9 +119,7 @@ class TestIssueDetail:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["title"] == "New Title"
 
-    def test_update_title_rejected_in_progress(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_update_title_rejected_in_progress(self, authenticated_client, organization, project, issue):
         issue.status = "IN_PROGRESS"
         issue.save()
         url = issue_url(project.id, issue.id)
@@ -139,9 +127,7 @@ class TestIssueDetail:
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_update_description_rejected_in_done(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_update_description_rejected_in_done(self, authenticated_client, organization, project, issue):
         issue.status = "DONE"
         issue.save()
         url = issue_url(project.id, issue.id)
@@ -149,9 +135,7 @@ class TestIssueDetail:
         response = authenticated_client.put(url, data, format="json")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_update_status_still_works_in_progress(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_update_status_still_works_in_progress(self, authenticated_client, organization, project, issue):
         issue.status = "IN_PROGRESS"
         issue.save()
         url = issue_url(project.id, issue.id)
@@ -175,9 +159,7 @@ class TestIssueComments:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data["body"] == "A new comment"
 
-    def test_create_comment_empty_body(
-        self, authenticated_client, organization, project, issue
-    ):
+    def test_create_comment_empty_body(self, authenticated_client, organization, project, issue):
         url = comments_url(project.id, issue.id)
         data = {"body": ""}
         response = authenticated_client.post(url, data, format="json")

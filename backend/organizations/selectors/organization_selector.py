@@ -10,7 +10,11 @@ def get_organization_by_id(org_id):
 
 
 def list_user_organizations(user):
-    return Organization.objects.filter(
-        memberships__user=user,
-        memberships__is_active=True,
-    ).distinct().order_by("-is_active", "-created_at")
+    return (
+        Organization.objects.filter(
+            memberships__user=user,
+            memberships__is_active=True,
+        )
+        .distinct()
+        .order_by("-is_active", "-created_at")
+    )

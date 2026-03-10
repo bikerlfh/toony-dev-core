@@ -128,9 +128,7 @@ class ProjectSettings(BaseModel):
         related_name="project_settings",
     )
     default_branch = models.CharField(max_length=255, default="main")
-    branch_naming_convention = models.CharField(
-        max_length=255, blank=True, default=""
-    )
+    branch_naming_convention = models.CharField(max_length=255, blank=True, default="")
     required_reviewers_count = models.IntegerField(default=1)
     auto_close_completed_issues = models.BooleanField(default=False)
     issue_prefix = models.CharField(max_length=10)
