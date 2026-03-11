@@ -193,6 +193,7 @@ async def run_claude(
         stderr=asyncio.subprocess.PIPE,
         cwd=work_dir,
         env=env,
+        limit=10 * 1024 * 1024,  # 10 MB – Claude tool results can be very large single lines
     )
 
     try:
