@@ -25,8 +25,7 @@ export interface WorkflowList {
   is_active: boolean;
   organization: string | null;
   project: string | null;
-  issue: string | null;
-  label: string | null;
+  labels: string[];
   nodes_count: number;
   created_at: string;
 }
@@ -50,15 +49,16 @@ export interface CreateWorkflowPayload {
   is_active?: boolean;
   organization?: string;
   project?: string;
-  issue?: string;
-  label?: string;
+  labels?: string[];
 }
 
 export interface UpdateWorkflowPayload {
   name?: string;
   description?: string;
   is_active?: boolean;
-  label?: string | null;
+  organization?: string | null;
+  project?: string | null;
+  labels?: string[];
 }
 
 export interface CreateNodePayload {

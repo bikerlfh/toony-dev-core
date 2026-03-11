@@ -41,6 +41,8 @@ import {
 import { listSubAgents } from "@/lib/api/sub-agents";
 import { listSkills } from "@/lib/api/skills";
 import { listLabels } from "@/lib/api/workspace";
+import { listOrganizations } from "@/lib/api/organizations";
+import { listProjects } from "@/lib/api/projects";
 import { Select } from "@/components/ui/select";
 import type {
   WorkflowDetail,
@@ -48,6 +50,8 @@ import type {
   SubAgentList,
   SkillList,
   Label,
+  Organization,
+  ProjectList,
 } from "@/types";
 
 /* ── Custom node ────────────────────────────────────── */
@@ -188,9 +192,15 @@ export default function WorkflowEditPage() {
   // Workflow properties form
   const [wfName, setWfName] = useState("");
   const [wfDescription, setWfDescription] = useState("");
-  const [wfLabelId, setWfLabelId] = useState("");
+  const [wfLabelIds, setWfLabelIds] = useState<string[]>([]);
+  const [wfOrgId, setWfOrgId] = useState<string | null>(null);
+  const [wfProjectId, setWfProjectId] = useState<string | null>(null);
   const [wfIsActive, setWfIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Organization & Project data
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [orgProjects, setOrgProjects] = useState<ProjectList[]>([]);
 
   // Catalog data
   const [subAgents, setSubAgents] = useState<SubAgentList[]>([]);
@@ -217,22 +227,26 @@ export default function WorkflowEditPage() {
 
   const loadWorkflow = useCallback(async () => {
     try {
-      const [wf, saRes, skRes, lblRes] = await Promise.all([
+      const [wf, saRes, skRes, lblRes, orgRes] = await Promise.all([
         getWorkflow(id),
         listSubAgents(),
         listSkills(),
         listLabels(),
+        listOrganizations(),
       ]);
 
       setWorkflow(wf);
       setWfName(wf.name);
       setWfDescription(wf.description ?? "");
-      setWfLabelId(wf.label ?? "");
+      setWfLabelIds(wf.labels ?? []);
+      setWfOrgId(wf.organization);
+      setWfProjectId(wf.project);
       setWfIsActive(wf.is_active);
 
       setSubAgents(saRes.results);
       setSkills(skRes.results);
       setLabels(lblRes.results);
+      setOrganizations(orgRes.results);
 
       // Convert API nodes/edges to React Flow format
       setNodes(wf.nodes.map(apiNodeToFlowNode));
@@ -253,6 +267,19 @@ export default function WorkflowEditPage() {
   useEffect(() => {
     loadWorkflow();
   }, [loadWorkflow]);
+
+  // Load projects when organization changes
+  useEffect(() => {
+    if (!wfOrgId) {
+      setOrgProjects([]);
+      return;
+    }
+    listProjects().then((res) => {
+      setOrgProjects(
+        res.results.filter((p) => p.organization === wfOrgId)
+      );
+    });
+  }, [wfOrgId]);
 
   /* ── Catalog items ──────────────────────────────── */
 
@@ -505,7 +532,9 @@ export default function WorkflowEditPage() {
         name: wfName,
         description: wfDescription || undefined,
         is_active: wfIsActive,
-        label: wfLabelId || null,
+        organization: wfOrgId,
+        project: wfProjectId,
+        labels: wfLabelIds,
       });
       setWorkflow((prev) => (prev ? { ...prev, ...updated } : prev));
     } catch (err: unknown) {
@@ -946,21 +975,111 @@ export default function WorkflowEditPage() {
                     />
                   </div>
 
-                  {/* Label */}
+                  {/* Organization */}
                   <div>
                     <label className="block text-xs font-medium text-slate-500">
-                      Label trigger
+                      Organization
                     </label>
                     <Select
                       options={[
-                        { value: "", label: "None (default)" },
-                        ...labels.map((l) => ({ value: l.id, label: l.name })),
+                        { value: "", label: "None (global)" },
+                        ...organizations.map((o) => ({ value: o.id, label: o.name })),
                       ]}
-                      value={wfLabelId}
-                      onChange={(v) => setWfLabelId(v)}
-                      placeholder="None (default)"
+                      value={wfOrgId ?? ""}
+                      onChange={(v) => {
+                        setWfOrgId(v || null);
+                        setWfProjectId(null);
+                      }}
+                      placeholder="None (global)"
                       className="mt-1"
                     />
+                  </div>
+
+                  {/* Project (only if org selected) */}
+                  {wfOrgId && (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500">
+                        Project
+                      </label>
+                      <Select
+                        options={[
+                          { value: "", label: "None" },
+                          ...orgProjects.map((p) => ({ value: p.id, label: p.name })),
+                        ]}
+                        value={wfProjectId ?? ""}
+                        onChange={(v) => setWfProjectId(v || null)}
+                        placeholder="None"
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  {/* Labels (multi-select) */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500">
+                      Label triggers
+                    </label>
+                    {/* Selected labels as removable badges */}
+                    {wfLabelIds.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {wfLabelIds.map((lid) => {
+                          const lbl = labels.find((l) => l.id === lid);
+                          return (
+                            <span
+                              key={lid}
+                              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                              style={{
+                                backgroundColor: lbl ? `${lbl.color}20` : "#33415520",
+                                color: lbl?.color ?? "#94a3b8",
+                              }}
+                            >
+                              {lbl?.name ?? lid.slice(0, 8)}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setWfLabelIds((prev) => prev.filter((x) => x !== lid))
+                                }
+                                className="ml-0.5 hover:opacity-70"
+                              >
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Available labels as checkboxes */}
+                    <div className="mt-1.5 max-h-32 space-y-1 overflow-y-auto rounded-md border border-slate-800 bg-slate-900 p-1.5">
+                      {labels.length === 0 && (
+                        <p className="px-1 py-1 text-[10px] text-slate-600">No labels available.</p>
+                      )}
+                      {labels.map((l) => (
+                        <label
+                          key={l.id}
+                          className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs text-slate-300 hover:bg-slate-800/60"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={wfLabelIds.includes(l.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setWfLabelIds((prev) => [...prev, l.id]);
+                              } else {
+                                setWfLabelIds((prev) => prev.filter((x) => x !== l.id));
+                              }
+                            }}
+                            className="h-3 w-3 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                          />
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: l.color }}
+                          />
+                          {l.name}
+                        </label>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Active */}
@@ -980,13 +1099,11 @@ export default function WorkflowEditPage() {
                       Scope
                     </label>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      {workflow.issue
-                        ? "Issue"
-                        : workflow.project
-                          ? "Project"
-                          : workflow.organization
-                            ? "Organization"
-                            : "Global"}
+                      {wfProjectId
+                        ? "Project"
+                        : wfOrgId
+                          ? "Organization"
+                          : "Global"}
                     </p>
                   </div>
 

@@ -7,10 +7,9 @@ import type { WorkflowList } from "@/types";
 
 /* ── Scope helpers ─────────────────────────────────── */
 
-type ScopeKind = "GLOBAL" | "ORGANIZATION" | "PROJECT" | "ISSUE";
+type ScopeKind = "GLOBAL" | "ORGANIZATION" | "PROJECT";
 
 function getScope(w: WorkflowList): ScopeKind {
-  if (w.issue) return "ISSUE";
   if (w.project) return "PROJECT";
   if (w.organization) return "ORGANIZATION";
   return "GLOBAL";
@@ -20,14 +19,12 @@ const SCOPE_LABELS: Record<ScopeKind, string> = {
   GLOBAL: "Global",
   ORGANIZATION: "Organization",
   PROJECT: "Project",
-  ISSUE: "Issue",
 };
 
 const SCOPE_COLORS: Record<ScopeKind, string> = {
   GLOBAL: "bg-slate-800 text-slate-400",
   ORGANIZATION: "bg-purple-900/50 text-purple-400",
   PROJECT: "bg-blue-900/50 text-blue-400",
-  ISSUE: "bg-amber-900/50 text-amber-400",
 };
 
 /* ── Filter options ────────────────────────────────── */
@@ -41,7 +38,6 @@ const SCOPE_OPTIONS: ScopeFilter[] = [
   "GLOBAL",
   "ORGANIZATION",
   "PROJECT",
-  "ISSUE",
 ];
 
 /* ── Filter pill ───────────────────────────────────── */
@@ -289,9 +285,9 @@ export default function WorkflowsPage() {
                     >
                       {SCOPE_LABELS[scope]}
                     </span>
-                    {wf.label ? (
+                    {wf.labels.length > 0 ? (
                       <span className="inline-flex shrink-0 rounded-full bg-indigo-900/30 px-2 py-0.5 text-[10px] font-medium text-indigo-400">
-                        Label
+                        {wf.labels.length} label{wf.labels.length > 1 ? "s" : ""}
                       </span>
                     ) : (
                       <span className="inline-flex shrink-0 rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] font-medium text-slate-500">

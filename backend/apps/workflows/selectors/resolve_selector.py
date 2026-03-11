@@ -1,50 +1,72 @@
+from django.db.models import Count, Q
+
 from workflows.models import Workflow
 
 
-def _find_active_workflow(scope_filter, label=None):
-    """Find an active workflow matching a scope filter and optional label."""
-    qs = Workflow.objects.filter(is_active=True, **scope_filter)
-    if label:
-        qs = qs.filter(label=label)
-    else:
-        qs = qs.filter(label__isnull=True)
+SCOPED_EAGER_LOADING = {
+    "select_related": ["organization", "project", "created_by"],
+    "prefetch_related": ["nodes__sub_agent", "nodes__skill", "edges", "labels"],
+}
+
+
+def _build_scopes(project, organization):
+    return [
+        {"project": project},
+        {"organization": organization},
+        {"organization__isnull": True, "project__isnull": True},
+    ]
+
+
+def _find_best_label_match(scope_filter, issue_label_ids):
+    """Find the active workflow with the most label matches within a scope."""
     return (
-        qs.select_related("organization", "project", "issue", "label", "created_by")
-        .prefetch_related("nodes__sub_agent", "nodes__skill", "edges")
+        Workflow.objects.filter(is_active=True, **scope_filter)
+        .filter(labels__id__in=issue_label_ids)
+        .annotate(
+            match_count=Count(
+                "labels", filter=Q(labels__id__in=issue_label_ids)
+            )
+        )
+        .select_related(*SCOPED_EAGER_LOADING["select_related"])
+        .prefetch_related(*SCOPED_EAGER_LOADING["prefetch_related"])
+        .order_by("-match_count")
         .first()
     )
+
+
+def _find_default_workflow(scopes):
+    """Find an active workflow with no labels (default) across scopes."""
+    for scope_filter in scopes:
+        wf = (
+            Workflow.objects.filter(is_active=True, **scope_filter)
+            .filter(labels__isnull=True)
+            .select_related(*SCOPED_EAGER_LOADING["select_related"])
+            .prefetch_related(*SCOPED_EAGER_LOADING["prefetch_related"])
+            .first()
+        )
+        if wf:
+            return wf
+    return None
 
 
 def resolve_workflow_for_issue(issue):
     """
     Resolve the best workflow for an issue.
 
-    Resolution order:
-    1. Pass 1: For each issue label (in order), check scopes Issue -> Project -> Org -> Global
-    2. Pass 2: Check default (no label) at each scope
+    Resolution order (by scope: project -> org -> global):
+    1. Workflows whose labels overlap with issue labels, ranked by match count
+    2. Default workflows (no labels assigned)
     """
     project = issue.project
     organization = project.organization
+    scopes = _build_scopes(project, organization)
 
-    scopes = [
-        {"issue": issue},
-        {"project": project},
-        {"organization": organization},
-        {"organization__isnull": True, "project__isnull": True, "issue__isnull": True},
-    ]
+    issue_label_ids = set(issue.labels.values_list("id", flat=True))
 
-    # Pass 1: Match by label
-    labels = list(issue.labels.all().order_by("name"))
-    for label in labels:
+    if issue_label_ids:
         for scope_filter in scopes:
-            workflow = _find_active_workflow(scope_filter, label=label)
+            workflow = _find_best_label_match(scope_filter, issue_label_ids)
             if workflow:
                 return workflow
 
-    # Pass 2: Default (no label)
-    for scope_filter in scopes:
-        workflow = _find_active_workflow(scope_filter, label=None)
-        if workflow:
-            return workflow
-
-    return None
+    return _find_default_workflow(scopes)
