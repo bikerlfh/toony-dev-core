@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type FormEvent,
 } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -177,6 +176,202 @@ function HelpRow({ keys, desc }: { keys: string[]; desc: string }) {
   );
 }
 
+/* ── Collapsible section ──────────────────────────────── */
+
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  badge,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  badge?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-slate-800/60 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-[10px] font-medium uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-400"
+      >
+        <svg
+          className={`h-3 w-3 shrink-0 transition-transform ${open ? "rotate-0" : "-rotate-90"}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 16 16"
+          strokeWidth="1.5"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        {title}
+        {badge && <span className="ml-auto">{badge}</span>}
+      </button>
+      {open && <div className="space-y-3 px-3 pb-3">{children}</div>}
+    </div>
+  );
+}
+
+/* ── Label picker ─────────────────────────────────────── */
+
+function LabelPicker({
+  labels,
+  selectedIds,
+  onChange,
+}: {
+  labels: Label[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const filtered = search
+    ? labels.filter((l) =>
+        l.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : labels;
+
+  return (
+    <div ref={ref} className="relative">
+      {selectedIds.length > 0 && (
+        <div className="mb-1.5 flex flex-wrap gap-1">
+          {selectedIds.map((lid) => {
+            const lbl = labels.find((l) => l.id === lid);
+            return (
+              <span
+                key={lid}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                style={{
+                  backgroundColor: lbl ? `${lbl.color}20` : "#33415520",
+                  color: lbl?.color ?? "#94a3b8",
+                }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: lbl?.color ?? "#94a3b8" }}
+                />
+                {lbl?.name ?? lid.slice(0, 8)}
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange(selectedIds.filter((x) => x !== lid))
+                  }
+                  className="ml-0.5 hover:opacity-70"
+                >
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-300"
+      >
+        <span>
+          {selectedIds.length === 0
+            ? "No labels"
+            : `${selectedIds.length} label${selectedIds.length > 1 ? "s" : ""} selected`}
+        </span>
+        <svg
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 16 16"
+          strokeWidth="1.5"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-slate-800/60 bg-slate-900 shadow-xl">
+          <div className="border-b border-slate-800/60 p-1.5">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search labels..."
+              autoFocus
+              className="w-full rounded-md border-0 bg-slate-950 px-2 py-1 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+          <div className="max-h-40 overflow-y-auto p-1">
+            {filtered.length === 0 && (
+              <p className="px-2 py-2 text-center text-[10px] text-slate-600">
+                {search ? "No matches." : "No labels available."}
+              </p>
+            )}
+            {filtered.map((l) => (
+              <label
+                key={l.id}
+                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-slate-300 transition-colors hover:bg-slate-800/60"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(l.id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      onChange([...selectedIds, l.id]);
+                    } else {
+                      onChange(selectedIds.filter((x) => x !== l.id));
+                    }
+                  }}
+                  className="h-3 w-3 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
+                />
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: l.color }}
+                />
+                {l.name}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Page ───────────────────────────────────────────── */
 
 export default function WorkflowEditPage() {
@@ -196,7 +391,9 @@ export default function WorkflowEditPage() {
   const [wfOrgId, setWfOrgId] = useState<string | null>(null);
   const [wfProjectId, setWfProjectId] = useState<string | null>(null);
   const [wfIsActive, setWfIsActive] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   // Organization & Project data
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -223,6 +420,11 @@ export default function WorkflowEditPage() {
   // Debounce ref for position updates
   const positionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Auto-save refs
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedStateRef = useRef<string>("");
+  const hasLoadedRef = useRef(false);
+
   /* ── Load data ──────────────────────────────────── */
 
   const loadWorkflow = useCallback(async () => {
@@ -242,6 +444,17 @@ export default function WorkflowEditPage() {
       setWfOrgId(wf.organization);
       setWfProjectId(wf.project);
       setWfIsActive(wf.is_active);
+
+      // Store initial form state for auto-save comparison
+      savedStateRef.current = JSON.stringify({
+        name: wf.name,
+        description: wf.description ?? "",
+        labels: [...(wf.labels ?? [])].sort(),
+        organization: wf.organization,
+        project: wf.project,
+        is_active: wf.is_active,
+      });
+      hasLoadedRef.current = true;
 
       setSubAgents(saRes.results);
       setSkills(skRes.results);
@@ -280,6 +493,53 @@ export default function WorkflowEditPage() {
       );
     });
   }, [wfOrgId]);
+
+  /* ── Auto-save workflow properties ──────────────── */
+
+  useEffect(() => {
+    if (!hasLoadedRef.current || !workflow) return;
+
+    const currentState = JSON.stringify({
+      name: wfName,
+      description: wfDescription,
+      labels: [...wfLabelIds].sort(),
+      organization: wfOrgId,
+      project: wfProjectId,
+      is_active: wfIsActive,
+    });
+
+    if (currentState === savedStateRef.current) return;
+    if (!wfName.trim()) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setSaveStatus("saving");
+      try {
+        const updated = await updateWorkflow(id, {
+          name: wfName,
+          description: wfDescription || undefined,
+          is_active: wfIsActive,
+          organization: wfOrgId,
+          project: wfProjectId,
+          labels: wfLabelIds,
+        });
+        setWorkflow((prev) => (prev ? { ...prev, ...updated } : prev));
+        savedStateRef.current = currentState;
+        setSaveStatus("saved");
+        setTimeout(
+          () => setSaveStatus((s) => (s === "saved" ? "idle" : s)),
+          2000
+        );
+      } catch {
+        setSaveStatus("error");
+      }
+    }, 1000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [wfName, wfDescription, wfLabelIds, wfOrgId, wfProjectId, wfIsActive, id, workflow]);
 
   /* ── Catalog items ──────────────────────────────── */
 
@@ -519,36 +779,6 @@ export default function WorkflowEditPage() {
     },
     [onNodesChange, workflow]
   );
-
-  /* ── Save workflow properties ───────────────────── */
-
-  async function handleSaveProperties(e: FormEvent) {
-    e.preventDefault();
-    setIsSaving(true);
-    setError("");
-
-    try {
-      const updated = await updateWorkflow(id, {
-        name: wfName,
-        description: wfDescription || undefined,
-        is_active: wfIsActive,
-        organization: wfOrgId,
-        project: wfProjectId,
-        labels: wfLabelIds,
-      });
-      setWorkflow((prev) => (prev ? { ...prev, ...updated } : prev));
-    } catch (err: unknown) {
-      const data = (err as { response?: { data?: Record<string, string[]> } })
-        ?.response?.data;
-      setError(
-        data
-          ? Object.values(data).flat().join(" ")
-          : "Failed to update workflow."
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
 
   /* ── Save node config overrides ─────────────────── */
 
@@ -932,13 +1162,44 @@ export default function WorkflowEditPage() {
               </div>
             ) : (
               /* ── Workflow properties ─────────────── */
-              <form onSubmit={handleSaveProperties} className="p-3">
-                <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                  Workflow properties
-                </h3>
+              <div>
+                {/* Header with save status */}
+                <div className="flex items-center justify-between border-b border-slate-800/60 px-3 py-2.5">
+                  <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    Workflow properties
+                  </h3>
+                  {saveStatus === "saving" && (
+                    <span className="text-[10px] text-slate-500">
+                      Saving...
+                    </span>
+                  )}
+                  {saveStatus === "saved" && (
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                      <svg
+                        className="h-3 w-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 16 16"
+                        strokeWidth="1.5"
+                      >
+                        <path
+                          d="M3 8.5l3 3 7-7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Saved
+                    </span>
+                  )}
+                  {saveStatus === "error" && (
+                    <span className="text-[10px] text-red-400">
+                      Error saving
+                    </span>
+                  )}
+                </div>
 
-                <div className="mt-3 space-y-3">
-                  {/* Name */}
+                {/* Identity */}
+                <CollapsibleSection title="Identity">
                   <div>
                     <label className="block text-xs font-medium text-slate-500">
                       Name
@@ -947,12 +1208,9 @@ export default function WorkflowEditPage() {
                       type="text"
                       value={wfName}
                       onChange={(e) => setWfName(e.target.value)}
-                      required
                       className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
-
-                  {/* Slug (read-only) */}
                   <div>
                     <label className="block text-xs font-medium text-slate-500">
                       Slug
@@ -961,8 +1219,6 @@ export default function WorkflowEditPage() {
                       {workflow.slug}
                     </p>
                   </div>
-
-                  {/* Description */}
                   <div>
                     <label className="block text-xs font-medium text-slate-500">
                       Description
@@ -974,8 +1230,21 @@ export default function WorkflowEditPage() {
                       className="mt-1 block w-full rounded-md border border-slate-800 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none"
                     />
                   </div>
+                </CollapsibleSection>
 
-                  {/* Organization */}
+                {/* Scope */}
+                <CollapsibleSection
+                  title="Scope"
+                  badge={
+                    <span className="font-mono text-[10px] normal-case tracking-normal text-slate-600">
+                      {wfProjectId
+                        ? "project"
+                        : wfOrgId
+                          ? "org"
+                          : "global"}
+                    </span>
+                  }
+                >
                   <div>
                     <label className="block text-xs font-medium text-slate-500">
                       Organization
@@ -983,7 +1252,10 @@ export default function WorkflowEditPage() {
                     <Select
                       options={[
                         { value: "", label: "None (global)" },
-                        ...organizations.map((o) => ({ value: o.id, label: o.name })),
+                        ...organizations.map((o) => ({
+                          value: o.id,
+                          label: o.name,
+                        })),
                       ]}
                       value={wfOrgId ?? ""}
                       onChange={(v) => {
@@ -994,8 +1266,6 @@ export default function WorkflowEditPage() {
                       className="mt-1"
                     />
                   </div>
-
-                  {/* Project (only if org selected) */}
                   {wfOrgId && (
                     <div>
                       <label className="block text-xs font-medium text-slate-500">
@@ -1004,7 +1274,10 @@ export default function WorkflowEditPage() {
                       <Select
                         options={[
                           { value: "", label: "None" },
-                          ...orgProjects.map((p) => ({ value: p.id, label: p.name })),
+                          ...orgProjects.map((p) => ({
+                            value: p.id,
+                            label: p.name,
+                          })),
                         ]}
                         value={wfProjectId ?? ""}
                         onChange={(v) => setWfProjectId(v || null)}
@@ -1013,76 +1286,28 @@ export default function WorkflowEditPage() {
                       />
                     </div>
                   )}
+                </CollapsibleSection>
 
-                  {/* Labels (multi-select) */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500">
-                      Label triggers
-                    </label>
-                    {/* Selected labels as removable badges */}
-                    {wfLabelIds.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {wfLabelIds.map((lid) => {
-                          const lbl = labels.find((l) => l.id === lid);
-                          return (
-                            <span
-                              key={lid}
-                              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                              style={{
-                                backgroundColor: lbl ? `${lbl.color}20` : "#33415520",
-                                color: lbl?.color ?? "#94a3b8",
-                              }}
-                            >
-                              {lbl?.name ?? lid.slice(0, 8)}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setWfLabelIds((prev) => prev.filter((x) => x !== lid))
-                                }
-                                className="ml-0.5 hover:opacity-70"
-                              >
-                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {/* Available labels as checkboxes */}
-                    <div className="mt-1.5 max-h-32 space-y-1 overflow-y-auto rounded-md border border-slate-800 bg-slate-900 p-1.5">
-                      {labels.length === 0 && (
-                        <p className="px-1 py-1 text-[10px] text-slate-600">No labels available.</p>
-                      )}
-                      {labels.map((l) => (
-                        <label
-                          key={l.id}
-                          className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs text-slate-300 hover:bg-slate-800/60"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={wfLabelIds.includes(l.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setWfLabelIds((prev) => [...prev, l.id]);
-                              } else {
-                                setWfLabelIds((prev) => prev.filter((x) => x !== l.id));
-                              }
-                            }}
-                            className="h-3 w-3 rounded border-slate-600 bg-slate-950 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0"
-                          />
-                          <span
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: l.color }}
-                          />
-                          {l.name}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                {/* Triggers */}
+                <CollapsibleSection
+                  title="Triggers"
+                  badge={
+                    wfLabelIds.length > 0 ? (
+                      <span className="rounded-full bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-normal text-indigo-400">
+                        {wfLabelIds.length}
+                      </span>
+                    ) : null
+                  }
+                >
+                  <LabelPicker
+                    labels={labels}
+                    selectedIds={wfLabelIds}
+                    onChange={setWfLabelIds}
+                  />
+                </CollapsibleSection>
 
-                  {/* Active */}
+                {/* Status & Info */}
+                <CollapsibleSection title="Status & Info" defaultOpen={false}>
                   <label className="flex items-center gap-2 text-xs text-slate-300">
                     <input
                       type="checkbox"
@@ -1092,46 +1317,13 @@ export default function WorkflowEditPage() {
                     />
                     Active
                   </label>
-
-                  {/* Scope info (read-only) */}
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500">
-                      Scope
-                    </label>
-                    <p className="mt-0.5 text-xs text-slate-400">
-                      {wfProjectId
-                        ? "Project"
-                        : wfOrgId
-                          ? "Organization"
-                          : "Global"}
-                    </p>
+                  <div className="flex items-center gap-3 font-mono text-[10px] text-slate-600">
+                    <span>{nodes.length} nodes</span>
+                    <span className="text-slate-800">&middot;</span>
+                    <span>{edges.length} edges</span>
                   </div>
-
-                  {/* Stats */}
-                  <div className="rounded-md border border-slate-800/40 bg-slate-900/30 px-2.5 py-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Nodes</span>
-                      <span className="font-medium text-slate-300">
-                        {nodes.length}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Edges</span>
-                      <span className="font-medium text-slate-300">
-                        {edges.length}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="mt-4 w-full rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
-                >
-                  {isSaving ? "Saving..." : "Save properties"}
-                </button>
-              </form>
+                </CollapsibleSection>
+              </div>
             )}
           </div>
         </div>
