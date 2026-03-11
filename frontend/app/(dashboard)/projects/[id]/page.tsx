@@ -25,9 +25,10 @@ import {
   updateCycle,
   deleteCycle,
 } from "@/lib/api/cycles";
-import { listLabels } from "@/lib/api/workspace";
+import { listLabels, listTeams } from "@/lib/api/workspace";
 import { listIssues, updateIssue } from "@/lib/api/issues";
 import { listResources, createResource, updateResource, deleteResource } from "@/lib/api/resources";
+import { listProjectTeams, addProjectTeam, removeProjectTeam } from "@/lib/api/project-teams";
 // Role checks removed — will be re-implemented when org context is rebuilt
 import { ConfirmModal } from "@/components/confirm-modal";
 import { StatusBadge } from "@/components/status-badge";
@@ -55,10 +56,12 @@ import type {
   ProjectWsEvent,
   ProjectResource,
   ResourceType,
+  ProjectTeam,
+  Team,
 } from "@/types";
 import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 
-type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "resources" | "settings";
+type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "teams" | "resources" | "settings";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "issues", label: "Issues" },
@@ -67,6 +70,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "milestones", label: "Milestones" },
   { key: "cycles", label: "Cycles" },
   { key: "members", label: "Members" },
+  { key: "teams", label: "Teams" },
   { key: "settings", label: "Settings" },
 ];
 
@@ -358,6 +362,9 @@ export default function ProjectDetailPage() {
         )}
         {activeTab === "members" && (
           <MembersTab projectId={projectId} canManage={canManage} />
+        )}
+        {activeTab === "teams" && (
+          <TeamsTab projectId={projectId} canManage={canManage} />
         )}
         {activeTab === "resources" && (
           <ResourcesTab projectId={projectId} canManage={canManage} />
@@ -1119,6 +1126,166 @@ function MembersTab({ projectId, canManage }: { projectId: string; canManage: bo
       {removeTarget && (
         <ConfirmModal title="Remove member"
           message={`Remove ${removeTarget.user.first_name} ${removeTarget.user.last_name} from this project?`}
+          confirmLabel="Remove" confirmVariant="danger" isLoading={isRemoving}
+          onConfirm={handleRemove} onCancel={() => setRemoveTarget(null)} />
+      )}
+    </div>
+  );
+}
+
+// --- Teams Tab ---
+
+function TeamsTab({ projectId, canManage }: { projectId: string; canManage: boolean }) {
+  const router = useRouter();
+  const [projectTeams, setProjectTeams] = useState<ProjectTeam[]>([]);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState("");
+  const [addError, setAddError] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<ProjectTeam | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const fetchProjectTeams = useCallback(async () => {
+    try {
+      setProjectTeams((await listProjectTeams(projectId)).results);
+    } finally { setIsLoading(false); }
+  }, [projectId]);
+
+  useEffect(() => { fetchProjectTeams(); }, [fetchProjectTeams]);
+
+  const associatedTeamIds = new Set(projectTeams.map((pt) => pt.team.id));
+  const availableTeams = allTeams.filter((t) => !associatedTeamIds.has(t.id));
+
+  async function openAddModal() {
+    setShowAdd(true);
+    setAddError("");
+    setSelectedTeamId("");
+    try {
+      setAllTeams((await listTeams()).results);
+    } catch {
+      setAddError("Failed to load teams.");
+    }
+  }
+
+  async function handleAdd(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedTeamId) return;
+    setAddError("");
+    setIsAdding(true);
+    try {
+      await addProjectTeam(projectId, selectedTeamId);
+      setShowAdd(false);
+      setSelectedTeamId("");
+      fetchProjectTeams();
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
+      setAddError(data ? Object.values(data).flat().join(" ") : "Failed to add team.");
+    } finally { setIsAdding(false); }
+  }
+
+  async function handleRemove() {
+    if (!removeTarget) return;
+    setIsRemoving(true);
+    try {
+      await removeProjectTeam(projectId, removeTarget.team.id);
+      setRemoveTarget(null);
+      fetchProjectTeams();
+    } finally { setIsRemoving(false); }
+  }
+
+  if (isLoading) return <p className="text-slate-500">Loading teams...</p>;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-medium text-white">Teams</h2>
+        {canManage && (
+          <button onClick={openAddModal}
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500">Add team</button>
+        )}
+      </div>
+
+      {projectTeams.length === 0 ? (
+        <p className="mt-6 text-sm text-slate-500">No teams associated with this project yet.</p>
+      ) : (
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60 bg-slate-900">
+          <table className="min-w-full divide-y divide-slate-800/60">
+            <thead className="bg-slate-900">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Team</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Added</th>
+                {canManage && <th className="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {projectTeams.map((pt) => (
+                <tr key={pt.id} className="hover:bg-slate-900/60">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-sm font-medium text-slate-400">
+                        {pt.team.name[0]}
+                      </div>
+                      <div>
+                        <button onClick={() => router.push(`/teams/${pt.team.id}`)}
+                          className="text-sm font-medium text-slate-200 hover:text-indigo-400 transition-colors">
+                          {pt.team.name}
+                        </button>
+                        <span className="ml-2 inline-block rounded-md bg-slate-800 px-1.5 py-0.5 text-xs font-mono text-slate-500">
+                          {pt.team.identifier}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500">{new Date(pt.created_at).toLocaleDateString()}</td>
+                  {canManage && (
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => setRemoveTarget(pt)} className="text-sm text-red-400 transition-colors hover:text-red-300">Remove</button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="mb-4 text-base font-medium tracking-tight text-white">Add team to project</h2>
+            {addError && <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400"><svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6.25" /><path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" /></svg><span>{addError}</span></div>}
+            <form onSubmit={handleAdd} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-400">Team</label>
+                {availableTeams.length === 0 && !addError ? (
+                  <p className="mt-1.5 text-sm text-slate-500">All teams are already associated with this project.</p>
+                ) : (
+                  <Select
+                    options={availableTeams.map((t) => ({ value: t.id, label: t.name }))}
+                    value={selectedTeamId}
+                    onChange={(v) => setSelectedTeamId(v)}
+                    placeholder="Select a team..."
+                    className="mt-1.5"
+                  />
+                )}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => { setShowAdd(false); setAddError(""); }}
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">Cancel</button>
+                <button type="submit" disabled={isAdding || !selectedTeamId}
+                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                  {isAdding ? "Adding..." : "Add team"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {removeTarget && (
+        <ConfirmModal title="Remove team"
+          message={`Remove "${removeTarget.team.name}" from this project?`}
           confirmLabel="Remove" confirmVariant="danger" isLoading={isRemoving}
           onConfirm={handleRemove} onCancel={() => setRemoveTarget(null)} />
       )}
