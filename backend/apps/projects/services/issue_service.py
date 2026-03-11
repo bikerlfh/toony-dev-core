@@ -56,6 +56,11 @@ def update_issue(issue, user, **kwargs):
 
     old_status = issue.status
 
+    # Block TODO→BACKLOG if active agent tasks exist; cancel QUEUED ones
+    new_status = kwargs.get("status")
+    if old_status == IssueStatus.TODO and new_status == IssueStatus.BACKLOG:
+        _handle_todo_to_backlog(issue)
+
     tracked_fields = {
         "title",
         "description",
@@ -204,6 +209,33 @@ def delete_comment(comment):
         "comment_deleted",
         {"issue_id": issue_id, "comment_id": comment_id},
     )
+
+
+def _handle_todo_to_backlog(issue):
+    """Cancel QUEUED agent tasks or block if any are actively running."""
+    from rest_framework.exceptions import ValidationError as DRFValidationError
+
+    from toony_agents.models import AgentTaskStatus
+    from toony_agents.services.agent_task_service import update_task_status
+
+    active_statuses = {
+        AgentTaskStatus.ASSIGNED,
+        AgentTaskStatus.RUNNING,
+        AgentTaskStatus.WAITING_FOR_ANSWER,
+    }
+
+    # Check for active (non-cancellable) tasks first
+    active_task = issue.agent_tasks.filter(status__in=active_statuses).first()
+    if active_task:
+        raise DRFValidationError(
+            f"Cannot move issue back to BACKLOG: AgentTask {active_task.id} is currently "
+            f"{active_task.status}. Wait for it to complete or cancel it first."
+        )
+
+    # Cancel all QUEUED tasks
+    queued_tasks = issue.agent_tasks.filter(status=AgentTaskStatus.QUEUED)
+    for task in queued_tasks:
+        update_task_status(task, AgentTaskStatus.CANCELLED)
 
 
 def _maybe_create_agent_task(issue, user):
