@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -5,6 +7,8 @@ from common.broadcast import broadcast
 from projects.models import Issue, IssueActivity, IssueComment
 from projects.selectors.issue_selector import get_next_identifier
 from projects.serializers.output import IssueCommentSerializer, IssueListSerializer
+
+logger = logging.getLogger(__name__)
 
 
 def create_issue(project, reporter, title, **kwargs):
@@ -49,6 +53,8 @@ def update_issue(issue, user, **kwargs):
         raise DRFValidationError(
             "Title and description can only be edited when the issue is in BACKLOG or TODO status."
         )
+
+    old_status = issue.status
 
     tracked_fields = {
         "title",
@@ -126,6 +132,10 @@ def update_issue(issue, user, **kwargs):
         IssueListSerializer(issue).data,
     )
 
+    # Auto-create AgentTask when issue transitions BACKLOG → TODO
+    if old_status == IssueStatus.BACKLOG and issue.status == IssueStatus.TODO:
+        _maybe_create_agent_task(issue, user)
+
     return issue
 
 
@@ -193,4 +203,62 @@ def delete_comment(comment):
         f"project_{project_id}",
         "comment_deleted",
         {"issue_id": issue_id, "comment_id": comment_id},
+    )
+
+
+def _maybe_create_agent_task(issue, user):
+    """Auto-create an AgentTask when an issue moves from BACKLOG to TODO."""
+    from django.conf import settings as django_settings
+
+    from toony_agents.models import ToonyAgent
+    from toony_agents.services.agent_task_service import create_agent_task
+
+    organization = issue.project.organization
+
+    # Find the most recently connected ToonyAgent for this org
+    agent = (
+        ToonyAgent.objects.filter(organizations=organization)
+        .order_by("-last_connected_at")
+        .first()
+    )
+    if agent is None:
+        logger.warning(
+            "No ToonyAgent found for organization %s; skipping auto-task for issue %s",
+            organization.id,
+            issue.identifier,
+        )
+        return
+
+    # Resolve prompt template: project override > env var
+    template = ""
+    try:
+        project_settings = issue.project.settings
+        template = project_settings.auto_task_prompt_template or ""
+    except issue.project.__class__.settings.RelatedObjectDoesNotExist:
+        pass
+
+    if not template:
+        template = getattr(django_settings, "DEFAULT_AGENT_TASK_PROMPT_TEMPLATE", "")
+
+    if not template:
+        logger.warning(
+            "No prompt template configured for project %s or env; skipping auto-task for issue %s",
+            issue.project_id,
+            issue.identifier,
+        )
+        return
+
+    prompt = template.format(
+        issue_id=issue.id,
+        issue_identifier=issue.identifier,
+    )
+
+    create_agent_task(
+        organization=organization,
+        toony_agent=agent,
+        created_by=user,
+        title=issue.title,
+        prompt=prompt,
+        project=issue.project,
+        issue=issue,
     )
