@@ -73,6 +73,8 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
         source="toony_agent.slug",
         default=None,
     )
+    organization = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentTask
@@ -81,11 +83,23 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
             "title",
             "status",
             "toony_agent_slug",
+            "organization",
+            "project",
             "started_at",
             "completed_at",
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_organization(self, obj):
+        if not obj.organization:
+            return None
+        return {"id": str(obj.organization.id), "name": obj.organization.name}
+
+    def get_project(self, obj):
+        if not obj.project:
+            return None
+        return {"id": str(obj.project.id), "name": obj.project.name}
 
 
 class AgentTaskDetailSerializer(serializers.ModelSerializer):
@@ -94,6 +108,8 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
         default=None,
     )
     created_by = serializers.SerializerMethodField()
+    organization = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentTask
@@ -103,6 +119,8 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
             "prompt",
             "status",
             "toony_agent_slug",
+            "organization",
+            "project",
             "result",
             "error",
             "session_id",
@@ -122,6 +140,16 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
             "first_name": u.first_name,
             "last_name": u.last_name,
         }
+
+    def get_organization(self, obj):
+        if not obj.organization:
+            return None
+        return {"id": str(obj.organization.id), "name": obj.organization.name}
+
+    def get_project(self, obj):
+        if not obj.project:
+            return None
+        return {"id": str(obj.project.id), "name": obj.project.name}
 
 
 class TaskEventSerializer(serializers.ModelSerializer):

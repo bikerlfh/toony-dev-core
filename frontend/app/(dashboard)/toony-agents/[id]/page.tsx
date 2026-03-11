@@ -538,9 +538,25 @@ export default function ToonyAgentDetailPage() {
                       <p className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-white">
                         {task.title}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-600">
-                        {fmtDate(task.created_at)}
-                      </p>
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-600">
+                        <span>{fmtDate(task.created_at)}</span>
+                        {task.organization && (
+                          <>
+                            <span className="text-slate-800">·</span>
+                            <span className="font-mono text-slate-500">
+                              <span className="text-indigo-500">~</span>
+                              <span className="text-slate-700">/</span>
+                              {task.organization.name}
+                              {task.project && (
+                                <>
+                                  <span className="text-slate-700">/</span>
+                                  {task.project.name}
+                                </>
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-4 ml-4">

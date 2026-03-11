@@ -5,7 +5,7 @@ def list_tasks_for_agent(toony_agent, *, organization=None):
     qs = AgentTask.objects.filter(toony_agent=toony_agent)
     if organization:
         qs = qs.filter(organization=organization)
-    return qs.select_related("toony_agent", "created_by")
+    return qs.select_related("toony_agent", "created_by", "organization", "project")
 
 
 def get_task_by_id(task_id):
@@ -13,7 +13,7 @@ def get_task_by_id(task_id):
         AgentTask.objects.filter(
             id=task_id,
         )
-        .select_related("toony_agent", "created_by")
+        .select_related("toony_agent", "created_by", "organization", "project")
         .first()
     )
 

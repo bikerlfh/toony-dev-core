@@ -220,15 +220,30 @@ export default function TaskViewPage() {
           &larr; Back
         </button>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-medium tracking-tight text-white">
-              {task.title}
-            </h1>
-            <span
-              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${TASK_STATUS_COLORS[taskStatus]}`}
-            >
-              {TASK_STATUS_LABELS[taskStatus]}
-            </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <h1 className="truncate text-lg font-medium tracking-tight text-white">
+                {task.title}
+              </h1>
+              <span
+                className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${TASK_STATUS_COLORS[taskStatus]}`}
+              >
+                {TASK_STATUS_LABELS[taskStatus]}
+              </span>
+            </div>
+            {task.organization && (
+              <div className="mt-1 font-mono text-xs text-slate-500">
+                <span className="text-indigo-500">~</span>
+                <span className="text-slate-700">/</span>
+                {task.organization.name}
+                {task.project && (
+                  <>
+                    <span className="text-slate-700">/</span>
+                    {task.project.name}
+                  </>
+                )}
+              </div>
+            )}
           </div>
           {isActive && (
             <button

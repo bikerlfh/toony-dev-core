@@ -71,6 +71,8 @@ export interface AgentTaskList {
   title: string;
   status: AgentTaskStatus;
   toony_agent_slug: string | null;
+  organization: { id: string; name: string } | null;
+  project: { id: string; name: string } | null;
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
