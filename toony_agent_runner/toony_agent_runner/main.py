@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .config import ClaudeConfig, ReconnectConfig, RunnerConfig, load_config
+from .config import ClaudeConfig, ReconnectConfig, RunnerConfig, load_config, save_config
 from .connection import BackendConnection
 from .protocol import (
     QuestionAnswered,
@@ -31,6 +31,8 @@ from .protocol import (
     CommandResultMessage,
     ConfigSync,
     ConfigSyncAckMessage,
+    ConfigUpdate,
+    ConfigUpdateAckMessage,
     HeartbeatAck,
     HeartbeatMessage,
     RegisterMessage,
@@ -88,7 +90,7 @@ async def _handle_command(
 # Main loop
 # ---------------------------------------------------------------------------
 
-async def run(config: RunnerConfig) -> None:
+async def run(config: RunnerConfig, config_path: str) -> None:
     """Main daemon loop."""
     conn = BackendConnection(
         url=config.backend_url,
@@ -134,6 +136,8 @@ async def run(config: RunnerConfig) -> None:
         "platform": platform.platform(),
         "runner_version": __version__,
         "pid": os.getpid(),
+        "max_concurrent_tasks": config.claude.max_concurrent_tasks,
+        "max_task_timeout": config.claude.max_task_timeout,
     }
     await conn.send(RegisterMessage(metadata=metadata).to_json())
     logger.info("Registered with backend: %s", metadata)
@@ -355,6 +359,44 @@ async def run(config: RunnerConfig) -> None:
                         ).to_json()
                     )
 
+            elif isinstance(msg, ConfigUpdate):
+                logger.info("Received config.update: %s", {
+                    "max_concurrent_tasks": msg.max_concurrent_tasks,
+                    "max_task_timeout": msg.max_task_timeout,
+                })
+                try:
+                    if msg.max_concurrent_tasks is not None:
+                        if not (1 <= msg.max_concurrent_tasks <= 100):
+                            raise ValueError(f"max_concurrent_tasks must be 1-100, got {msg.max_concurrent_tasks}")
+                        config.claude.max_concurrent_tasks = msg.max_concurrent_tasks
+                        max_tasks = msg.max_concurrent_tasks
+
+                    if msg.max_task_timeout is not None:
+                        if not (60 <= msg.max_task_timeout <= 28800):
+                            raise ValueError(f"max_task_timeout must be 60-28800, got {msg.max_task_timeout}")
+                        config.claude.max_task_timeout = msg.max_task_timeout
+
+                    save_config(config_path, config)
+
+                    # Re-register with updated metadata.
+                    metadata["max_concurrent_tasks"] = config.claude.max_concurrent_tasks
+                    metadata["max_task_timeout"] = config.claude.max_task_timeout
+                    await conn.send(RegisterMessage(metadata=metadata).to_json())
+                    await conn.send(
+                        ConfigUpdateAckMessage(
+                            success=True,
+                            metadata=metadata,
+                        ).to_json()
+                    )
+                    logger.info("Config update applied and saved")
+                except Exception as exc:
+                    logger.error("Config update failed: %s", exc)
+                    await conn.send(
+                        ConfigUpdateAckMessage(
+                            success=False, error=str(exc)
+                        ).to_json()
+                    )
+
     finally:
         # Shutdown: cancel all running tasks.
         logger.info("Shutting down...")
@@ -429,7 +471,7 @@ def cli() -> None:
         sys.exit(1)
 
     try:
-        asyncio.run(run(config))
+        asyncio.run(run(config, args.config))
     except KeyboardInterrupt:
         pass
 

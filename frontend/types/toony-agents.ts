@@ -155,9 +155,17 @@ export interface ConfigSyncStatusWsEvent {
   error?: string;
 }
 
+export interface ConfigUpdateStatusWsEvent {
+  type: "config.update.status";
+  success: boolean;
+  metadata: Record<string, unknown>;
+  error?: string;
+}
+
 export type ToonyAgentWsEvent =
   | ToonyAgentStatusWsEvent
   | TaskStatusWsEvent
   | TaskEventWsEvent
   | QuestionAskedWsEvent
-  | ConfigSyncStatusWsEvent;
+  | ConfigSyncStatusWsEvent
+  | ConfigUpdateStatusWsEvent;

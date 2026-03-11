@@ -82,6 +82,15 @@ function fmtDate(dateStr: string | null): string {
   });
 }
 
+function fmtTimeout(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  if (m > 0) return `${m}m`;
+  return `${seconds}s`;
+}
+
 /* ── Page ──────────────────────────────────────────────── */
 
 export default function ToonyAgentDetailPage() {
@@ -103,6 +112,9 @@ export default function ToonyAgentDetailPage() {
   const [removeOrgLoading, setRemoveOrgLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncResult, setSyncResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
 
   const fetchAgent = useCallback(async () => {
     try {
@@ -144,7 +156,13 @@ export default function ToonyAgentDetailPage() {
     (event: ToonyAgentWsEvent) => {
       if (event.type === "agent.status") {
         setAgent((prev) =>
-          prev ? { ...prev, status: event.status as ToonyAgentStatus } : prev
+          prev
+            ? {
+                ...prev,
+                status: event.status as ToonyAgentStatus,
+                ...(event.metadata ? { metadata: event.metadata } : {}),
+              }
+            : prev
         );
       } else if (event.type === "task.status") {
         setTasks((prev) =>
@@ -166,12 +184,23 @@ export default function ToonyAgentDetailPage() {
           });
         }
         setTimeout(() => setSyncResult(null), 5000);
+      } else if (event.type === "config.update.status") {
+        setSettingsSaving(false);
+        if (event.success) {
+          setAgent((prev) =>
+            prev && event.metadata ? { ...prev, metadata: event.metadata } : prev
+          );
+          setShowSettingsModal(false);
+          setSettingsError("");
+        } else {
+          setSettingsError(event.error || "Update failed");
+        }
       }
     },
     []
   );
 
-  const { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync } =
+  const { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync, sendConfigUpdate } =
     useToonyAgentWebSocket({
       agentId: agent?.id ?? null,
       onEvent: handleWsEvent,
@@ -343,22 +372,42 @@ export default function ToonyAgentDetailPage() {
               </span>
               <span className="text-slate-800">|</span>
               <span>Last seen {timeAgo(agent.last_connected_at)}</span>
+              {typeof agent.metadata?.max_concurrent_tasks === "number" && (
+                <>
+                  <span className="text-slate-800">|</span>
+                  <span>Concurrency: {agent.metadata.max_concurrent_tasks}</span>
+                </>
+              )}
+              {typeof agent.metadata?.max_task_timeout === "number" && (
+                <>
+                  <span className="text-slate-800">|</span>
+                  <span>Timeout: {fmtTimeout(agent.metadata.max_task_timeout as number)}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
           {agent.status !== "OFFLINE" && (
-            <button
-              onClick={() => {
-                setSyncLoading(true);
-                setSyncResult(null);
-                sendConfigSync();
-              }}
-              disabled={syncLoading}
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white disabled:opacity-50"
-            >
-              {syncLoading ? "Syncing..." : "Sync Config"}
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setSyncLoading(true);
+                  setSyncResult(null);
+                  sendConfigSync();
+                }}
+                disabled={syncLoading}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white disabled:opacity-50"
+              >
+                {syncLoading ? "Syncing..." : "Sync Config"}
+              </button>
+              <button
+                onClick={() => setShowSettingsModal(true)}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+              >
+                Runner Settings
+              </button>
+            </>
           )}
           <button
             onClick={() => setShowTaskModal(true)}
@@ -627,6 +676,111 @@ export default function ToonyAgentDetailPage() {
           onConfirm={handleRemoveOrg}
           onCancel={() => setRemoveOrgAgent(null)}
         />
+      )}
+
+      {/* ── Runner Settings Modal ─────────────────────────── */}
+      {showSettingsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSettingsModal(false);
+              setSettingsError("");
+            }
+          }}
+        >
+          <div className="w-full max-w-sm rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+            <h2 className="text-base font-medium tracking-tight text-white">
+              Runner Settings
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Update runner configuration. Changes apply immediately.
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const concurrency = parseInt(
+                  (form.elements.namedItem("concurrency") as HTMLInputElement).value,
+                  10
+                );
+                const timeoutMin = parseInt(
+                  (form.elements.namedItem("timeout") as HTMLInputElement).value,
+                  10
+                );
+                if (isNaN(concurrency) || concurrency < 1 || concurrency > 100) return;
+                if (isNaN(timeoutMin) || timeoutMin < 1 || timeoutMin > 480) return;
+                setSettingsSaving(true);
+                setSettingsError("");
+                sendConfigUpdate({
+                  max_concurrent_tasks: concurrency,
+                  max_task_timeout: timeoutMin * 60,
+                });
+              }}
+            >
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">
+                    Max Concurrent Tasks
+                  </label>
+                  <input
+                    name="concurrency"
+                    type="number"
+                    min={1}
+                    max={100}
+                    defaultValue={
+                      typeof agent.metadata?.max_concurrent_tasks === "number"
+                        ? agent.metadata.max_concurrent_tasks
+                        : 1
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <p className="mt-1 text-xs text-slate-600">1–100 concurrent tasks</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">
+                    Task Timeout
+                  </label>
+                  <input
+                    name="timeout"
+                    type="number"
+                    min={1}
+                    max={480}
+                    defaultValue={
+                      typeof agent.metadata?.max_task_timeout === "number"
+                        ? Math.round((agent.metadata.max_task_timeout as number) / 60)
+                        : 60
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <p className="mt-1 text-xs text-slate-600">1–480 minutes per task</p>
+                </div>
+              </div>
+              {settingsError && (
+                <p className="mt-3 text-sm text-red-400">{settingsError}</p>
+              )}
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSettingsModal(false);
+                    setSettingsError("");
+                  }}
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={settingsSaving}
+                  className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {settingsSaving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

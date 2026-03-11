@@ -8,7 +8,7 @@ Outgoing messages (runner -> backend):
 
 Incoming messages (backend -> runner):
     TaskAssign, QuestionAnswered, TaskCancel, HeartbeatAck, CommandExecute,
-    ConfigSync
+    ConfigSync, ConfigUpdate
 """
 
 from __future__ import annotations
@@ -189,6 +189,13 @@ class ConfigSync:
 
 
 @dataclass
+class ConfigUpdate:
+    """Backend relays a config update from the frontend."""
+    max_concurrent_tasks: int | None = None
+    max_task_timeout: int | None = None
+
+
+@dataclass
 class CommandResultMessage:
     """Runner reports the result of a command execution."""
 
@@ -226,12 +233,28 @@ class ConfigSyncAckMessage:
         }
 
 
+@dataclass
+class ConfigUpdateAckMessage:
+    """Acknowledges a config update from the frontend."""
+    success: bool
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error: str = ""
+
+    def to_json(self) -> dict:
+        return {
+            "type": "config.update.ack",
+            "success": self.success,
+            "metadata": self.metadata,
+            "error": self.error,
+        }
+
+
 # ---------------------------------------------------------------------------
 # Message parsing
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | QuestionAnswered | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync
+IncomingMessage = TaskAssign | QuestionAnswered | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync | ConfigUpdate
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -281,5 +304,11 @@ def parse_server_message(data: dict) -> IncomingMessage:
 
     if msg_type == "config.sync":
         return ConfigSync(organizations=data.get("organizations", []))
+
+    if msg_type == "config.update":
+        return ConfigUpdate(
+            max_concurrent_tasks=data.get("max_concurrent_tasks"),
+            max_task_timeout=data.get("max_task_timeout"),
+        )
 
     raise ValueError(f"Unknown server message type: {msg_type!r}")

@@ -21,6 +21,7 @@ export function useToonyAgentWebSocket({
   sendReply: (taskId: string, message: string) => void;
   cancelTask: (taskId: string) => void;
   sendConfigSync: () => void;
+  sendConfigUpdate: (config: { max_concurrent_tasks?: number; max_task_timeout?: number }) => void;
 } {
   const url = useMemo(() => {
     if (!agentId) return null;
@@ -74,5 +75,12 @@ export function useToonyAgentWebSocket({
     send({ type: "config.sync.request" });
   }, [send]);
 
-  return { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync };
+  const sendConfigUpdate = useCallback(
+    (config: { max_concurrent_tasks?: number; max_task_timeout?: number }) => {
+      send({ type: "config.update", ...config });
+    },
+    [send],
+  );
+
+  return { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync, sendConfigUpdate };
 }

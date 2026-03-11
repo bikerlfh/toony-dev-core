@@ -458,6 +458,23 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+        elif msg_type == "config.update.ack":
+            success = content.get("success", False)
+            metadata = content.get("metadata", {})
+            if success and metadata:
+                await _set_agent_status(self.agent_id, None, metadata=metadata)
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {
+                    "type": "config_update_status",
+                    "data": {
+                        "success": success,
+                        "metadata": metadata,
+                        "error": content.get("error", ""),
+                    },
+                },
+            )
+
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
@@ -514,6 +531,12 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 "organizations": workspace_config,
             }
         )
+
+    async def config_update(self, event):
+        """Frontend requested config update — relay to runner."""
+        msg = {"type": "config.update"}
+        msg.update(event["data"])
+        await self.send_json(msg)
 
 
 # -- Frontend-facing consumer --------------------------------------------------
@@ -683,6 +706,17 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 {"type": "config_sync_request", "data": {}},
             )
 
+        elif msg_type == "config.update":
+            config_data = {}
+            if "max_concurrent_tasks" in content:
+                config_data["max_concurrent_tasks"] = content["max_concurrent_tasks"]
+            if "max_task_timeout" in content:
+                config_data["max_task_timeout"] = content["max_task_timeout"]
+            await self.channel_layer.group_send(
+                runner_group,
+                {"type": "config_update", "data": config_data},
+            )
+
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
@@ -702,3 +736,6 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
     async def config_sync_status(self, event):
         await self.send_json({"type": "config.sync.status", **event["data"]})
+
+    async def config_update_status(self, event):
+        await self.send_json({"type": "config.update.status", **event["data"]})
