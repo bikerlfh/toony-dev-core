@@ -1,0 +1,27 @@
+# Fix: AgentTask lifecycle on Issue status changes
+
+## Overview
+
+Fix duplicate AgentTask creation when an issue is moved TODO→BACKLOG→TODO. Handle AgentTask cancellation and status transition blocking.
+
+## Rules
+
+| Transition | AgentTask QUEUED | AgentTask ASSIGNED/RUNNING/WAITING_FOR_ANSWER | No active AgentTask |
+|---|---|---|---|
+| TODO→BACKLOG | Cancel task automatically, allow transition | Block transition (ValidationError with message) | Allow transition |
+| TODO→IN_PROGRESS | No effect | No effect | No effect |
+| BACKLOG→TODO | Create new AgentTask | N/A | Create new AgentTask |
+
+## TODO→BACKLOG logic
+
+In `update_issue`, when status changes from TODO to BACKLOG:
+
+1. Query `issue.agent_tasks` for tasks with status in (ASSIGNED, RUNNING, WAITING_FOR_ANSWER)
+2. If any found → raise `ValidationError` with message: `"Cannot move issue back to BACKLOG: AgentTask {task_id} is currently {status}. Wait for it to complete or cancel it first."`
+3. Query `issue.agent_tasks` for tasks with status QUEUED
+4. Cancel each one via `update_task_status(task, CANCELLED)`
+5. Proceed with status change
+
+## Location
+
+All logic in `update_issue` in `backend/apps/projects/services/issue_service.py`, inline before the transaction block — same pattern as the existing BACKLOG→TODO trigger.
