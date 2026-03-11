@@ -2,7 +2,6 @@ from django.db.models import Count, Q
 
 from workflows.models import Workflow
 
-
 SCOPED_EAGER_LOADING = {
     "select_related": ["organization", "project", "created_by"],
     "prefetch_related": ["nodes__sub_agent", "nodes__skill", "edges", "labels"],

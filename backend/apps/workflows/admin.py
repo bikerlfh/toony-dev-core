@@ -15,7 +15,16 @@ class WorkflowEdgeInline(admin.TabularInline):
 
 @admin.register(Workflow)
 class WorkflowAdmin(admin.ModelAdmin):
-    list_display = ["name", "slug", "is_active", "organization", "project", "label", "created_at"]
+    list_display = ["name", "slug", "is_active", "organization", "project", "labels_display", "created_at"]
     list_filter = ["is_active"]
     search_fields = ["name", "slug"]
     inlines = [WorkflowNodeInline, WorkflowEdgeInline]
+
+    def labels_display(self, obj):
+        return ", ".join([label.name for label in obj.labels.all()])
+
+    labels_display.short_description = "Labels"
+    labels_display.admin_order_field = "labels"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("labels")

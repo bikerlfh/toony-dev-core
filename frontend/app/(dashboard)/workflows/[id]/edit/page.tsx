@@ -276,7 +276,7 @@ export default function WorkflowEditPage() {
     }
     listProjects().then((res) => {
       setOrgProjects(
-        res.results.filter((p) => p.organization === wfOrgId)
+        res.results.filter((p) => p.organization?.id === wfOrgId)
       );
     });
   }, [wfOrgId]);

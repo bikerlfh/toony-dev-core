@@ -1218,8 +1218,7 @@
       "is_active": true,
       "organization": null,
       "project": null,
-      "issue": null,
-      "label": "3e4dd0d0-ec00-44fe-86a4-a1b878c0396b",
+      "labels": [],
       "created_by": "481e5fe6-487f-4130-8d6b-90354e1ce9a7"
     }
   },
@@ -1235,8 +1234,7 @@
       "is_active": true,
       "organization": null,
       "project": null,
-      "issue": null,
-      "label": null,
+      "labels": [],
       "created_by": "481e5fe6-487f-4130-8d6b-90354e1ce9a7"
     }
   },
