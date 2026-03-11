@@ -72,6 +72,7 @@ Supported template variables:
 |----------|-------------|---------|
 | `{issue_id}` | Issue UUID | `a1b2c3d4-...` |
 | `{issue_identifier}` | Human-readable identifier | `ENG-42` |
+| `{issue_description}` | Issue description text | `Fix the login bug...` |
 
 Example configurations:
 

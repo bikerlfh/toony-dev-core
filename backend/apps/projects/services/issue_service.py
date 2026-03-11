@@ -283,6 +283,7 @@ def _maybe_create_agent_task(issue, user):
     prompt = template.format(
         issue_id=issue.id,
         issue_identifier=issue.identifier,
+        issue_description=issue.description,
     )
 
     create_agent_task(

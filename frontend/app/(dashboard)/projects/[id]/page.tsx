@@ -1420,7 +1420,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
               <textarea value={autoTaskPrompt} onChange={(e) => setAutoTaskPrompt(e.target.value)} disabled={!canManage}
                 rows={3} placeholder="Use toony skill and implement {issue_identifier}"
                 className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              <p className="mt-1.5 text-xs text-slate-500">Variables: <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_id}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_identifier}"}</code>. Leave empty to use the global default.</p>
+              <p className="mt-1.5 text-xs text-slate-500">Variables: <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_id}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_identifier}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_description}"}</code>. Leave empty to use the global default.</p>
             </div>
           </div>
 
