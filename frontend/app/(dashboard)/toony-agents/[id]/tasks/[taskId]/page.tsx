@@ -207,6 +207,10 @@ export default function TaskViewPage() {
 
   const isActive =
     taskStatus === "RUNNING" || taskStatus === "WAITING_FOR_ANSWER";
+  const isCancellable =
+    taskStatus !== "COMPLETED" &&
+    taskStatus !== "FAILED" &&
+    taskStatus !== "CANCELLED";
   const canReply = taskStatus === "COMPLETED" && !!sessionId;
 
   return (
@@ -245,7 +249,7 @@ export default function TaskViewPage() {
               </div>
             )}
           </div>
-          {isActive && (
+          {isCancellable && (
             <button
               onClick={handleCancelTask}
               disabled={isCancelling}
