@@ -51,6 +51,7 @@ class TestAutoAgentTaskCreation:
     def test_picks_most_recently_connected_agent(self, issue, user, organization):
         """Selects the ToonyAgent with the most recent last_connected_at."""
         from django.utils import timezone
+
         from tests.factories import ToonyAgentFactory
 
         old_agent = ToonyAgentFactory(last_connected_at=timezone.now() - timezone.timedelta(days=2))
