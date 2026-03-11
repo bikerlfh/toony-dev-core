@@ -49,7 +49,7 @@ class TestWorkflowList:
         }
         response = authenticated_client.post(workflows_url(), data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
-        assert str(response.data["organization"]) == str(organization.id)
+        assert response.data["organization"]["id"] == str(organization.id)
 
     def test_create_workflow_with_project(self, authenticated_client, project):
         data = {
@@ -59,7 +59,7 @@ class TestWorkflowList:
         }
         response = authenticated_client.post(workflows_url(), data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
-        assert str(response.data["project"]) == str(project.id)
+        assert response.data["project"]["id"] == str(project.id)
 
     def test_create_workflow_missing_name(self, authenticated_client):
         data = {"slug": "no-name"}

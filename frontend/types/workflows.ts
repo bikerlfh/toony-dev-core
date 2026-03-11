@@ -17,15 +17,31 @@ export interface WorkflowEdgeData {
   target_node: string;
 }
 
+export interface WorkflowOrg {
+  id: string;
+  name: string;
+}
+
+export interface WorkflowProject {
+  id: string;
+  name: string;
+}
+
+export interface WorkflowLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface WorkflowList {
   id: string;
   name: string;
   slug: string;
   description: string;
   is_active: boolean;
-  organization: string | null;
-  project: string | null;
-  labels: string[];
+  organization: WorkflowOrg | null;
+  project: WorkflowProject | null;
+  labels: WorkflowLabel[];
   nodes_count: number;
   created_at: string;
 }

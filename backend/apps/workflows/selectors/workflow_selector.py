@@ -2,7 +2,12 @@ from workflows.models import Workflow
 
 
 def list_workflows():
-    return Workflow.objects.all().order_by("name")
+    return (
+        Workflow.objects.select_related("organization", "project")
+        .prefetch_related("labels")
+        .all()
+        .order_by("name")
+    )
 
 
 def get_workflow_by_id(workflow_id):

@@ -4,6 +4,22 @@ from accounts.serializers.output import UserDetailSerializer
 from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 
 
+class WorkflowOrgSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+
+
+class WorkflowProjectSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+
+
+class WorkflowLabelSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    color = serializers.CharField()
+
+
 class WorkflowNodeListSerializer(serializers.ModelSerializer):
     sub_agent_slug = serializers.SlugRelatedField(source="sub_agent", slug_field="slug", read_only=True)
     skill_slug = serializers.SlugRelatedField(source="skill", slug_field="slug", read_only=True)
@@ -34,7 +50,9 @@ class WorkflowEdgeListSerializer(serializers.ModelSerializer):
 
 class WorkflowListSerializer(serializers.ModelSerializer):
     nodes_count = serializers.IntegerField(source="nodes.count", read_only=True)
-    labels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    organization = WorkflowOrgSerializer(read_only=True)
+    project = WorkflowProjectSerializer(read_only=True)
+    labels = WorkflowLabelSerializer(many=True, read_only=True)
 
     class Meta:
         model = Workflow
@@ -57,7 +75,9 @@ class WorkflowDetailSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)
     nodes = WorkflowNodeListSerializer(many=True, read_only=True)
     edges = WorkflowEdgeListSerializer(many=True, read_only=True)
-    labels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    organization = WorkflowOrgSerializer(read_only=True)
+    project = WorkflowProjectSerializer(read_only=True)
+    labels = WorkflowLabelSerializer(many=True, read_only=True)
 
     class Meta:
         model = Workflow

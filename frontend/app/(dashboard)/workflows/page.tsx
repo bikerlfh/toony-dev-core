@@ -21,11 +21,15 @@ const SCOPE_LABELS: Record<ScopeKind, string> = {
   PROJECT: "Project",
 };
 
-const SCOPE_COLORS: Record<ScopeKind, string> = {
-  GLOBAL: "bg-slate-800 text-slate-400",
-  ORGANIZATION: "bg-purple-900/50 text-purple-400",
-  PROJECT: "bg-blue-900/50 text-blue-400",
-};
+/* ── Context path builder ─────────────────────────── */
+
+function getContextPath(w: WorkflowList): string[] {
+  const parts: string[] = [];
+  if (w.organization) parts.push(w.organization.name);
+  if (w.project) parts.push(w.project.name);
+  if (parts.length === 0) parts.push("global");
+  return parts;
+}
 
 /* ── Filter options ────────────────────────────────── */
 
@@ -254,7 +258,6 @@ export default function WorkflowsPage() {
       ) : (
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60">
           {filtered.map((wf) => {
-            const scope = getScope(wf);
             return (
               <div
                 key={wf.id}
@@ -274,32 +277,45 @@ export default function WorkflowsPage() {
                   </svg>
                 </div>
 
-                {/* Name + description */}
+                {/* Name + context path + labels */}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-indigo-400">
-                      {wf.name}
+                  <span className="truncate text-sm font-medium text-slate-200 transition-colors group-hover:text-indigo-400">
+                    {wf.name}
+                  </span>
+
+                  <div className="mt-1 flex items-center gap-3">
+                    {/* Terminal-path breadcrumb */}
+                    <span className="shrink-0 font-mono text-xs text-slate-500">
+                      <span className="text-indigo-500">~</span>
+                      {getContextPath(wf).map((part, i) => (
+                        <span key={i}>
+                          <span className="text-slate-700"> / </span>
+                          {part}
+                        </span>
+                      ))}
                     </span>
-                    <span
-                      className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${SCOPE_COLORS[scope]}`}
-                    >
-                      {SCOPE_LABELS[scope]}
-                    </span>
-                    {wf.labels.length > 0 ? (
-                      <span className="inline-flex shrink-0 rounded-full bg-indigo-900/30 px-2 py-0.5 text-[10px] font-medium text-indigo-400">
-                        {wf.labels.length} label{wf.labels.length > 1 ? "s" : ""}
-                      </span>
-                    ) : (
-                      <span className="inline-flex shrink-0 rounded-full bg-slate-800/60 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-                        Default
-                      </span>
+
+                    {/* Label dots */}
+                    {wf.labels.length > 0 && (
+                      <>
+                        <span className="h-3 w-px shrink-0 bg-slate-800" />
+                        <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                          {wf.labels.map((label) => (
+                            <span
+                              key={label.id}
+                              className="inline-flex shrink-0 items-center gap-1 text-xs text-slate-500"
+                            >
+                              <span
+                                className="h-1.5 w-1.5 rounded-full"
+                                style={{ backgroundColor: label.color }}
+                              />
+                              {label.name}
+                            </span>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </div>
-                  {wf.description && (
-                    <p className="mt-0.5 truncate text-xs text-slate-500">
-                      {wf.description}
-                    </p>
-                  )}
                 </div>
 
                 {/* Active indicator */}

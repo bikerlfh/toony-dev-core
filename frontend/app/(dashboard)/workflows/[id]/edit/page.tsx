@@ -440,18 +440,18 @@ export default function WorkflowEditPage() {
       setWorkflow(wf);
       setWfName(wf.name);
       setWfDescription(wf.description ?? "");
-      setWfLabelIds(wf.labels ?? []);
-      setWfOrgId(wf.organization);
-      setWfProjectId(wf.project);
+      setWfLabelIds(wf.labels?.map((l) => l.id) ?? []);
+      setWfOrgId(wf.organization?.id ?? null);
+      setWfProjectId(wf.project?.id ?? null);
       setWfIsActive(wf.is_active);
 
       // Store initial form state for auto-save comparison
       savedStateRef.current = JSON.stringify({
         name: wf.name,
         description: wf.description ?? "",
-        labels: [...(wf.labels ?? [])].sort(),
-        organization: wf.organization,
-        project: wf.project,
+        labels: [...(wf.labels?.map((l) => l.id) ?? [])].sort(),
+        organization: wf.organization?.id ?? null,
+        project: wf.project?.id ?? null,
         is_active: wf.is_active,
       });
       hasLoadedRef.current = true;
