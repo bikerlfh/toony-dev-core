@@ -253,6 +253,16 @@ export type IssueStatus =
 
 export type IssuePriority = "NONE" | "URGENT" | "HIGH" | "MEDIUM" | "LOW";
 
+export interface IssueMilestoneMinimal {
+  id: string;
+  name: string;
+}
+
+export interface IssueCycleMinimal {
+  id: string;
+  name: string;
+}
+
 export interface IssueList {
   id: string;
   project_id: string;
@@ -263,6 +273,8 @@ export interface IssueList {
   priority: IssuePriority;
   assignee: User | null;
   labels: Label[];
+  milestone: IssueMilestoneMinimal | null;
+  cycle: IssueCycleMinimal | null;
   estimate: number | null;
   due_date: string | null;
   sort_order: number;

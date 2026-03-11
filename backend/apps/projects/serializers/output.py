@@ -175,9 +175,25 @@ class CycleSerializer(serializers.ModelSerializer):
 # --- Issue ---
 
 
+class _MilestoneMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Milestone
+        fields = ["id", "name"]
+        read_only_fields = fields
+
+
+class _CycleMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cycle
+        fields = ["id", "name"]
+        read_only_fields = fields
+
+
 class IssueListSerializer(serializers.ModelSerializer):
     assignee = UserDetailSerializer(read_only=True)
     labels = LabelSerializer(many=True, read_only=True)
+    milestone = _MilestoneMinimalSerializer(read_only=True)
+    cycle = _CycleMinimalSerializer(read_only=True)
 
     class Meta:
         model = Issue
@@ -191,6 +207,8 @@ class IssueListSerializer(serializers.ModelSerializer):
             "priority",
             "assignee",
             "labels",
+            "milestone",
+            "cycle",
             "estimate",
             "due_date",
             "sort_order",
@@ -212,6 +230,8 @@ class CrossProjectIssueListSerializer(serializers.ModelSerializer):
     assignee = UserDetailSerializer(read_only=True)
     labels = LabelSerializer(many=True, read_only=True)
     project = _IssueProjectSerializer(read_only=True)
+    milestone = _MilestoneMinimalSerializer(read_only=True)
+    cycle = _CycleMinimalSerializer(read_only=True)
 
     class Meta:
         model = Issue
@@ -226,6 +246,8 @@ class CrossProjectIssueListSerializer(serializers.ModelSerializer):
             "priority",
             "assignee",
             "labels",
+            "milestone",
+            "cycle",
             "estimate",
             "due_date",
             "sort_order",

@@ -138,9 +138,25 @@ function IssueCard({
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       } ${isDragging ? "opacity-30 scale-[0.97]" : ""}`}
     >
-      {/* Top row: identifier + priority */}
+      {/* Top row: identifier + milestone/cycle + priority */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-xs font-mono text-slate-500 shrink-0">{issue.identifier}</span>
+          {(issue.milestone || issue.cycle) && (
+            <>
+              <span className="text-slate-700 text-[10px] shrink-0">/</span>
+              {issue.milestone && (
+                <span className="text-[10px] font-mono text-slate-600 truncate" title={issue.milestone.name}>{issue.milestone.name}</span>
+              )}
+              {issue.milestone && issue.cycle && (
+                <span className="text-slate-700 text-[10px] shrink-0">/</span>
+              )}
+              {issue.cycle && (
+                <span className="text-[10px] font-mono text-slate-600 truncate" title={issue.cycle.name}>{issue.cycle.name}</span>
+              )}
+            </>
+          )}
+        </div>
         <PriorityBadge priority={issue.priority} />
       </div>
 

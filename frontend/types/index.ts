@@ -61,6 +61,8 @@ export type {
   UpdateCyclePayload,
   IssueStatus,
   IssuePriority,
+  IssueMilestoneMinimal,
+  IssueCycleMinimal,
   IssueList,
   IssueDetail,
   CreateIssuePayload,

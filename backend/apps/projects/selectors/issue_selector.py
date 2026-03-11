@@ -118,6 +118,8 @@ def list_user_issues(user, *, filters=None, search=None):
         .select_related(
             "assignee",
             "project",
+            "milestone",
+            "cycle",
         )
         .prefetch_related("labels")
     )
