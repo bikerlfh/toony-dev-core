@@ -5,7 +5,7 @@ from common.broadcast import broadcast
 from toony_agents.models import AgentTask, AgentTaskStatus, TaskEvent
 
 
-def create_agent_task(organization, toony_agent, created_by, title, prompt, project=None):
+def create_agent_task(organization, toony_agent, created_by, title, prompt, project=None, issue=None):
     with transaction.atomic():
         task = AgentTask.objects.create(
             organization=organization,
@@ -14,6 +14,7 @@ def create_agent_task(organization, toony_agent, created_by, title, prompt, proj
             prompt=prompt,
             created_by=created_by,
             project=project,
+            issue=issue,
         )
     broadcast(
         f"toony_agent_{toony_agent.id}",
