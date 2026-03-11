@@ -110,11 +110,8 @@ export function CreateTaskModal({ isOpen, onClose, agentId, organizations, onSuc
 
   if (!isOpen) return null;
 
-  const INPUT_CLASS =
+  const FIELD_CLASS =
     "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
-
-  const SELECT_CLASS =
-    "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
 
   return (
     <div
@@ -123,9 +120,9 @@ export function CreateTaskModal({ isOpen, onClose, agentId, organizations, onSuc
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+      <div className="w-full max-w-3xl rounded-xl border border-slate-800/60 bg-slate-900">
         {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-slate-800/60 px-5 py-4">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/15">
               <svg
@@ -155,7 +152,7 @@ export function CreateTaskModal({ isOpen, onClose, agentId, organizations, onSuc
 
         {/* Error */}
         {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+          <div className="mx-5 mt-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
             <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <circle cx="8" cy="8" r="6.25" />
               <path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" />
@@ -165,85 +162,90 @@ export function CreateTaskModal({ isOpen, onClose, agentId, organizations, onSuc
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Organization */}
-          <div>
-            <label className="block text-sm font-medium text-slate-400">
-              Organization
-            </label>
-            <select
-              required
-              value={organizationId}
-              onChange={(e) => setOrganizationId(e.target.value)}
-              disabled={organizations.length <= 1}
-              className={SELECT_CLASS}
-            >
-              {organizations.length > 1 && (
-                <option value="">Select organization...</option>
+          {/* Split content */}
+          <div className="flex min-h-96">
+            {/* Left panel: metadata */}
+            <div className="w-52 shrink-0 border-r border-slate-800/60 p-5">
+              {/* Title */}
+              <div>
+                <label className="text-xs font-medium text-slate-500">
+                  Title
+                </label>
+                <input
+                  ref={titleRef}
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Fix login page bug"
+                  className={FIELD_CLASS}
+                />
+              </div>
+
+              {/* Organization */}
+              <div className="mt-5">
+                <label className="text-xs font-medium text-slate-500">
+                  Organization
+                </label>
+                <select
+                  required
+                  value={organizationId}
+                  onChange={(e) => setOrganizationId(e.target.value)}
+                  disabled={organizations.length <= 1}
+                  className={FIELD_CLASS}
+                >
+                  {organizations.length > 1 && (
+                    <option value="">Select...</option>
+                  )}
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project */}
+              {organizationId && (
+                <div className="mt-5">
+                  <label className="text-xs font-medium text-slate-500">
+                    Project
+                    <span className="ml-1 font-normal text-slate-600">optional</span>
+                  </label>
+                  <select
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    disabled={loadingProjects}
+                    className={FIELD_CLASS}
+                  >
+                    <option value="">{loadingProjects ? "Loading..." : "None"}</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
-              {organizations.map((org) => (
-                <option key={org.id} value={org.id}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Project */}
-          {organizationId && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-400">
-                Project
-                <span className="ml-1 text-slate-600 font-normal">optional</span>
-              </label>
-              <select
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                disabled={loadingProjects}
-                className={SELECT_CLASS}
-              >
-                <option value="">{loadingProjects ? "Loading..." : "No project"}</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
             </div>
-          )}
 
-          {/* Title */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-400">
-              Title
-            </label>
-            <input
-              ref={titleRef}
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Fix login page bug"
-              className={INPUT_CLASS}
-            />
+            {/* Right panel: prompt editor */}
+            <div className="flex flex-1 flex-col p-5">
+              <label className="mb-1.5 text-xs font-medium text-slate-500">
+                Prompt
+              </label>
+              <textarea
+                required
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe the task in detail..."
+                className="min-h-0 flex-1 w-full rounded-lg border border-slate-800/60 bg-slate-950 px-4 py-3 text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors resize-none"
+              />
+            </div>
           </div>
 
-          {/* Prompt */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-slate-400">
-              Prompt
-            </label>
-            <textarea
-              required
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={6}
-              placeholder="Describe the task in detail..."
-              className={`${INPUT_CLASS} resize-none`}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="mt-6 flex items-center justify-between">
+          {/* Footer */}
+          <div className="flex items-center justify-between border-t border-slate-800/60 px-5 py-4">
             <span className="text-xs text-slate-600">
               esc to cancel
             </span>
