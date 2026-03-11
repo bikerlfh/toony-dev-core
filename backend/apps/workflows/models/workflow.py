@@ -23,17 +23,8 @@ class Workflow(BaseModel):
         blank=True,
         related_name="workflows",
     )
-    issue = models.ForeignKey(
-        "projects.Issue",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="workflows",
-    )
-    label = models.ForeignKey(
+    labels = models.ManyToManyField(
         "workspace.Label",
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="workflows",
     )
@@ -63,7 +54,6 @@ class Workflow(BaseModel):
                 condition=models.Q(
                     organization__isnull=True,
                     project__isnull=True,
-                    issue__isnull=True,
                 ),
                 name="unique_global_workflow_slug",
             ),

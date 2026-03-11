@@ -2,10 +2,9 @@ from common.exceptions import ConflictError
 from workflows.models import Workflow
 
 
-def create_workflow(created_by, name, slug, **kwargs):
+def create_workflow(created_by, name, slug, *, labels=None, **kwargs):
     organization = kwargs.get("organization")
     project = kwargs.get("project")
-    issue = kwargs.get("issue")
 
     # Check slug uniqueness within scope
     qs = Workflow.objects.filter(slug=slug)
@@ -13,32 +12,35 @@ def create_workflow(created_by, name, slug, **kwargs):
         qs = qs.filter(organization=organization)
     elif project:
         qs = qs.filter(project=project)
-    elif issue:
-        qs = qs.filter(issue=issue)
     else:
         qs = qs.filter(
             organization__isnull=True,
             project__isnull=True,
-            issue__isnull=True,
         )
 
     if qs.exists():
         raise ConflictError("A workflow with this slug already exists in this scope.")
 
-    return Workflow.objects.create(
+    workflow = Workflow.objects.create(
         created_by=created_by,
         name=name,
         slug=slug,
         **kwargs,
     )
 
+    if labels:
+        workflow.labels.set(labels)
 
-def update_workflow(workflow, **kwargs):
+    return workflow
+
+
+def update_workflow(workflow, *, labels=None, **kwargs):
     allowed_fields = {
         "name",
         "description",
         "is_active",
-        "label",
+        "organization",
+        "project",
     }
 
     for field, value in kwargs.items():
@@ -46,6 +48,10 @@ def update_workflow(workflow, **kwargs):
             setattr(workflow, field, value)
 
     workflow.save()
+
+    if labels is not None:
+        workflow.labels.set(labels)
+
     return workflow
 
 

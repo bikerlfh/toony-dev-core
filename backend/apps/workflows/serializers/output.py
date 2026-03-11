@@ -34,6 +34,7 @@ class WorkflowEdgeListSerializer(serializers.ModelSerializer):
 
 class WorkflowListSerializer(serializers.ModelSerializer):
     nodes_count = serializers.IntegerField(source="nodes.count", read_only=True)
+    labels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Workflow
@@ -45,8 +46,7 @@ class WorkflowListSerializer(serializers.ModelSerializer):
             "is_active",
             "organization",
             "project",
-            "issue",
-            "label",
+            "labels",
             "nodes_count",
             "created_at",
         ]
@@ -57,6 +57,7 @@ class WorkflowDetailSerializer(serializers.ModelSerializer):
     created_by = UserDetailSerializer(read_only=True)
     nodes = WorkflowNodeListSerializer(many=True, read_only=True)
     edges = WorkflowEdgeListSerializer(many=True, read_only=True)
+    labels = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Workflow
@@ -68,8 +69,7 @@ class WorkflowDetailSerializer(serializers.ModelSerializer):
             "is_active",
             "organization",
             "project",
-            "issue",
-            "label",
+            "labels",
             "created_by",
             "nodes",
             "edges",

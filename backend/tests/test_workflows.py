@@ -224,7 +224,8 @@ class TestWorkflowResolve:
         label = LabelFactory()
         issue.labels.add(label)
         WorkflowFactory(created_by=user, is_active=True)  # default
-        wf_label = WorkflowFactory(created_by=user, label=label, is_active=True)
+        wf_label = WorkflowFactory(created_by=user, is_active=True)
+        wf_label.labels.add(label)
         response = authenticated_client.get(resolve_url(issue.id))
         assert response.status_code == status.HTTP_200_OK
         assert response.data["id"] == str(wf_label.id)
