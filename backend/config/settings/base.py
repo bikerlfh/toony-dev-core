@@ -177,3 +177,9 @@ SPECTACULAR_SETTINGS = {
     "VERSION": APP_VERSION,
     "COMPONENT_SPLIT_REQUEST": True,
 }
+
+# Agent Task Automation
+DEFAULT_AGENT_TASK_PROMPT_TEMPLATE = os.environ.get(
+    "DEFAULT_AGENT_TASK_PROMPT_TEMPLATE",
+    "Use toony skill and implement {issue_identifier}",
+)
