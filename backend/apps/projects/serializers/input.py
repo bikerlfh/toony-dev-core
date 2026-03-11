@@ -96,6 +96,10 @@ class UpdateProjectSettingsSerializer(serializers.Serializer):
         choices=EstimationMethod.choices,
         required=False,
     )
+    auto_task_prompt_template = serializers.CharField(
+        required=False,
+        allow_blank=True,
+    )
 
 
 # --- Milestone ---

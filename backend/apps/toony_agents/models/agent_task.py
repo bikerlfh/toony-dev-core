@@ -29,6 +29,13 @@ class AgentTask(BaseModel):
         blank=True,
         related_name="agent_tasks",
     )
+    issue = models.ForeignKey(
+        "projects.Issue",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="agent_tasks",
+    )
     toony_agent = models.ForeignKey(
         "toony_agents.ToonyAgent",
         on_delete=models.SET_NULL,

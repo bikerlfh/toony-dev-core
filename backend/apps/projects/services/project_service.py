@@ -94,6 +94,7 @@ def update_project_settings(settings_obj, **kwargs):
         "auto_close_completed_issues",
         "issue_prefix",
         "estimation_method",
+        "auto_task_prompt_template",
     }
     for field, value in kwargs.items():
         if field in allowed_fields:

@@ -75,6 +75,7 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
     )
     organization = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
+    issue = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentTask
@@ -85,6 +86,7 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
             "toony_agent_slug",
             "organization",
             "project",
+            "issue",
             "started_at",
             "completed_at",
             "created_at",
@@ -101,6 +103,11 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
             return None
         return {"id": str(obj.project.id), "name": obj.project.name}
 
+    def get_issue(self, obj):
+        if not obj.issue:
+            return None
+        return {"id": str(obj.issue.id), "identifier": obj.issue.identifier, "title": obj.issue.title}
+
 
 class AgentTaskDetailSerializer(serializers.ModelSerializer):
     toony_agent_slug = serializers.CharField(
@@ -110,6 +117,7 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField()
     organization = serializers.SerializerMethodField()
     project = serializers.SerializerMethodField()
+    issue = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentTask
@@ -121,6 +129,7 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
             "toony_agent_slug",
             "organization",
             "project",
+            "issue",
             "result",
             "error",
             "session_id",
@@ -150,6 +159,11 @@ class AgentTaskDetailSerializer(serializers.ModelSerializer):
         if not obj.project:
             return None
         return {"id": str(obj.project.id), "name": obj.project.name}
+
+    def get_issue(self, obj):
+        if not obj.issue:
+            return None
+        return {"id": str(obj.issue.id), "identifier": obj.issue.identifier, "title": obj.issue.title}
 
 
 class TaskEventSerializer(serializers.ModelSerializer):

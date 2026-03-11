@@ -129,6 +129,7 @@ class ProjectSettingsSerializer(serializers.ModelSerializer):
             "auto_close_completed_issues",
             "issue_prefix",
             "estimation_method",
+            "auto_task_prompt_template",
             "updated_at",
         ]
         read_only_fields = fields

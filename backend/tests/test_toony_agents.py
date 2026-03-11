@@ -218,6 +218,7 @@ class TestToonyAgentAPI:
             "title": "Fix bug",
             "prompt": "Fix the login bug",
             "toony_agent_slug": "task-api-bot",
+            "organization_id": str(organization.id),
         }
         response = authenticated_client.post(url, data, format="json")
         assert response.status_code == status.HTTP_201_CREATED
