@@ -91,3 +91,95 @@ class TestAutoAgentTaskCreation:
 
         issue.refresh_from_db()
         assert issue.status == IssueStatus.TODO
+
+
+class TestAgentTaskLifecycleOnStatusChange:
+    """Tests for AgentTask lifecycle when issue status changes."""
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_todo_to_backlog_cancels_queued_task(self, issue, toony_agent, user):
+        """Moving issue TODO→BACKLOG cancels QUEUED agent tasks."""
+        update_issue(issue, user, status=IssueStatus.TODO)
+        task = AgentTask.objects.get(issue=issue)
+        assert task.status == "QUEUED"
+
+        update_issue(issue, user, status=IssueStatus.BACKLOG)
+
+        task.refresh_from_db()
+        assert task.status == "CANCELLED"
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_todo_to_backlog_blocks_if_task_assigned(self, issue, toony_agent, user):
+        """Cannot move issue TODO→BACKLOG if agent task is ASSIGNED."""
+        from rest_framework.exceptions import ValidationError
+
+        update_issue(issue, user, status=IssueStatus.TODO)
+        task = AgentTask.objects.get(issue=issue)
+        task.status = "ASSIGNED"
+        task.save()
+
+        with pytest.raises(ValidationError, match="AgentTask"):
+            update_issue(issue, user, status=IssueStatus.BACKLOG)
+
+        issue.refresh_from_db()
+        assert issue.status == IssueStatus.TODO
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_todo_to_backlog_blocks_if_task_running(self, issue, toony_agent, user):
+        """Cannot move issue TODO→BACKLOG if agent task is RUNNING."""
+        from rest_framework.exceptions import ValidationError
+
+        update_issue(issue, user, status=IssueStatus.TODO)
+        task = AgentTask.objects.get(issue=issue)
+        task.status = "RUNNING"
+        task.save()
+
+        with pytest.raises(ValidationError, match="AgentTask"):
+            update_issue(issue, user, status=IssueStatus.BACKLOG)
+
+        issue.refresh_from_db()
+        assert issue.status == IssueStatus.TODO
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_todo_to_backlog_blocks_if_task_waiting(self, issue, toony_agent, user):
+        """Cannot move issue TODO→BACKLOG if agent task is WAITING_FOR_ANSWER."""
+        from rest_framework.exceptions import ValidationError
+
+        update_issue(issue, user, status=IssueStatus.TODO)
+        task = AgentTask.objects.get(issue=issue)
+        task.status = "WAITING_FOR_ANSWER"
+        task.save()
+
+        with pytest.raises(ValidationError, match="AgentTask"):
+            update_issue(issue, user, status=IssueStatus.BACKLOG)
+
+        issue.refresh_from_db()
+        assert issue.status == IssueStatus.TODO
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_todo_to_backlog_allows_if_task_completed(self, issue, toony_agent, user):
+        """Can move issue TODO→BACKLOG if agent task is already COMPLETED."""
+        update_issue(issue, user, status=IssueStatus.TODO)
+        task = AgentTask.objects.get(issue=issue)
+        task.status = "COMPLETED"
+        task.save()
+
+        update_issue(issue, user, status=IssueStatus.BACKLOG)
+
+        issue.refresh_from_db()
+        assert issue.status == IssueStatus.BACKLOG
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_backlog_todo_backlog_todo_creates_new_task(self, issue, toony_agent, user):
+        """Full cycle: BACKLOG→TODO→BACKLOG→TODO creates a new task each time."""
+        update_issue(issue, user, status=IssueStatus.TODO)
+        first_task = AgentTask.objects.get(issue=issue, status="QUEUED")
+
+        update_issue(issue, user, status=IssueStatus.BACKLOG)
+        first_task.refresh_from_db()
+        assert first_task.status == "CANCELLED"
+
+        update_issue(issue, user, status=IssueStatus.TODO)
+        queued_tasks = AgentTask.objects.filter(issue=issue, status="QUEUED")
+        assert queued_tasks.count() == 1
+        assert queued_tasks.first().id != first_task.id
