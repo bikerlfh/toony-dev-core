@@ -258,6 +258,7 @@ export interface IssueList {
   project_id: string;
   identifier: string;
   title: string;
+  description: string;
   status: IssueStatus;
   priority: IssuePriority;
   assignee: User | null;

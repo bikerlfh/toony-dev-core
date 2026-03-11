@@ -65,21 +65,20 @@ export function KanbanBoard({ issues, onIssueClick, onStatusChange }: KanbanBoar
 
   const isDragging = draggingIssueId !== null;
 
-  const populatedColumns = COLUMNS.filter((col) => issues.some((i) => i.status === col.status));
-  const emptyColumns = COLUMNS.filter((col) => !issues.some((i) => i.status === col.status));
+  const ALWAYS_VISIBLE: Set<IssueStatus> = new Set(["BACKLOG", "TODO", "IN_PROGRESS", "DONE"]);
+  const visibleColumns = COLUMNS.filter((col) => ALWAYS_VISIBLE.has(col.status) || issues.some((i) => i.status === col.status));
 
   return (
-    <div className="flex gap-4">
-      <div className="min-w-0 flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-4">
-          {populatedColumns.map((col) => {
+    <div className="min-w-0 flex-1 overflow-x-auto pb-4">
+      <div className="flex gap-2.5">
+        {visibleColumns.map((col) => {
             const columnIssues = issues.filter((i) => i.status === col.status);
             const isOver = dragOverColumn === col.status && isDragging;
 
             return (
               <div
                 key={col.status}
-                className={`flex w-72 shrink-0 flex-col rounded-xl p-1.5 transition-colors duration-150 ${
+                className={`flex w-80 shrink-0 flex-col rounded-xl p-1.5 transition-colors duration-150 ${
                   isOver
                     ? "bg-indigo-500/[0.06] ring-1 ring-inset ring-indigo-500/20"
                     : ""
@@ -87,13 +86,13 @@ export function KanbanBoard({ issues, onIssueClick, onStatusChange }: KanbanBoar
                 onDragOver={(e) => handleDragOver(e, col.status)}
                 onDrop={(e) => handleDrop(e, col.status)}
               >
-                <div className="mb-3 flex items-center justify-between px-0.5">
+                <div className="mb-2 flex items-center justify-between px-0.5">
                   <h3 className="text-sm font-medium text-slate-300">{col.label}</h3>
                   <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-500">
                     {columnIssues.length}
                   </span>
                 </div>
-                <div className="flex flex-1 flex-col gap-2 min-h-[4rem]">
+                <div className="flex flex-1 flex-col gap-1 min-h-[4rem]">
                   {columnIssues.map((issue) => (
                     <IssueCard
                       key={issue.id}
@@ -109,35 +108,7 @@ export function KanbanBoard({ issues, onIssueClick, onStatusChange }: KanbanBoar
               </div>
             );
           })}
-        </div>
       </div>
-      {emptyColumns.length > 0 && (
-        <div className="w-48 shrink-0 self-start rounded-xl border border-slate-800/40 bg-slate-900/50 p-3">
-          <h4 className="mb-2 text-xs font-medium text-slate-500">Empty statuses</h4>
-          <div className="flex flex-col gap-1.5">
-            {emptyColumns.map((col) => {
-              const isOver = dragOverColumn === col.status && isDragging;
-
-              return (
-                <div
-                  key={col.status}
-                  className={`rounded-lg border border-dashed px-3 py-2 text-xs transition-colors duration-150 ${
-                    isOver
-                      ? "border-indigo-500/40 bg-indigo-500/[0.06] text-indigo-400"
-                      : isDragging
-                        ? "border-slate-700/50 text-slate-400"
-                        : "border-slate-800/40 text-slate-500"
-                  }`}
-                  onDragOver={(e) => handleDragOver(e, col.status)}
-                  onDrop={(e) => handleDrop(e, col.status)}
-                >
-                  {col.label}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -163,16 +134,26 @@ function IssueCard({
       onClick={onClick}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className={`rounded-xl border border-slate-800/60 bg-slate-900 p-3 transition-all hover:bg-slate-900/80 ${
+      className={`rounded-xl border border-slate-800/60 bg-slate-900 p-3.5 transition-all hover:bg-slate-900/80 ${
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       } ${isDragging ? "opacity-30 scale-[0.97]" : ""}`}
     >
-      <div className="flex items-start justify-between">
+      {/* Top row: identifier + priority */}
+      <div className="flex items-center justify-between">
         <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
         <PriorityBadge priority={issue.priority} />
       </div>
-      <p className="mt-1 text-sm font-medium text-slate-200 line-clamp-2">{issue.title}</p>
-      <div className="mt-2 flex items-center justify-between">
+
+      {/* Title — single line */}
+      <p className="mt-1.5 text-sm font-medium text-slate-200 line-clamp-1">{issue.title}</p>
+
+      {/* Description — up to 3 lines */}
+      {issue.description && (
+        <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-3">{issue.description}</p>
+      )}
+
+      {/* Bottom row: labels + assignee */}
+      <div className="mt-2.5 flex items-center justify-between">
         <div className="flex flex-wrap gap-1">
           {issue.labels.slice(0, 3).map((label) => (
             <span

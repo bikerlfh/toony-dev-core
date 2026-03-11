@@ -143,6 +143,29 @@ Uniform `h-24 w-24` square tiles in `flex flex-wrap gap-2`. Images: thumbnail vi
 ### Adaptive Drop Zone
 `rounded-xl border-2 border-dashed border-slate-800`. Empty: `p-6`. With content: `p-2.5`. Drag active: `border-indigo-500 bg-indigo-500/10 text-indigo-400`.
 
+### Kanban Board (Dense Stack)
+Apply to all kanban/board views (tasks, project issues, etc.):
+- **Column width:** `w-80` (320px)
+- **Column gap (horizontal):** `gap-2.5` — tight between status columns
+- **Card gap (vertical):** `gap-1` — near-touching, feed-like rhythm
+- **Column header:** `mb-2`, count badge in `rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-500`
+- **Card surface:** `rounded-xl border border-slate-800/60 bg-slate-900 p-3.5`, hover `bg-slate-900/80`
+- **Card layout (top → bottom):**
+  1. Project colored dot (`h-2 w-2 rounded-full`) + mono identifier + compact priority badge (right-aligned)
+  2. Title: `text-sm font-medium text-slate-200 line-clamp-1`
+  3. Description: `text-xs leading-relaxed text-slate-500 line-clamp-3` (shown only when present)
+  4. Labels (max 3, `rounded-full px-1.5 py-0.5 text-[10px]`) + assignee avatar (right-aligned)
+- **Drag feedback:** `opacity-30 scale-[0.97]` on dragged card, column highlight `bg-indigo-500/[0.06] ring-1 ring-inset ring-indigo-500/20`
+
+### Priority Badge (Compact Pill)
+Shared component used across all boards, lists, and detail views:
+```
+<span className="inline-block rounded-full px-1.5 py-px text-[10px] font-medium leading-normal {colorClass}">
+  {label}
+</span>
+```
+Colors: Urgent `bg-red-500/15 text-red-400`, High `bg-orange-500/15 text-orange-400`, Medium `bg-amber-500/15 text-amber-400`, Low `bg-blue-500/15 text-blue-400`. NONE returns null. Labels are capitalized words ("Urgent"), not uppercase.
+
 ## SVG Icon Style
 
 Hand-drawn SVGs at 16x16 viewBox, `fill="none" stroke="currentColor" strokeWidth="1.5"`. Consistent with the technical, minimal aesthetic. Use `strokeLinecap="round" strokeLinejoin="round"` for softer edges.

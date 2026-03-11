@@ -70,7 +70,7 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
 
   return (
     <div className="min-w-0 flex-1 overflow-x-auto pb-4">
-      <div className="flex gap-4">
+      <div className="flex gap-2.5">
         {visibleColumns.map((col) => {
             const columnIssues = issues.filter((i) => i.status === col.status);
             const isOver = dragOverColumn === col.status && isDragging;
@@ -78,7 +78,7 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
             return (
               <div
                 key={col.status}
-                className={`flex w-72 shrink-0 flex-col rounded-xl p-1.5 transition-colors duration-150 ${
+                className={`flex w-80 shrink-0 flex-col rounded-xl p-1.5 transition-colors duration-150 ${
                   isOver
                     ? "bg-indigo-500/[0.06] ring-1 ring-inset ring-indigo-500/20"
                     : ""
@@ -86,13 +86,13 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
                 onDragOver={(e) => handleDragOver(e, col.status)}
                 onDrop={(e) => handleDrop(e, col.status)}
               >
-                <div className="mb-3 flex items-center justify-between px-0.5">
+                <div className="mb-2 flex items-center justify-between px-0.5">
                   <h3 className="text-sm font-medium text-slate-300">{col.label}</h3>
                   <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs text-slate-500">
                     {columnIssues.length}
                   </span>
                 </div>
-                <div className="flex flex-1 flex-col gap-2 min-h-[4rem]">
+                <div className="flex flex-1 flex-col gap-1 min-h-[4rem]">
                   {columnIssues.map((issue) => (
                     <IssueCard
                       key={issue.id}
@@ -134,16 +134,35 @@ function IssueCard({
       onClick={onClick}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className={`rounded-xl border border-slate-800/60 bg-slate-900 p-3 transition-all hover:bg-slate-900/80 ${
+      className={`rounded-xl border border-slate-800/60 bg-slate-900 p-3.5 transition-all hover:bg-slate-900/80 ${
         draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       } ${isDragging ? "opacity-30 scale-[0.97]" : ""}`}
     >
-      <div className="flex items-start justify-between">
-        <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
+      {/* Top row: project dot + identifier + priority */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          {issue.project?.color && (
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: issue.project.color }}
+              title={issue.project.name}
+            />
+          )}
+          <span className="text-xs font-mono text-slate-500">{issue.identifier}</span>
+        </div>
         <PriorityBadge priority={issue.priority} />
       </div>
-      <p className="mt-1 text-sm font-medium text-slate-200 line-clamp-2">{issue.title}</p>
-      <div className="mt-2 flex items-center justify-between">
+
+      {/* Title — single line */}
+      <p className="mt-1.5 text-sm font-medium text-slate-200 line-clamp-1">{issue.title}</p>
+
+      {/* Description — up to 3 lines */}
+      {issue.description && (
+        <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-3">{issue.description}</p>
+      )}
+
+      {/* Bottom row: labels + assignee */}
+      <div className="mt-2.5 flex items-center justify-between">
         <div className="flex flex-wrap gap-1">
           {issue.labels.slice(0, 3).map((label) => (
             <span

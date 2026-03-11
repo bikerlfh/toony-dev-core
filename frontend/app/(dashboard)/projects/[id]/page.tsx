@@ -34,7 +34,6 @@ import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { FilterBar } from "@/components/issues/filter-bar";
 import { KanbanBoard } from "@/components/issues/kanban-board";
-import { IssuesList } from "@/components/issues/issues-list";
 import { CreateIssueModal } from "@/components/issues/create-issue-modal";
 import { Select } from "@/components/ui/select";
 import type {
@@ -51,7 +50,6 @@ import type {
   EstimationMethod,
   IssueList,
   IssueStatus,
-  IssuePriority,
   IssueFilters,
   Label,
   ProjectWsEvent,
@@ -63,12 +61,12 @@ import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 type Tab = "overview" | "issues" | "milestones" | "cycles" | "members" | "resources" | "settings";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "overview", label: "Overview" },
   { key: "issues", label: "Issues" },
+  { key: "overview", label: "Overview" },
+  { key: "resources", label: "Resources" },
   { key: "milestones", label: "Milestones" },
   { key: "cycles", label: "Cycles" },
   { key: "members", label: "Members" },
-  { key: "resources", label: "Resources" },
   { key: "settings", label: "Settings" },
 ];
 
@@ -124,7 +122,7 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const projectId = params.id as string;
 
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<Tab>("issues");
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -1276,8 +1274,6 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
 
 // --- Issues Tab ---
 
-type IssueViewMode = "board" | "list";
-
 function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boolean }) {
   const router = useRouter();
   const [issues, setIssues] = useState<IssueList[]>([]);
@@ -1286,7 +1282,6 @@ function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boo
   const [cycles, setCycles] = useState<Cycle[]>([]);
   const [labels, setLabels] = useState<Label[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<IssueViewMode>("board");
   const [filters, setFilters] = useState<IssueFilters>({});
   const [showCreate, setShowCreate] = useState(false);
 
@@ -1345,15 +1340,10 @@ function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boo
       prev.map((i) => (i.id === issue.id ? { ...i, status } : i)),
     );
     try {
-      await updateIssue(projectId, issue.identifier, { status });
+      await updateIssue(projectId, issue.id, { status });
     } catch {
       fetchIssues();
     }
-  }
-
-  async function handlePriorityChange(issue: IssueList, priority: IssuePriority) {
-    await updateIssue(projectId, issue.identifier, { priority });
-    fetchIssues();
   }
 
   if (isLoading) return <p className="text-slate-500">Loading issues...</p>;
@@ -1362,34 +1352,6 @@ function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boo
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex rounded-lg border border-slate-800/60">
-            <button
-              onClick={() => setViewMode("board")}
-              className={`px-3 py-1.5 text-sm ${viewMode === "board" ? "bg-slate-800 font-medium text-white" : "text-slate-500 hover:text-slate-300"}`}
-            >
-              Board
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`border-l border-slate-800/60 px-3 py-1.5 text-sm ${viewMode === "list" ? "bg-slate-800 font-medium text-white" : "text-slate-500 hover:text-slate-300"}`}
-            >
-              List
-            </button>
-          </div>
-        </div>
-        {canManage && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            Create issue
-          </button>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div className="mt-4">
         <FilterBar
           filters={filters}
           onChange={setFilters}
@@ -1398,24 +1360,23 @@ function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boo
           cycles={cycles}
           labels={labels}
         />
+        {canManage && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+          >
+            Create issue
+          </button>
+        )}
       </div>
 
-      {/* View */}
+      {/* Board */}
       <div className="mt-4">
-        {viewMode === "board" ? (
-          <KanbanBoard
-            issues={issues}
-            onIssueClick={(issue) => router.push(`/projects/${projectId}/issues/${issue.id}`)}
-            onStatusChange={canManage ? handleStatusChange : undefined}
-          />
-        ) : (
-          <IssuesList
-            issues={issues}
-            onIssueClick={(issue) => router.push(`/projects/${projectId}/issues/${issue.id}`)}
-            onStatusChange={canManage ? handleStatusChange : undefined}
-            onPriorityChange={canManage ? handlePriorityChange : undefined}
-          />
-        )}
+        <KanbanBoard
+          issues={issues}
+          onIssueClick={(issue) => router.push(`/projects/${projectId}/issues/${issue.id}`)}
+          onStatusChange={canManage ? handleStatusChange : undefined}
+        />
       </div>
 
       {/* Create modal */}

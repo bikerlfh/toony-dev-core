@@ -31,7 +31,13 @@ interface IssuesListProps {
 }
 
 const STATUS_OPTIONS: IssueStatus[] = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELED"];
-const PRIORITY_OPTIONS: IssuePriority[] = ["NONE", "URGENT", "HIGH", "MEDIUM", "LOW"];
+const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
+  { value: "NONE", label: "None" },
+  { value: "URGENT", label: "Urgent" },
+  { value: "HIGH", label: "High" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "LOW", label: "Low" },
+];
 
 export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityChange }: IssuesListProps) {
   if (issues.length === 0) {
@@ -78,7 +84,7 @@ export function IssuesList({ issues, onIssueClick, onStatusChange, onPriorityCha
               <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                 {onPriorityChange ? (
                   <Select
-                    options={PRIORITY_OPTIONS.map((p) => ({ value: p, label: p }))}
+                    options={PRIORITY_OPTIONS}
                     value={issue.priority}
                     onChange={(v) => onPriorityChange(issue, v as IssuePriority)}
                     size="sm"
