@@ -137,6 +137,7 @@ class ProjectSettings(BaseModel):
         choices=EstimationMethod.choices,
         default=EstimationMethod.STORY_POINTS,
     )
+    auto_task_prompt_template = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "project_settings"
