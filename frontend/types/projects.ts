@@ -135,6 +135,7 @@ export interface ProjectSettings {
   auto_close_completed_issues: boolean;
   issue_prefix: string;
   estimation_method: EstimationMethod;
+  auto_task_prompt_template: string;
   updated_at: string;
 }
 
@@ -181,6 +182,7 @@ export interface UpdateProjectSettingsPayload {
   auto_close_completed_issues?: boolean;
   issue_prefix?: string;
   estimation_method?: EstimationMethod;
+  auto_task_prompt_template?: string;
 }
 
 // --- Milestone ---

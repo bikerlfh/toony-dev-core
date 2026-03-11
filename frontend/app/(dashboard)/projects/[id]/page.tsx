@@ -1310,6 +1310,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
   const [autoClose, setAutoClose] = useState(false);
   const [prefixOverride, setPrefixOverride] = useState("");
   const [estimation, setEstimation] = useState<EstimationMethod>("STORY_POINTS");
+  const [autoTaskPrompt, setAutoTaskPrompt] = useState("");
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -1322,6 +1323,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
       setAutoClose(data.auto_close_completed_issues);
       setPrefixOverride(data.issue_prefix);
       setEstimation(data.estimation_method);
+      setAutoTaskPrompt(data.auto_task_prompt_template || "");
     } finally { setIsLoading(false); }
   }, [projectId]);
 
@@ -1340,6 +1342,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
         auto_close_completed_issues: autoClose,
         issue_prefix: prefixOverride,
         estimation_method: estimation,
+        auto_task_prompt_template: autoTaskPrompt,
       });
       setSettings(updated);
       setSaveMessage("Settings saved.");
@@ -1404,6 +1407,20 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
               <input type="checkbox" id="autoClose" checked={autoClose} onChange={(e) => setAutoClose(e.target.checked)} disabled={!canManage}
                 className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500" />
               <label htmlFor="autoClose" className="text-sm text-slate-300">Auto-close completed issues</label>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+          <h2 className="text-base font-medium text-white">Agent Automation</h2>
+          <p className="mt-1 text-sm text-slate-500">When an issue moves from Backlog to Todo, an agent task is created automatically using this prompt template.</p>
+          <div className="mt-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Auto-task prompt template</label>
+              <textarea value={autoTaskPrompt} onChange={(e) => setAutoTaskPrompt(e.target.value)} disabled={!canManage}
+                rows={3} placeholder="Use toony skill and implement {issue_identifier}"
+                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
+              <p className="mt-1.5 text-xs text-slate-500">Variables: <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_id}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_identifier}"}</code>. Leave empty to use the global default.</p>
             </div>
           </div>
 
