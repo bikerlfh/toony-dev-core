@@ -5,7 +5,7 @@ from common.broadcast import broadcast
 from toony_agents.models import AgentTask, AgentTaskStatus, TaskEvent
 
 
-def create_agent_task(organization, toony_agent, created_by, title, prompt):
+def create_agent_task(organization, toony_agent, created_by, title, prompt, project=None):
     with transaction.atomic():
         task = AgentTask.objects.create(
             organization=organization,
@@ -13,6 +13,7 @@ def create_agent_task(organization, toony_agent, created_by, title, prompt):
             title=title,
             prompt=prompt,
             created_by=created_by,
+            project=project,
         )
     broadcast(
         f"toony_agent_{toony_agent.id}",
@@ -20,10 +21,13 @@ def create_agent_task(organization, toony_agent, created_by, title, prompt):
         {"task_id": str(task.id), "status": task.status},
     )
     # Notify runner so it picks up the task immediately
+    assign_data = {"task_id": str(task.id), "prompt": task.prompt, "title": task.title}
+    if task.project_id:
+        assign_data["project_id"] = str(task.project_id)
     broadcast(
         f"toony_agent_runner_{toony_agent.id}",
         "task_assign",
-        {"task_id": str(task.id), "prompt": task.prompt, "title": task.title},
+        assign_data,
     )
     return task
 

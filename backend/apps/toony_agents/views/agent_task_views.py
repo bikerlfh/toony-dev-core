@@ -37,20 +37,45 @@ class AgentTaskListCreateView(PaginatedViewMixin, APIView):
         data = serializer.validated_data
         data.pop("toony_agent_slug", None)
 
-        # Determine the organization for the task from the agent's orgs
-        # that the user is a member of
-        user_org_ids = OrganizationMembership.objects.filter(
+        # Resolve organization
+        organization_id = data.pop("organization_id")
+        organization = agent.organizations.filter(id=organization_id).first()
+        if not organization:
+            return Response(
+                {"organization_id": ["Organization not found or not assigned to this agent."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # Verify user is a member
+        if not OrganizationMembership.objects.filter(
             user=request.user,
+            organization=organization,
             is_active=True,
-        ).values_list("organization_id", flat=True)
-        organization = agent.organizations.filter(
-            id__in=user_org_ids,
-        ).first()
+        ).exists():
+            return Response(
+                {"organization_id": ["You are not a member of this organization."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Resolve project (optional)
+        project = None
+        project_id = data.pop("project_id", None)
+        if project_id:
+            from projects.models import Project
+            project = Project.objects.filter(
+                id=project_id,
+                organization=organization,
+            ).first()
+            if not project:
+                return Response(
+                    {"project_id": ["Project not found in this organization."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         task = create_agent_task(
             organization=organization,
             toony_agent=agent,
             created_by=request.user,
+            project=project,
             **data,
         )
         return Response(

@@ -13,10 +13,12 @@ import type {
 } from "@/types";
 
 export async function listProjects(
-  cursor?: string
+  cursor?: string,
+  organization?: string,
 ): Promise<PaginatedResponse<ProjectList>> {
   const params: Record<string, string> = {};
   if (cursor) params.cursor = cursor;
+  if (organization) params.organization = organization;
   const { data } = await api.get<PaginatedResponse<ProjectList>>(
     "/projects/",
     { params }

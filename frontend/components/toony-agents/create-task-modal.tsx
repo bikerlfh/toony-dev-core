@@ -2,19 +2,26 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { createAgentTask } from "@/lib/api/toony-agents";
+import { listProjects } from "@/lib/api/projects";
+import type { ProjectList } from "@/types";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   agentId: string;
+  organizations: { id: string; name: string; slug: string }[];
   onSuccess: (taskId: string) => void;
 }
 
-export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateTaskModalProps) {
+export function CreateTaskModal({ isOpen, onClose, agentId, organizations, onSuccess }: CreateTaskModalProps) {
   const [title, setTitle] = useState("");
   const [prompt, setPrompt] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [organizationId, setOrganizationId] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [projects, setProjects] = useState<ProjectList[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +42,28 @@ export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateT
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
+  // Auto-select org if only one
+  useEffect(() => {
+    if (isOpen && organizations.length === 1) {
+      setOrganizationId(organizations[0].id);
+    }
+  }, [isOpen, organizations]);
+
+  // Fetch projects when org changes
+  useEffect(() => {
+    if (!organizationId) {
+      setProjects([]);
+      setProjectId("");
+      return;
+    }
+    setLoadingProjects(true);
+    setProjectId("");
+    listProjects(undefined, organizationId)
+      .then((res) => setProjects(res.results))
+      .catch(() => setProjects([]))
+      .finally(() => setLoadingProjects(false));
+  }, [organizationId]);
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -42,8 +71,14 @@ export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateT
       setPrompt("");
       setError("");
       setIsSubmitting(false);
+      setProjectId("");
+      setProjects([]);
+      // Don't reset organizationId here if auto-selected
+      if (organizations.length !== 1) {
+        setOrganizationId("");
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, organizations.length]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -54,6 +89,8 @@ export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateT
       const task = await createAgentTask(agentId, {
         title,
         prompt,
+        organization_id: organizationId,
+        ...(projectId ? { project_id: projectId } : {}),
       });
       onSuccess(task.id);
       onClose();
@@ -75,6 +112,9 @@ export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateT
 
   const INPUT_CLASS =
     "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
+
+  const SELECT_CLASS =
+    "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
 
   return (
     <div
@@ -125,8 +165,54 @@ export function CreateTaskModal({ isOpen, onClose, agentId, onSuccess }: CreateT
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Title */}
+          {/* Organization */}
           <div>
+            <label className="block text-sm font-medium text-slate-400">
+              Organization
+            </label>
+            <select
+              required
+              value={organizationId}
+              onChange={(e) => setOrganizationId(e.target.value)}
+              disabled={organizations.length <= 1}
+              className={SELECT_CLASS}
+            >
+              {organizations.length > 1 && (
+                <option value="">Select organization...</option>
+              )}
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Project */}
+          {organizationId && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-400">
+                Project
+                <span className="ml-1 text-slate-600 font-normal">optional</span>
+              </label>
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                disabled={loadingProjects}
+                className={SELECT_CLASS}
+              >
+                <option value="">{loadingProjects ? "Loading..." : "No project"}</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Title */}
+          <div className="mt-4">
             <label className="block text-sm font-medium text-slate-400">
               Title
             </label>

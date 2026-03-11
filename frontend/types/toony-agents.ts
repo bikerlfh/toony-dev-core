@@ -93,6 +93,8 @@ export interface AgentTaskDetail extends AgentTaskList {
 export interface CreateAgentTaskPayload {
   title: string;
   prompt: string;
+  organization_id: string;
+  project_id?: string;
 }
 
 export interface TaskEventItem {

@@ -622,6 +622,7 @@ export default function ToonyAgentDetailPage() {
         isOpen={showTaskModal}
         onClose={() => setShowTaskModal(false)}
         agentId={agentId}
+        organizations={agent.organizations}
         onSuccess={handleTaskCreated}
       />
 

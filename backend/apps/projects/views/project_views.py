@@ -11,6 +11,7 @@ from projects.permissions import IsProjectAccessible
 from projects.selectors import (
     get_project_membership,
     get_project_settings,
+    list_organization_projects,
     list_project_members,
     list_user_projects,
 )
@@ -43,7 +44,17 @@ class ProjectListCreateView(PaginatedViewMixin, APIView):
 
     def get(self, request):
         search = request.query_params.get("q")
-        projects = list_user_projects(request.user, search=search)
+        organization_id = request.query_params.get("organization")
+        if organization_id:
+            from organizations.models import Organization
+            from projects.models import Project
+
+            organization = Organization.objects.filter(id=organization_id).first()
+            if organization is None:
+                return self.paginate(Project.objects.none(), ProjectListSerializer, request)
+            projects = list_organization_projects(organization, search=search)
+        else:
+            projects = list_user_projects(request.user, search=search)
         return self.paginate(projects, ProjectListSerializer, request)
 
     def post(self, request):
