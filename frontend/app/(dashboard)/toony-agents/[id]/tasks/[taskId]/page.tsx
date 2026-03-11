@@ -273,6 +273,7 @@ export default function TaskViewPage() {
         {/* Live output (75%) */}
         <div className="flex-1 min-w-0">
           <TaskLiveOutput
+            prompt={task.prompt}
             events={events}
             taskStatus={taskStatus}
             onAnswer={handleAnswer}

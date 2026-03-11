@@ -9,6 +9,7 @@ import type {
 } from "@/types";
 
 interface TaskLiveOutputProps {
+  prompt?: string;
   events: TaskEventItemType[];
   taskStatus: AgentTaskStatus;
   onAnswer: (questionId: string, answer: string) => void;
@@ -24,6 +25,7 @@ const INACTIVE_STATUSES: AgentTaskStatus[] = [
 ];
 
 export function TaskLiveOutput({
+  prompt,
   events,
   taskStatus,
   onAnswer,
@@ -44,6 +46,13 @@ export function TaskLiveOutput({
     <div className="flex flex-col h-full">
       {/* Scrollable events */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
+        {prompt && (
+          <div className="mb-3 flex justify-end">
+            <div className="max-w-[80%] rounded-lg bg-indigo-500/15 px-3 py-2 text-sm text-slate-200">
+              {prompt}
+            </div>
+          </div>
+        )}
         {events.length === 0 ? (
           <p className="text-sm text-slate-500 italic">
             Waiting for events...
