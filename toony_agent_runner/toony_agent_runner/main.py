@@ -330,7 +330,10 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                             config_payload,
                             workspace_root,
                         )
-                        await clone_pending_repos(project_map, config_payload, conn)
+                        await clone_pending_repos(
+                            project_map, config_payload, conn,
+                            clone_protocol=config.clone_protocol,
+                        )
                         total_projects = sum(
                             len(o.get("projects", []))
                             for o in msg.organizations

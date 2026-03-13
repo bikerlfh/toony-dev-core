@@ -137,6 +137,8 @@ async def clone_pending_repos(
     project_map: dict[str, Path],
     config_data: dict[str, Any],
     conn,
+    *,
+    clone_protocol: str = "ssh",
 ) -> None:
     """Clone repositories for projects that have repository_url but no .git/ directory.
 
@@ -157,10 +159,11 @@ async def clone_pending_repos(
                 logger.debug("Repo already cloned: %s", proj_dir)
                 continue
 
+            clone_url = build_clone_url(repo_url, clone_protocol)
             branch = proj.get("base_branch", "main")
             start = time.monotonic()
             try:
-                await _async_git_clone(repo_url, proj_dir, branch=branch)
+                await _async_git_clone(clone_url, proj_dir, branch=branch)
                 duration_ms = int((time.monotonic() - start) * 1000)
                 logger.info("Cloned %s -> %s (%dms)", repo_url, proj_dir, duration_ms)
                 await conn.send(

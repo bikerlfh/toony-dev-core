@@ -440,21 +440,25 @@ class TestClonePendingRepos:
                 _make_org(projects=[
                     _make_project(
                         slug="my-repo", project_id="p-1",
-                        repository_url="https://github.com/org/repo.git",
+                        repository_url="https://github.com/org/repo",
                         base_branch="main",
                     ),
                 ]),
             ],
         }
 
+        cloned_urls = []
+
         async def fake_clone(url, dest, branch):
+            cloned_urls.append(url)
             dest.mkdir(parents=True, exist_ok=True)
             (dest / ".git").mkdir()
 
         monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", fake_clone)
 
-        await clone_pending_repos(project_map, config_data, mock_conn)
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
 
+        assert cloned_urls == ["git@github.com:org/repo.git"]
         assert len(mock_conn.sent) == 1
         msg = mock_conn.sent[0]
         assert msg["type"] == "repo.clone.result"
@@ -481,7 +485,7 @@ class TestClonePendingRepos:
             ],
         }
 
-        await clone_pending_repos(project_map, config_data, mock_conn)
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
 
         assert len(mock_conn.sent) == 0
 
@@ -499,7 +503,7 @@ class TestClonePendingRepos:
             ],
         }
 
-        await clone_pending_repos(project_map, config_data, mock_conn)
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
 
         assert len(mock_conn.sent) == 0
 
@@ -525,10 +529,41 @@ class TestClonePendingRepos:
 
         monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", failing_clone)
 
-        await clone_pending_repos(project_map, config_data, mock_conn)
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
 
         assert len(mock_conn.sent) == 1
         msg = mock_conn.sent[0]
         assert msg["type"] == "repo.clone.result"
         assert msg["status"] == "error"
         assert "Authentication failed" in msg["error"]
+
+    @pytest.mark.asyncio
+    async def test_clones_with_https_protocol(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo",
+                        base_branch="main",
+                    ),
+                ]),
+            ],
+        }
+
+        cloned_urls = []
+
+        async def fake_clone(url, dest, branch):
+            cloned_urls.append(url)
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / ".git").mkdir()
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", fake_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="https")
+
+        assert cloned_urls == ["https://github.com/org/repo.git"]
