@@ -9,6 +9,7 @@ import type {
   AgentTaskDetail,
   CreateAgentTaskPayload,
   TaskEventItem,
+  AgentSystemEventItem,
   PaginatedResponse,
 } from "@/types";
 
@@ -148,6 +149,21 @@ export async function cancelAgentTask(
   );
   return data;
 }
+
+// ── System Events ──
+
+export async function listSystemEvents(
+  agentId: string,
+  params?: { event_type?: string; project_id?: string }
+): Promise<PaginatedResponse<AgentSystemEventItem>> {
+  const { data } = await api.get<PaginatedResponse<AgentSystemEventItem>>(
+    `/toony-agents/${agentId}/system-events/`,
+    { params }
+  );
+  return data;
+}
+
+// ── Task Events ──
 
 export async function listTaskEvents(
   agentId: string,

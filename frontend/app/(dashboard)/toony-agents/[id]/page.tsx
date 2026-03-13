@@ -628,6 +628,29 @@ export default function ToonyAgentDetailPage() {
         )}
       </div>
 
+      {/* ── System Events link ────────────────────────────── */}
+      <div className="mt-8">
+        <Link
+          href={`/toony-agents/${agentId}/events`}
+          className="group flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3 transition-all hover:border-slate-700/60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-800/60">
+              <svg className="h-4 w-4 text-slate-400" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1.5 8h2.25l1.5-3.5 2.5 7 2.5-7 1.5 3.5h2.75" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-sm font-medium text-slate-200 transition-colors group-hover:text-white">System Events</p>
+              <p className="text-xs text-slate-600">Clone results, config syncs, runner activity</p>
+            </div>
+          </div>
+          <svg className="h-4 w-4 text-slate-700 transition-colors group-hover:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </Link>
+      </div>
+
       {/* ── Modals ──────────────────────────────────────────── */}
       <ManageKeysModal
         isOpen={showKeysModal}
