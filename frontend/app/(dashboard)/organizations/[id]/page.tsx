@@ -6,7 +6,7 @@ import Link from "next/link";
 import { getOrganization, updateOrganization } from "@/lib/api/organizations";
 import { listMembers, addMember, updateMemberRole, removeMember } from "@/lib/api/members";
 import { getOrganizationSettings, updateOrganizationSettings } from "@/lib/api/settings";
-import { listCredentials, createCredential, deleteCredential } from "@/lib/api/credentials";
+import { listCredentials, createCredential, updateCredential, deleteCredential } from "@/lib/api/credentials";
 import { listIntegrations, createIntegration, deleteIntegration } from "@/lib/api/integrations";
 import { listImportJobs } from "@/lib/api/imports";
 import { listToonyAgentsByOrganization, listToonyAgents, updateToonyAgent, getToonyAgent } from "@/lib/api/toony-agents";
@@ -33,12 +33,12 @@ type Tab = "general" | "members" | "settings" | "credentials" | "integrations" |
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "general", label: "General" },
+  { key: "agents", label: "Agents" },
   { key: "members", label: "Members" },
-  { key: "settings", label: "Settings" },
   { key: "credentials", label: "Credentials" },
   { key: "integrations", label: "Integrations" },
   { key: "imports", label: "Imports" },
-  { key: "agents", label: "Agents" },
+  { key: "settings", label: "Settings" },
 ];
 
 const MEMBERSHIP_ROLES: { value: MembershipRole; label: string }[] = [
@@ -693,19 +693,185 @@ function SettingsTab({ orgId }: { orgId: string }) {
   );
 }
 
+// ────────────────────────────── Credential Modal ──────────────────────────────
+
+function CredentialModal({
+  orgId,
+  credential,
+  onClose,
+  onSaved,
+}: {
+  orgId: string;
+  credential: RepositoryCredential | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const isEdit = credential !== null;
+  const [credName, setCredName] = useState(credential?.name ?? "");
+  const [provider, setProvider] = useState<CredentialProvider>(credential?.provider ?? "GITHUB");
+  const [credType, setCredType] = useState<CredentialType>(credential?.credential_type ?? "TOKEN");
+  const [credValue, setCredValue] = useState("");
+  const [urlPattern, setUrlPattern] = useState(credential?.url_pattern ?? "");
+  const [isActive, setIsActive] = useState(credential?.is_active ?? true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setIsSaving(true);
+    try {
+      if (isEdit) {
+        const payload: Record<string, unknown> = {
+          name: credName,
+          provider,
+          credential_type: credType,
+          url_pattern: urlPattern || "",
+          is_active: isActive,
+        };
+        if (credValue) payload.encrypted_value = credValue;
+        await updateCredential(orgId, credential.id, payload);
+      } else {
+        await createCredential(orgId, {
+          name: credName,
+          provider,
+          credential_type: credType,
+          encrypted_value: credValue,
+          url_pattern: urlPattern || undefined,
+        });
+      }
+      onSaved();
+      onClose();
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
+      setError(data ? Object.values(data).flat().join(" ") : "Something went wrong");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-md rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+        <h2 className="text-base font-medium tracking-tight text-white">
+          {isEdit ? "Edit credential" : "Add credential"}
+        </h2>
+
+        {error && (
+          <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
+            <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="8" cy="8" r="6.25" />
+              <path d="M8 5v3.5M8 10.5h.007" strokeLinecap="round" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Name</label>
+            <input
+              type="text"
+              required
+              value={credName}
+              onChange={(e) => setCredName(e.target.value)}
+              placeholder="My GitHub Token"
+              className={INPUT_CLASS}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Provider</label>
+              <Select options={CREDENTIAL_PROVIDER_OPTIONS} value={provider} onChange={(v) => setProvider(v as CredentialProvider)} className="mt-1.5" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-400">Type</label>
+              <Select options={CREDENTIAL_TYPE_OPTIONS} value={credType} onChange={(v) => setCredType(v as CredentialType)} className="mt-1.5" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-400">
+              {isEdit ? "New value / token" : "Value / Token"}
+            </label>
+            <input
+              type="password"
+              required={!isEdit}
+              value={credValue}
+              onChange={(e) => setCredValue(e.target.value)}
+              placeholder={isEdit ? "Leave blank to keep current" : "ghp_..."}
+              className={INPUT_CLASS}
+            />
+            {isEdit && (
+              <p className="mt-1 text-xs text-slate-600">Only fill this if you want to replace the stored value.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-400">URL Pattern</label>
+            <input
+              type="text"
+              value={urlPattern}
+              onChange={(e) => setUrlPattern(e.target.value)}
+              placeholder="github.com/*"
+              className={INPUT_CLASS}
+            />
+          </div>
+
+          {isEdit && (
+            <div className="flex items-center justify-between rounded-lg border border-slate-800/40 px-3 py-2.5">
+              <span className="text-sm text-slate-300">Active</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isActive}
+                onClick={() => setIsActive(!isActive)}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                  isActive ? "bg-indigo-600" : "bg-slate-700"
+                } cursor-pointer`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                  isActive ? "translate-x-[18px]" : "translate-x-[3px]"
+                }`} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate-600">esc to cancel</span>
+            <div className="flex gap-3">
+              <button type="button" onClick={onClose}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white">
+                Cancel
+              </button>
+              <button type="submit" disabled={isSaving || !credName || (!isEdit && !credValue)}
+                className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                {isSaving ? "Saving..." : isEdit ? "Save changes" : "Add credential"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ────────────────────────────── Credentials Tab ──────────────────────────────
 
 function CredentialsTab({ orgId }: { orgId: string }) {
   const [credentials, setCredentials] = useState<RepositoryCredential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [credName, setCredName] = useState("");
-  const [provider, setProvider] = useState<CredentialProvider>("GITHUB");
-  const [credType, setCredType] = useState<CredentialType>("TOKEN");
-  const [credValue, setCredValue] = useState("");
-  const [urlPattern, setUrlPattern] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  // undefined = closed, null = create, RepositoryCredential = edit
+  const [credModalTarget, setCredModalTarget] = useState<RepositoryCredential | null | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<RepositoryCredential | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -721,32 +887,6 @@ function CredentialsTab({ orgId }: { orgId: string }) {
   useEffect(() => {
     fetchCredentials();
   }, [fetchCredentials]);
-
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
-    if (!credName.trim() || !credValue.trim()) return;
-    setError("");
-    setIsSubmitting(true);
-    try {
-      await createCredential(orgId, {
-        name: credName,
-        provider,
-        credential_type: credType,
-        encrypted_value: credValue,
-        url_pattern: urlPattern || undefined,
-      });
-      setCredName("");
-      setCredValue("");
-      setUrlPattern("");
-      setShowForm(false);
-      fetchCredentials();
-    } catch (err: unknown) {
-      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
-      setError(data ? Object.values(data).flat().join(" ") : "Failed to create credential.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -767,80 +907,65 @@ function CredentialsTab({ orgId }: { orgId: string }) {
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-medium text-white">Repository Credentials</h3>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setCredModalTarget(null)}
           className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
         >
-          {showForm ? "Cancel" : "Add credential"}
+          Add credential
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-slate-800/60 bg-slate-900 p-4 space-y-4">
-          {error && (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
-              <span>{error}</span>
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium text-slate-400">Name</label>
-            <input type="text" required value={credName} onChange={(e) => setCredName(e.target.value)} placeholder="My GitHub Token" className={INPUT_CLASS} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Provider</label>
-              <Select options={CREDENTIAL_PROVIDER_OPTIONS} value={provider} onChange={(v) => setProvider(v as CredentialProvider)} className="mt-1.5" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Type</label>
-              <Select options={CREDENTIAL_TYPE_OPTIONS} value={credType} onChange={(v) => setCredType(v as CredentialType)} className="mt-1.5" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-400">Value / Token</label>
-            <input type="password" required value={credValue} onChange={(e) => setCredValue(e.target.value)} placeholder="ghp_..." className={INPUT_CLASS} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-400">URL Pattern (optional)</label>
-            <input type="text" value={urlPattern} onChange={(e) => setUrlPattern(e.target.value)} placeholder="github.com/*" className={INPUT_CLASS} />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {isSubmitting ? "Creating..." : "Create credential"}
-          </button>
-        </form>
-      )}
-
-      {credentials.length === 0 && !showForm ? (
+      {credentials.length === 0 ? (
         <p className="text-slate-500">No credentials configured.</p>
       ) : (
         <div className="space-y-2">
           {credentials.map((cred) => (
             <div
               key={cred.id}
-              className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
+              className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900 px-4 py-3"
             >
               <div>
                 <p className="text-sm font-medium text-slate-200">{cred.name}</p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{cred.provider}</span>
                   <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-400">{cred.credential_type}</span>
+                  {cred.url_pattern && (
+                    <span className="font-mono text-xs text-slate-600">{cred.url_pattern}</span>
+                  )}
                   {!cred.is_active && (
                     <span className="rounded-md bg-red-500/15 px-2 py-0.5 text-xs text-red-400">Inactive</span>
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => setDeleteTarget(cred)}
-                className="text-xs text-red-400 transition-colors hover:text-red-300"
-              >
-                Delete
-              </button>
+              <div className="ml-3 flex shrink-0 items-center gap-2">
+                <button
+                  onClick={() => setCredModalTarget(cred)}
+                  className="text-slate-600 transition-colors hover:text-indigo-400"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setDeleteTarget(cred)}
+                  className="text-slate-600 transition-colors hover:text-red-400"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M2 4h12M5.33 4V2.67a1.33 1.33 0 011.34-1.34h2.66a1.33 1.33 0 011.34 1.34V4m2 0v9.33a1.33 1.33 0 01-1.34 1.34H4.67a1.33 1.33 0 01-1.34-1.34V4h9.34z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>
+      )}
+
+      {credModalTarget !== undefined && (
+        <CredentialModal
+          orgId={orgId}
+          credential={credModalTarget}
+          onClose={() => setCredModalTarget(undefined)}
+          onSaved={fetchCredentials}
+        />
       )}
 
       {deleteTarget && (
