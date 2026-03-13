@@ -409,6 +409,12 @@ export default function ToonyAgentDetailPage() {
               </button>
             </>
           )}
+          <Link
+            href={`/toony-agents/${agentId}/events`}
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            System Events
+          </Link>
           <button
             onClick={() => setShowTaskModal(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
@@ -436,6 +442,54 @@ export default function ToonyAgentDetailPage() {
           <span className="text-slate-300">{syncResult.message}</span>
         </div>
       )}
+
+      {/* ── Organizations ─────────────────────────────────── */}
+      <div className="mt-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-medium text-white">Organizations</h2>
+          <span className="text-xs text-slate-600">
+            {agent.organizations.length}
+          </span>
+          <button
+            onClick={() => setShowAddOrgModal(true)}
+            className="ml-auto rounded-md border border-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
+          >
+            + Add
+          </button>
+        </div>
+
+        {agent.organizations.length === 0 ? (
+          <div className="mt-4">
+            <div className="font-mono text-sm text-slate-500">
+              <span className="text-indigo-500">~</span>
+              <span className="text-slate-600">/</span>
+              <span> no organizations assigned</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {agent.organizations.map((org) => (
+              <div
+                key={org.id}
+                className="group flex items-center gap-2 rounded-lg border border-slate-800/60 bg-slate-900 py-1.5 pl-3 pr-2 transition-colors hover:border-slate-700/60"
+              >
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-slate-200">{org.name}</span>
+                  <span className="ml-2 font-mono text-xs text-slate-600">{org.slug}</span>
+                </div>
+                <button
+                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-600 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                >
+                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Metrics strip ─────────────────────────────────── */}
       <div className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
@@ -578,77 +632,6 @@ export default function ToonyAgentDetailPage() {
             })}
           </div>
         )}
-      </div>
-
-      {/* ── Organizations ─────────────────────────────────── */}
-      <div className="mt-8">
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-medium text-white">Organizations</h2>
-          <span className="text-xs text-slate-600">
-            {agent.organizations.length}
-          </span>
-          <button
-            onClick={() => setShowAddOrgModal(true)}
-            className="ml-auto rounded-md border border-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
-          >
-            + Add
-          </button>
-        </div>
-
-        {agent.organizations.length === 0 ? (
-          <div className="mt-4">
-            <div className="font-mono text-sm text-slate-500">
-              <span className="text-indigo-500">~</span>
-              <span className="text-slate-600">/</span>
-              <span> no organizations assigned</span>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {agent.organizations.map((org) => (
-              <div
-                key={org.id}
-                className="group flex items-center gap-2 rounded-lg border border-slate-800/60 bg-slate-900 py-1.5 pl-3 pr-2 transition-colors hover:border-slate-700/60"
-              >
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-slate-200">{org.name}</span>
-                  <span className="ml-2 font-mono text-xs text-slate-600">{org.slug}</span>
-                </div>
-                <button
-                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-600 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
-                >
-                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── System Events link ────────────────────────────── */}
-      <div className="mt-8">
-        <Link
-          href={`/toony-agents/${agentId}/events`}
-          className="group flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3 transition-all hover:border-slate-700/60"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-800/60">
-              <svg className="h-4 w-4 text-slate-400" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M1.5 8h2.25l1.5-3.5 2.5 7 2.5-7 1.5 3.5h2.75" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-sm font-medium text-slate-200 transition-colors group-hover:text-white">System Events</p>
-              <p className="text-xs text-slate-600">Clone results, config syncs, runner activity</p>
-            </div>
-          </div>
-          <svg className="h-4 w-4 text-slate-700 transition-colors group-hover:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-          </svg>
-        </Link>
       </div>
 
       {/* ── Modals ──────────────────────────────────────────── */}
