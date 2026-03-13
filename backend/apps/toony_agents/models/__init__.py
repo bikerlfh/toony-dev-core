@@ -1,3 +1,4 @@
+from .agent_system_event import AgentSystemEvent, AgentSystemEventType
 from .agent_task import AgentTask, AgentTaskStatus
 from .agent_task_question import AgentTaskQuestion
 from .task_event import TaskEvent, TaskEventType
@@ -10,6 +11,8 @@ __all__ = [
     "ToonyAgentKey",
     "AgentTask",
     "AgentTaskStatus",
+    "AgentSystemEvent",
+    "AgentSystemEventType",
     "TaskEvent",
     "TaskEventType",
     "AgentTaskQuestion",
