@@ -13,12 +13,38 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import yaml
 
 from toony_agent_runner.protocol import RepoCloneResultMessage
 
 logger = logging.getLogger(__name__)
+
+
+def build_clone_url(repository_url: str, protocol: str = "ssh") -> str:
+    """Convert a browser repository URL to a git clone URL.
+
+    Supports GitHub, GitLab, Bitbucket, and any generic git host.
+
+    Args:
+        repository_url: Browser URL (e.g. ``https://github.com/owner/repo``)
+        protocol: ``"ssh"`` or ``"https"``
+
+    Returns:
+        Clone URL (e.g. ``git@github.com:owner/repo.git``)
+    """
+    parsed = urlparse(repository_url)
+    host = parsed.hostname or ""
+    path = parsed.path.strip("/")
+
+    # Strip .git suffix if already present to normalize
+    if path.endswith(".git"):
+        path = path[:-4]
+
+    if protocol == "ssh":
+        return f"git@{host}:{path}.git"
+    return f"https://{host}/{path}.git"
 
 
 def process_config_sync(

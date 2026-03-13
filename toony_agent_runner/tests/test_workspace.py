@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 import pytest
 
-from toony_agent_runner.workspace import process_config_sync, resolve_project_path
+from toony_agent_runner.workspace import build_clone_url, process_config_sync, resolve_project_path
 
 
 # ---------------------------------------------------------------------------
@@ -342,6 +342,56 @@ class TestProcessConfigSyncRepoUrl:
         assert (tmp_path / "acme-corp" / "projects" / "without-repo").is_dir()
         assert "p-1" in result
         assert "p-2" in result
+
+
+# ---------------------------------------------------------------------------
+# build_clone_url tests
+# ---------------------------------------------------------------------------
+
+class TestBuildCloneUrl:
+    """Verify build_clone_url converts browser URLs to clone URLs."""
+
+    # -- SSH protocol --
+
+    def test_github_ssh(self):
+        assert build_clone_url("https://github.com/owner/repo", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_gitlab_ssh(self):
+        assert build_clone_url("https://gitlab.com/owner/repo", "ssh") == "git@gitlab.com:owner/repo.git"
+
+    def test_bitbucket_ssh(self):
+        assert build_clone_url("https://bitbucket.org/owner/repo", "ssh") == "git@bitbucket.org:owner/repo.git"
+
+    # -- HTTPS protocol --
+
+    def test_github_https(self):
+        assert build_clone_url("https://github.com/owner/repo", "https") == "https://github.com/owner/repo.git"
+
+    def test_gitlab_https(self):
+        assert build_clone_url("https://gitlab.com/owner/repo", "https") == "https://gitlab.com/owner/repo.git"
+
+    def test_bitbucket_https(self):
+        assert build_clone_url("https://bitbucket.org/owner/repo", "https") == "https://bitbucket.org/owner/repo.git"
+
+    # -- Edge cases --
+
+    def test_trailing_slash_stripped(self):
+        assert build_clone_url("https://github.com/owner/repo/", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_already_has_dot_git(self):
+        assert build_clone_url("https://github.com/owner/repo.git", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_self_hosted_ssh(self):
+        assert build_clone_url("https://git.mycompany.com/team/project", "ssh") == "git@git.mycompany.com:team/project.git"
+
+    def test_self_hosted_https(self):
+        assert build_clone_url("https://git.mycompany.com/team/project", "https") == "https://git.mycompany.com/team/project.git"
+
+    def test_nested_path_gitlab(self):
+        assert build_clone_url("https://gitlab.com/group/subgroup/repo", "ssh") == "git@gitlab.com:group/subgroup/repo.git"
+
+    def test_default_protocol_is_ssh(self):
+        assert build_clone_url("https://github.com/owner/repo") == "git@github.com:owner/repo.git"
 
 
 # ---------------------------------------------------------------------------
