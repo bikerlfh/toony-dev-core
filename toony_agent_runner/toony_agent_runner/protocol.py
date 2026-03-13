@@ -4,7 +4,8 @@ Protocol definitions for runner <-> backend WebSocket communication.
 Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
     TaskEventMessage, QuestionAskedMessage, TaskCompletedMessage,
-    TaskFailedMessage, CommandResultMessage, ConfigSyncAckMessage
+    TaskFailedMessage, CommandResultMessage, ConfigSyncAckMessage,
+    RepoCloneResultMessage
 
 Incoming messages (backend -> runner):
     TaskAssign, QuestionAnswered, TaskCancel, HeartbeatAck, CommandExecute,
@@ -231,6 +232,34 @@ class ConfigSyncAckMessage:
             "project_count": self.project_count,
             "error": self.error,
         }
+
+
+@dataclass
+class RepoCloneResultMessage:
+    """Reports the result of cloning a project repository."""
+
+    project_id: str
+    organization_id: str
+    status: str  # "success" | "error"
+    repository_url: str
+    branch: str = ""
+    clone_duration_ms: int = 0
+    error: str = ""
+
+    def to_json(self) -> dict:
+        msg: dict[str, Any] = {
+            "type": "repo.clone.result",
+            "project_id": self.project_id,
+            "organization_id": self.organization_id,
+            "status": self.status,
+            "repository_url": self.repository_url,
+        }
+        if self.status == "success":
+            msg["branch"] = self.branch
+            msg["clone_duration_ms"] = self.clone_duration_ms
+        else:
+            msg["error"] = self.error
+        return msg
 
 
 @dataclass
