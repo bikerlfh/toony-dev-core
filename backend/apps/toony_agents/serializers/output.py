@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from toony_agents.models import AgentTask, TaskEvent, ToonyAgent, ToonyAgentKey
+from toony_agents.models import AgentSystemEvent, AgentTask, TaskEvent, ToonyAgent, ToonyAgentKey
 
 
 class ToonyAgentListSerializer(serializers.ModelSerializer):
@@ -171,3 +171,23 @@ class TaskEventSerializer(serializers.ModelSerializer):
         model = TaskEvent
         fields = ["id", "event_type", "data", "sequence", "created_at"]
         read_only_fields = fields
+
+
+class AgentSystemEventSerializer(serializers.ModelSerializer):
+    organization = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AgentSystemEvent
+        fields = ["id", "event_type", "organization", "project", "data", "created_at"]
+        read_only_fields = fields
+
+    def get_organization(self, obj):
+        if not obj.organization:
+            return None
+        return {"id": str(obj.organization.id), "name": obj.organization.name}
+
+    def get_project(self, obj):
+        if not obj.project:
+            return None
+        return {"id": str(obj.project.id), "name": obj.project.name}
