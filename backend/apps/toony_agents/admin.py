@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from toony_agents.models import AgentTask, TaskEvent, ToonyAgent, ToonyAgentKey
+from toony_agents.models import (
+    AgentSystemEvent,
+    AgentTask,
+    TaskEvent,
+    ToonyAgent,
+    ToonyAgentKey,
+)
 
 
 @admin.register(ToonyAgent)
@@ -33,3 +39,11 @@ class TaskEventAdmin(admin.ModelAdmin):
     list_filter = ("event_type",)
     search_fields = ("task__title",)
     ordering = ("task", "sequence")
+
+
+@admin.register(AgentSystemEvent)
+class AgentSystemEventAdmin(admin.ModelAdmin):
+    list_display = ("toony_agent", "event_type", "organization", "project", "created_at")
+    list_filter = ("event_type",)
+    search_fields = ("toony_agent__name", "organization__name", "project__name")
+    ordering = ("-created_at",)
