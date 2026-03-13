@@ -1293,62 +1293,179 @@ function TeamsTab({ projectId, canManage }: { projectId: string; canManage: bool
   );
 }
 
+// --- Setting Row ---
+
+function SettingRow({
+  label,
+  value,
+  displayValue,
+  inputType = "text",
+  mono,
+  placeholder,
+  maxLength,
+  min,
+  editing,
+  draft,
+  onDraftChange,
+  onStartEdit,
+  onSave,
+  onCancel,
+  isSaving,
+  canManage,
+}: {
+  label: string;
+  value: string;
+  displayValue?: string;
+  inputType?: "text" | "url" | "number";
+  mono?: boolean;
+  placeholder?: string;
+  maxLength?: number;
+  min?: number;
+  editing: boolean;
+  draft: string;
+  onDraftChange: (v: string) => void;
+  onStartEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isSaving: boolean;
+  canManage: boolean;
+}) {
+  const shown = displayValue ?? value;
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <span className="w-44 shrink-0 text-sm font-medium text-slate-300">{label}</span>
+        <input
+          type={inputType}
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSave();
+            if (e.key === "Escape") onCancel();
+          }}
+          maxLength={maxLength}
+          min={min}
+          placeholder={placeholder}
+          autoFocus
+          disabled={isSaving}
+          className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+        />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button onClick={onSave} disabled={isSaving}
+            className="rounded-md bg-indigo-600 p-1 text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 8l3.5 3.5L13 5" /></svg>
+          </button>
+          <button onClick={onCancel} disabled={isSaving}
+            className="rounded-md border border-slate-700 p-1 text-slate-400 transition-colors hover:text-white">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-center justify-between px-4 py-3">
+      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <div className="flex items-center gap-2.5">
+        <span className={`text-sm ${shown ? (mono ? "font-mono text-slate-400" : "text-slate-400") : "italic text-slate-600"}`}>
+          {shown || "Not set"}
+        </span>
+        {canManage && (
+          <button onClick={onStartEdit}
+            className="text-slate-700 transition-colors hover:text-indigo-400 group-hover:text-slate-500">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // --- Settings Tab ---
 
 function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; canManage: boolean; onDeleted: () => void }) {
   const [settings, setSettings] = useState<ProjectSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState("");
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [draftValue, setDraftValue] = useState("");
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  // Agent automation
+  const [editingPrompt, setEditingPrompt] = useState(false);
+  const [autoTaskDraft, setAutoTaskDraft] = useState("");
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+  const [promptMessage, setPromptMessage] = useState("");
+
+  // Delete
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const [repoUrl, setRepoUrl] = useState("");
-  const [defaultBranch, setDefaultBranch] = useState("main");
-  const [branchConvention, setBranchConvention] = useState("");
-  const [reviewers, setReviewers] = useState(1);
-  const [autoClose, setAutoClose] = useState(false);
-  const [prefixOverride, setPrefixOverride] = useState("");
-  const [estimation, setEstimation] = useState<EstimationMethod>("STORY_POINTS");
-  const [autoTaskPrompt, setAutoTaskPrompt] = useState("");
 
   const fetchSettings = useCallback(async () => {
     try {
       const data = await getProjectSettings(projectId);
       setSettings(data);
-      setRepoUrl(data.repository_url);
-      setDefaultBranch(data.default_branch);
-      setBranchConvention(data.branch_naming_convention);
-      setReviewers(data.required_reviewers_count);
-      setAutoClose(data.auto_close_completed_issues);
-      setPrefixOverride(data.issue_prefix);
-      setEstimation(data.estimation_method);
-      setAutoTaskPrompt(data.auto_task_prompt_template || "");
     } finally { setIsLoading(false); }
   }, [projectId]);
 
   useEffect(() => { fetchSettings(); }, [fetchSettings]);
 
-  async function handleSave(e: FormEvent) {
-    e.preventDefault();
-    setSaveMessage("");
-    setIsSaving(true);
+  function fullPayload(override: Record<string, unknown>) {
+    if (!settings) return override;
+    return {
+      repository_url: settings.repository_url,
+      default_branch: settings.default_branch,
+      branch_naming_convention: settings.branch_naming_convention,
+      required_reviewers_count: settings.required_reviewers_count,
+      auto_close_completed_issues: settings.auto_close_completed_issues,
+      issue_prefix: settings.issue_prefix,
+      estimation_method: settings.estimation_method,
+      auto_task_prompt_template: settings.auto_task_prompt_template,
+      ...override,
+    };
+  }
+
+  async function saveField(field: string, value: unknown) {
+    if (!settings) return;
+    setSavingField(field);
     try {
-      const updated = await updateProjectSettings(projectId, {
-        repository_url: repoUrl,
-        default_branch: defaultBranch,
-        branch_naming_convention: branchConvention,
-        required_reviewers_count: reviewers,
-        auto_close_completed_issues: autoClose,
-        issue_prefix: prefixOverride,
-        estimation_method: estimation,
-        auto_task_prompt_template: autoTaskPrompt,
-      });
+      const updated = await updateProjectSettings(projectId, fullPayload({ [field]: value }));
       setSettings(updated);
-      setSaveMessage("Settings saved.");
+      setEditingField(null);
+    } catch { /* stay in edit mode on error */ }
+    finally { setSavingField(null); }
+  }
+
+  function startEdit(field: string, currentValue: string) {
+    setEditingField(field);
+    setDraftValue(currentValue);
+  }
+
+  function cancelEdit() {
+    setEditingField(null);
+    setDraftValue("");
+  }
+
+  function handleRowSave(field: string, inputType: string) {
+    const val = inputType === "number" ? (parseInt(draftValue) || 0) : draftValue;
+    saveField(field, val);
+  }
+
+  async function savePrompt() {
+    if (!settings) return;
+    setIsSavingPrompt(true);
+    setPromptMessage("");
+    try {
+      const updated = await updateProjectSettings(projectId, fullPayload({ auto_task_prompt_template: autoTaskDraft }));
+      setSettings(updated);
+      setEditingPrompt(false);
+      setPromptMessage("Saved.");
     } catch {
-      setSaveMessage("Failed to save settings.");
-    } finally { setIsSaving(false); }
+      setPromptMessage("Failed to save.");
+    } finally { setIsSavingPrompt(false); }
   }
 
   async function handleDelete() {
@@ -1356,93 +1473,190 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
     try {
       await deleteProject(projectId);
       onDeleted();
-    } finally {
-      setIsDeleting(false);
-    }
+    } finally { setIsDeleting(false); }
   }
 
   if (isLoading) return <p className="text-slate-500">Loading settings...</p>;
   if (!settings) return <p className="text-red-400">Failed to load settings.</p>;
 
+  const estimationLabel = ESTIMATION_OPTIONS.find((o) => o.value === settings.estimation_method)?.label ?? settings.estimation_method;
+
+  const repoRows: { field: string; label: string; value: string; inputType: "text" | "url" | "number"; mono?: boolean; placeholder?: string }[] = [
+    { field: "repository_url", label: "Repository URL", value: settings.repository_url, inputType: "url", mono: true, placeholder: "https://github.com/..." },
+    { field: "default_branch", label: "Default branch", value: settings.default_branch, inputType: "text", mono: true },
+    { field: "branch_naming_convention", label: "Branch convention", value: settings.branch_naming_convention, inputType: "text", mono: true, placeholder: "{type}/{identifier}" },
+  ];
+
+  const workflowRows: { field: string; label: string; value: string; inputType: "text" | "url" | "number"; mono?: boolean; maxLength?: number; min?: number }[] = [
+    { field: "required_reviewers_count", label: "Required reviewers", value: String(settings.required_reviewers_count), inputType: "number", min: 0 },
+    { field: "issue_prefix", label: "Issue prefix", value: settings.issue_prefix, inputType: "text", mono: true, maxLength: 10 },
+  ];
+
   return (
     <div className="max-w-2xl">
-      <form onSubmit={handleSave} className="space-y-6">
-        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
-          <h2 className="text-base font-medium text-white">Project Settings</h2>
-          <div className="mt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Repository URL</label>
-              <input type="url" value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} disabled={!canManage}
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-400">Default branch</label>
-                <input type="text" value={defaultBranch} onChange={(e) => setDefaultBranch(e.target.value)} disabled={!canManage}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-400">Branch convention</label>
-                <input type="text" value={branchConvention} onChange={(e) => setBranchConvention(e.target.value)} disabled={!canManage}
-                  placeholder="{type}/{identifier}" className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-400">Required reviewers</label>
-                <input type="number" min={0} value={reviewers} onChange={(e) => setReviewers(parseInt(e.target.value) || 0)} disabled={!canManage}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-400">Issue prefix</label>
-                <input type="text" maxLength={10} value={prefixOverride} onChange={(e) => setPrefixOverride(e.target.value)} disabled={!canManage}
-                  className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Estimation method</label>
-              <Select options={ESTIMATION_OPTIONS} value={estimation} onChange={(v) => setEstimation(v as EstimationMethod)} disabled={!canManage} className="mt-1.5" />
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="autoClose" checked={autoClose} onChange={(e) => setAutoClose(e.target.checked)} disabled={!canManage}
-                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500" />
-              <label htmlFor="autoClose" className="text-sm text-slate-300">Auto-close completed issues</label>
-            </div>
+      {/* Repository */}
+      <div>
+        <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Repository</h3>
+        <div className="mt-2 divide-y divide-slate-800/40 rounded-xl border border-slate-800/60 bg-slate-900">
+          {repoRows.map((row) => (
+            <SettingRow
+              key={row.field}
+              label={row.label}
+              value={row.value}
+              inputType={row.inputType}
+              mono={row.mono}
+              placeholder={row.placeholder}
+              editing={editingField === row.field}
+              draft={draftValue}
+              onDraftChange={setDraftValue}
+              onStartEdit={() => startEdit(row.field, row.value)}
+              onSave={() => handleRowSave(row.field, row.inputType)}
+              onCancel={cancelEdit}
+              isSaving={savingField === row.field}
+              canManage={canManage}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Workflow */}
+      <div className="mt-6">
+        <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Workflow</h3>
+        <div className="mt-2 divide-y divide-slate-800/40 rounded-xl border border-slate-800/60 bg-slate-900">
+          {workflowRows.map((row) => (
+            <SettingRow
+              key={row.field}
+              label={row.label}
+              value={row.value}
+              inputType={row.inputType}
+              mono={row.mono}
+              maxLength={row.maxLength}
+              min={row.min}
+              editing={editingField === row.field}
+              draft={draftValue}
+              onDraftChange={setDraftValue}
+              onStartEdit={() => startEdit(row.field, row.value)}
+              onSave={() => handleRowSave(row.field, row.inputType)}
+              onCancel={cancelEdit}
+              isSaving={savingField === row.field}
+              canManage={canManage}
+            />
+          ))}
+
+          {/* Estimation method — inline select */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium text-slate-300">Estimation method</span>
+            {canManage ? (
+              <Select
+                options={ESTIMATION_OPTIONS}
+                value={settings.estimation_method}
+                onChange={(v) => saveField("estimation_method", v)}
+                             />
+            ) : (
+              <span className="text-sm text-slate-400">{estimationLabel}</span>
+            )}
+          </div>
+
+          {/* Auto-close toggle */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm font-medium text-slate-300">Auto-close completed issues</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.auto_close_completed_issues}
+              disabled={!canManage || savingField === "auto_close_completed_issues"}
+              onClick={() => saveField("auto_close_completed_issues", !settings.auto_close_completed_issues)}
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                settings.auto_close_completed_issues ? "bg-indigo-600" : "bg-slate-700"
+              } ${!canManage ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+            >
+              <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                settings.auto_close_completed_issues ? "translate-x-[18px]" : "translate-x-[3px]"
+              }`} />
+            </button>
           </div>
         </div>
+      </div>
 
-        <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
-          <h2 className="text-base font-medium text-white">Agent Automation</h2>
-          <p className="mt-1 text-sm text-slate-500">When an issue moves from Backlog to Todo, an agent task is created automatically using this prompt template.</p>
+      {/* Agent Automation */}
+      <div className="mt-6">
+        <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Agent Automation</h3>
+        <div className="mt-2 rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+          <p className="text-sm text-slate-500">When an issue moves from Backlog to Todo, an agent task is created automatically using this prompt template.</p>
+
           <div className="mt-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Auto-task prompt template</label>
-              <textarea value={autoTaskPrompt} onChange={(e) => setAutoTaskPrompt(e.target.value)} disabled={!canManage}
-                rows={3} placeholder="Use toony skill and implement {issue_identifier}"
-                className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:text-slate-500 disabled:bg-slate-900" />
-              <p className="mt-1.5 text-xs text-slate-500">Variables: <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_id}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_identifier}"}</code> <code className="rounded bg-slate-800 px-1 py-0.5">{"{issue_description}"}</code>. Leave empty to use the global default.</p>
-            </div>
+            {editingPrompt ? (
+              <>
+                <textarea
+                  value={autoTaskDraft}
+                  onChange={(e) => setAutoTaskDraft(e.target.value)}
+                  rows={3}
+                  placeholder="Use toony skill and implement {issue_identifier}"
+                  autoFocus
+                  disabled={isSavingPrompt}
+                  className="block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+                />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {["{issue_id}", "{issue_identifier}", "{issue_description}"].map((v) => (
+                    <code key={v} className="rounded bg-slate-800 px-1.5 py-0.5 text-xs text-slate-500">{v}</code>
+                  ))}
+                  <span className="text-xs text-slate-600">— available variables</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button onClick={savePrompt} disabled={isSavingPrompt}
+                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                    {isSavingPrompt ? "Saving..." : "Save"}
+                  </button>
+                  <button onClick={() => setEditingPrompt(false)} disabled={isSavingPrompt}
+                    className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:text-white">
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="group flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  {settings.auto_task_prompt_template ? (
+                    <p className="whitespace-pre-wrap rounded-lg bg-slate-950 px-3 py-2 font-mono text-sm leading-relaxed text-slate-400">
+                      {settings.auto_task_prompt_template}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic text-slate-600">No template configured. Global default will be used.</p>
+                  )}
+                </div>
+                {canManage && (
+                  <button
+                    onClick={() => { setAutoTaskDraft(settings.auto_task_prompt_template || ""); setEditingPrompt(true); }}
+                    className="mt-1 shrink-0 text-slate-700 transition-colors hover:text-indigo-400 group-hover:text-slate-500"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
-          {canManage && (
-            <div className="mt-6">
-              {saveMessage && (
-                <p className={`mb-3 text-sm ${saveMessage.includes("Failed") ? "text-red-400" : "text-emerald-400"}`}>{saveMessage}</p>
-              )}
-              <button type="submit" disabled={isSaving}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
-                {isSaving ? "Saving..." : "Save settings"}</button>
-            </div>
+          {promptMessage && !editingPrompt && (
+            <p className={`mt-3 text-xs ${promptMessage.includes("Failed") ? "text-red-400" : "text-emerald-400"}`}>{promptMessage}</p>
           )}
         </div>
-      </form>
+      </div>
 
+      {/* Danger Zone */}
       {canManage && (
-        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
-          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
-          <p className="mt-1 text-sm text-slate-400">Permanently delete this project and all its data.</p>
-          <button type="button" onClick={() => setShowDeleteConfirm(true)}
-            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500">Delete project</button>
+        <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-red-400">Delete project</h3>
+              <p className="mt-0.5 text-xs text-slate-500">Permanently delete this project and all its data.</p>
+            </div>
+            <button onClick={() => setShowDeleteConfirm(true)}
+              className="shrink-0 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10">
+              Delete project
+            </button>
+          </div>
         </div>
       )}
 

@@ -516,25 +516,100 @@ function MembersTab({ orgId }: { orgId: string }) {
   );
 }
 
+// ────────────────────────────── Org Setting Row ──────────────────────────────
+
+function OrgSettingRow({
+  label,
+  value,
+  inputType = "text",
+  mono,
+  placeholder,
+  min,
+  editing,
+  draft,
+  onDraftChange,
+  onStartEdit,
+  onSave,
+  onCancel,
+  isSaving,
+}: {
+  label: string;
+  value: string;
+  inputType?: "text" | "number";
+  mono?: boolean;
+  placeholder?: string;
+  min?: number;
+  editing: boolean;
+  draft: string;
+  onDraftChange: (v: string) => void;
+  onStartEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isSaving: boolean;
+}) {
+  if (editing) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-2.5">
+        <span className="w-44 shrink-0 text-sm font-medium text-slate-300">{label}</span>
+        <input
+          type={inputType}
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSave();
+            if (e.key === "Escape") onCancel();
+          }}
+          min={min}
+          placeholder={placeholder}
+          autoFocus
+          disabled={isSaving}
+          className="min-w-0 flex-1 rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+        />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button onClick={onSave} disabled={isSaving}
+            className="rounded-md bg-indigo-600 p-1 text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 8l3.5 3.5L13 5" /></svg>
+          </button>
+          <button onClick={onCancel} disabled={isSaving}
+            className="rounded-md border border-slate-700 p-1 text-slate-400 transition-colors hover:text-white">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group flex items-center justify-between px-4 py-3">
+      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <div className="flex items-center gap-2.5">
+        <span className={`text-sm ${value ? (mono ? "font-mono text-slate-400" : "text-slate-400") : "italic text-slate-600"}`}>
+          {value || "Not set"}
+        </span>
+        <button onClick={onStartEdit}
+          className="text-slate-700 transition-colors hover:text-indigo-400 group-hover:text-slate-500">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11.33 2a1.89 1.89 0 012.67 2.67L5.33 13.33 2 14l.67-3.33L11.33 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ────────────────────────────── Settings Tab ──────────────────────────────
 
 function SettingsTab({ orgId }: { orgId: string }) {
   const [settings, setSettings] = useState<OrganizationSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [methodology, setMethodology] = useState<MethodologyChoice>("SCRUM");
-  const [timezone, setTimezone] = useState("UTC");
-  const [auditRetention, setAuditRetention] = useState(90);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [draftValue, setDraftValue] = useState("");
+  const [savingField, setSavingField] = useState<string | null>(null);
 
   const fetchSettings = useCallback(async () => {
     try {
       const data = await getOrganizationSettings(orgId);
       setSettings(data);
-      setMethodology(data.default_project_methodology);
-      setTimezone(data.timezone);
-      setAuditRetention(data.audit_log_retention_days);
     } finally {
       setIsLoading(false);
     }
@@ -544,83 +619,77 @@ function SettingsTab({ orgId }: { orgId: string }) {
     fetchSettings();
   }, [fetchSettings]);
 
-  async function handleSave(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-    setIsSaving(true);
+  async function saveField(field: string, value: unknown) {
+    if (!settings) return;
+    setSavingField(field);
     try {
-      await updateOrganizationSettings(orgId, {
-        default_project_methodology: methodology,
-        timezone,
-        audit_log_retention_days: auditRetention,
-      });
-      setSuccess(true);
-      fetchSettings();
-    } catch (err: unknown) {
-      const data = (err as { response?: { data?: Record<string, string[]> } })?.response?.data;
-      setError(data ? Object.values(data).flat().join(" ") : "Failed to save settings.");
-    } finally {
-      setIsSaving(false);
-    }
+      const updated = await updateOrganizationSettings(orgId, { [field]: value });
+      setSettings(updated);
+      setEditingField(null);
+    } catch { /* stay in edit mode on error */ }
+    finally { setSavingField(null); }
+  }
+
+  function startEdit(field: string, currentValue: string) {
+    setEditingField(field);
+    setDraftValue(currentValue);
+  }
+
+  function cancelEdit() {
+    setEditingField(null);
+    setDraftValue("");
   }
 
   if (isLoading) return <p className="text-slate-500">Loading settings...</p>;
   if (!settings) return <p className="text-slate-500">Failed to load settings.</p>;
 
+  const methodologyLabel = METHODOLOGY_OPTIONS.find((o) => o.value === settings.default_project_methodology)?.label ?? settings.default_project_methodology;
+
   return (
-    <form onSubmit={handleSave} className="max-w-xl space-y-5">
-      {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
-          <span>{error}</span>
+    <div className="max-w-xl">
+      <h3 className="text-[10px] font-medium uppercase tracking-wider text-slate-600">Preferences</h3>
+      <div className="mt-2 divide-y divide-slate-800/40 rounded-xl border border-slate-800/60 bg-slate-900">
+        {/* Methodology — inline select */}
+        <div className="flex items-center justify-between px-4 py-3">
+          <span className="text-sm font-medium text-slate-300">Default methodology</span>
+          <Select
+            options={METHODOLOGY_OPTIONS}
+            value={settings.default_project_methodology}
+            onChange={(v) => saveField("default_project_methodology", v)}
+          />
         </div>
-      )}
-      {success && (
-        <div className="flex items-start gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-400">
-          <span>Settings saved successfully.</span>
-        </div>
-      )}
 
-      <div>
-        <label className="block text-sm font-medium text-slate-400">Default Methodology</label>
-        <Select
-          options={METHODOLOGY_OPTIONS}
-          value={methodology}
-          onChange={(v) => setMethodology(v as MethodologyChoice)}
-          className="mt-1.5"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-slate-400">Timezone</label>
-        <input
-          type="text"
-          value={timezone}
-          onChange={(e) => setTimezone(e.target.value)}
+        {/* Timezone */}
+        <OrgSettingRow
+          label="Timezone"
+          value={settings.timezone}
+          mono
           placeholder="e.g. America/New_York"
-          className={INPUT_CLASS}
+          editing={editingField === "timezone"}
+          draft={draftValue}
+          onDraftChange={setDraftValue}
+          onStartEdit={() => startEdit("timezone", settings.timezone)}
+          onSave={() => saveField("timezone", draftValue)}
+          onCancel={cancelEdit}
+          isSaving={savingField === "timezone"}
         />
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-400">Audit Log Retention (days)</label>
-        <input
-          type="number"
+        {/* Audit log retention */}
+        <OrgSettingRow
+          label="Audit log retention"
+          value={`${settings.audit_log_retention_days} days`}
+          inputType="number"
           min={1}
-          value={auditRetention}
-          onChange={(e) => setAuditRetention(parseInt(e.target.value) || 90)}
-          className={INPUT_CLASS}
+          editing={editingField === "audit_log_retention_days"}
+          draft={draftValue}
+          onDraftChange={setDraftValue}
+          onStartEdit={() => startEdit("audit_log_retention_days", String(settings.audit_log_retention_days))}
+          onSave={() => saveField("audit_log_retention_days", parseInt(draftValue) || 90)}
+          onCancel={cancelEdit}
+          isSaving={savingField === "audit_log_retention_days"}
         />
       </div>
-
-      <button
-        type="submit"
-        disabled={isSaving}
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
-      >
-        {isSaving ? "Saving..." : "Save settings"}
-      </button>
-    </form>
+    </div>
   );
 }
 

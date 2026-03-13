@@ -166,6 +166,36 @@ Shared component used across all boards, lists, and detail views:
 ```
 Colors: Urgent `bg-red-500/15 text-red-400`, High `bg-orange-500/15 text-orange-400`, Medium `bg-amber-500/15 text-amber-400`, Low `bg-blue-500/15 text-blue-400`. NONE returns null. Labels are capitalized words ("Urgent"), not uppercase.
 
+### Settings Rows (Inline-Edit Key-Value)
+For settings/config pages. Each setting is a scannable row: label left, current value right, edit on click.
+
+**Section header:** `text-[10px] font-medium uppercase tracking-wider text-slate-600` above each group.
+
+**Row container:** `divide-y divide-slate-800/40 rounded-xl border border-slate-800/60 bg-slate-900`. Each row: `flex items-center justify-between px-4 py-3`.
+
+**Display mode:**
+- Label: `text-sm font-medium text-slate-300` (left)
+- Value: `text-sm text-slate-400` (right), `font-mono` for code-like values (URLs, branches, prefixes)
+- Empty: `italic text-slate-600` showing "Not set"
+- Edit icon: `h-3.5 w-3.5` pencil, `text-slate-700 group-hover:text-slate-500 hover:text-indigo-400`
+
+**Edit mode:**
+- Label: `w-44 shrink-0` fixed width for alignment
+- Input: `min-w-0 flex-1 rounded-md border-slate-700 bg-slate-950 px-2.5 py-1 text-sm`
+- Actions: check (indigo-600 bg, `p-1`) and X (border-slate-700, `p-1`) icon buttons, `gap-1.5`
+- Keyboard: Enter saves, Escape cancels
+
+**Toggle row:** Label left, toggle switch right. Switch: `h-5 w-9 rounded-full`, on=`bg-indigo-600`, off=`bg-slate-700`. Knob: `h-3.5 w-3.5 rounded-full bg-white`. Saves immediately on click.
+
+**Select row:** Label left, `Select` component (size="sm") right. Saves immediately on change.
+
+**Each field saves independently** — no "save all" button. Uses PUT with full payload (all current values + changed field).
+
+### Danger Zone (Compact)
+Single-row layout inside `rounded-xl border border-red-500/20 bg-slate-900 p-5`:
+- Left: title (`text-sm font-medium text-red-400`) + description (`text-xs text-slate-500`)
+- Right: ghost button (`border border-red-500/30 text-red-400 hover:bg-red-500/10`)
+
 ## SVG Icon Style
 
 Hand-drawn SVGs at 16x16 viewBox, `fill="none" stroke="currentColor" strokeWidth="1.5"`. Consistent with the technical, minimal aesthetic. Use `strokeLinecap="round" strokeLinejoin="round"` for softer edges.

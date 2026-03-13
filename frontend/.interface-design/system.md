@@ -128,6 +128,12 @@ File upload target that compacts when content already exists.
 ### Upload progress inline
 Progress bars inside `rounded-lg border border-slate-800/60 bg-slate-900 px-3 py-2`. Bar: `h-1.5 rounded-full bg-slate-800` track with `bg-indigo-500` fill. Percentage: `text-xs tabular-nums text-slate-500`.
 
+### Settings rows (inline-edit key-value)
+Scannable config rows: label left, value right, pencil to edit inline. Section headers: `text-[10px] font-medium uppercase tracking-wider text-slate-600`. Row container: `divide-y divide-slate-800/40 rounded-xl border border-slate-800/60 bg-slate-900`, each row `px-4 py-3`. Values use `font-mono` for code-like content. Toggle rows save immediately (switch: `h-5 w-9 rounded-full`). Select rows use `Select size="sm"` inline. Each field saves independently via PUT with full payload.
+
+### Danger zone (compact)
+`rounded-xl border border-red-500/20 bg-slate-900 p-5`. Single row: title+description left, ghost-red button right (`border border-red-500/30 text-red-400 hover:bg-red-500/10`).
+
 ## Avatar circles
 
 - Small (in cards): `h-5 w-5 rounded-full bg-slate-800 text-[10px] font-medium text-slate-400`
