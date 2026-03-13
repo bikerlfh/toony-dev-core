@@ -6,6 +6,10 @@ api_key: "tok_ta_YOUR_KEY_HERE"
 # If multiple runners share the same machine, use different workspace_root values.
 workspace_root: "~/work"
 
+# Protocol for cloning repositories: ssh | https (default: ssh)
+# ssh uses git@host:owner/repo.git, https uses https://host/owner/repo.git
+clone_protocol: "ssh"
+
 claude:
   working_directory: "."
   max_task_timeout: 3600

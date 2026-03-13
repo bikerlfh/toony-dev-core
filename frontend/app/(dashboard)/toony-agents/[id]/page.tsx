@@ -409,6 +409,12 @@ export default function ToonyAgentDetailPage() {
               </button>
             </>
           )}
+          <Link
+            href={`/toony-agents/${agentId}/events`}
+            className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:border-slate-600 hover:text-white"
+          >
+            System Events
+          </Link>
           <button
             onClick={() => setShowTaskModal(true)}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
@@ -436,6 +442,54 @@ export default function ToonyAgentDetailPage() {
           <span className="text-slate-300">{syncResult.message}</span>
         </div>
       )}
+
+      {/* ── Organizations ─────────────────────────────────── */}
+      <div className="mt-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-medium text-white">Organizations</h2>
+          <span className="text-xs text-slate-600">
+            {agent.organizations.length}
+          </span>
+          <button
+            onClick={() => setShowAddOrgModal(true)}
+            className="ml-auto rounded-md border border-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
+          >
+            + Add
+          </button>
+        </div>
+
+        {agent.organizations.length === 0 ? (
+          <div className="mt-4">
+            <div className="font-mono text-sm text-slate-500">
+              <span className="text-indigo-500">~</span>
+              <span className="text-slate-600">/</span>
+              <span> no organizations assigned</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {agent.organizations.map((org) => (
+              <div
+                key={org.id}
+                className="group flex items-center gap-2 rounded-lg border border-slate-800/60 bg-slate-900 py-1.5 pl-3 pr-2 transition-colors hover:border-slate-700/60"
+              >
+                <div className="min-w-0">
+                  <span className="text-sm font-medium text-slate-200">{org.name}</span>
+                  <span className="ml-2 font-mono text-xs text-slate-600">{org.slug}</span>
+                </div>
+                <button
+                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-600 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                >
+                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Metrics strip ─────────────────────────────────── */}
       <div className="mt-6 grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-slate-800/60 bg-slate-800/30">
@@ -576,54 +630,6 @@ export default function ToonyAgentDetailPage() {
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Organizations ─────────────────────────────────── */}
-      <div className="mt-8">
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-medium text-white">Organizations</h2>
-          <span className="text-xs text-slate-600">
-            {agent.organizations.length}
-          </span>
-          <button
-            onClick={() => setShowAddOrgModal(true)}
-            className="ml-auto rounded-md border border-slate-800/60 px-2.5 py-1 text-xs font-medium text-slate-400 transition-colors hover:border-slate-700 hover:text-slate-200"
-          >
-            + Add
-          </button>
-        </div>
-
-        {agent.organizations.length === 0 ? (
-          <div className="mt-4">
-            <div className="font-mono text-sm text-slate-500">
-              <span className="text-indigo-500">~</span>
-              <span className="text-slate-600">/</span>
-              <span> no organizations assigned</span>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {agent.organizations.map((org) => (
-              <div
-                key={org.id}
-                className="group flex items-center gap-2 rounded-lg border border-slate-800/60 bg-slate-900 py-1.5 pl-3 pr-2 transition-colors hover:border-slate-700/60"
-              >
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-slate-200">{org.name}</span>
-                  <span className="ml-2 font-mono text-xs text-slate-600">{org.slug}</span>
-                </div>
-                <button
-                  onClick={() => setRemoveOrgAgent({ id: org.id, name: org.name })}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-600 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
-                >
-                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            ))}
           </div>
         )}
       </div>

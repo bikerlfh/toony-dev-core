@@ -41,7 +41,7 @@ from .protocol import (
     TaskReply,
     parse_server_message,
 )
-from .workspace import process_config_sync, resolve_project_path
+from .workspace import process_config_sync, resolve_project_path, clone_pending_repos
 from .commands import execute_command
 from .task_executor import execute_task, execute_task_reply
 
@@ -325,9 +325,14 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                 logger.info("Received config.sync with %d organizations", len(msg.organizations))
                 if workspace_root:
                     try:
+                        config_payload = {"organizations": msg.organizations}
                         project_map = process_config_sync(
-                            {"organizations": msg.organizations},
+                            config_payload,
                             workspace_root,
+                        )
+                        await clone_pending_repos(
+                            project_map, config_payload, conn,
+                            clone_protocol=config.clone_protocol,
                         )
                         total_projects = sum(
                             len(o.get("projects", []))

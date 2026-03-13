@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 import pytest
 
-from toony_agent_runner.workspace import process_config_sync, resolve_project_path
+from toony_agent_runner.workspace import build_clone_url, process_config_sync, resolve_project_path
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +47,7 @@ def _make_project(
     branch_convention: str = "feat/{issue_prefix}-{issue_number}-{slug}",
     default_reviewers: list | None = None,
     issue_prefix: str = "ENG",
+    repository_url: str = "",
 ) -> dict:
     return {
         "slug": slug,
@@ -57,6 +58,7 @@ def _make_project(
         "branch_convention": branch_convention,
         "default_reviewers": default_reviewers or [],
         "issue_prefix": issue_prefix,
+        "repository_url": repository_url,
     }
 
 
@@ -304,6 +306,94 @@ class TestProcessConfigSyncIdempotent:
         assert (tmp_path / "acme-corp" / ".toony" / "workspace-registry.yaml").is_file()
 
 
+class TestProcessConfigSyncRepoUrl:
+    """Projects with repository_url should NOT have their directory created."""
+
+    def test_skips_dir_for_project_with_repository_url(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="cloned-repo", project_id="p-1", repository_url="https://github.com/org/repo.git"),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        result = process_config_sync(data, tmp_path)
+
+        proj_dir = tmp_path / "acme-corp" / "projects" / "cloned-repo"
+        assert not proj_dir.exists(), "Directory should not be created for projects with repository_url"
+        assert result["p-1"] == proj_dir
+
+    def test_creates_dir_for_project_without_repository_url(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="no-repo", project_id="p-1", repository_url=""),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        process_config_sync(data, tmp_path)
+
+        proj_dir = tmp_path / "acme-corp" / "projects" / "no-repo"
+        assert proj_dir.is_dir()
+
+    def test_mixed_projects(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="with-repo", project_id="p-1", repository_url="https://github.com/org/repo.git"),
+            _make_project(slug="without-repo", project_id="p-2", repository_url=""),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        result = process_config_sync(data, tmp_path)
+
+        assert not (tmp_path / "acme-corp" / "projects" / "with-repo").exists()
+        assert (tmp_path / "acme-corp" / "projects" / "without-repo").is_dir()
+        assert "p-1" in result
+        assert "p-2" in result
+
+
+# ---------------------------------------------------------------------------
+# build_clone_url tests
+# ---------------------------------------------------------------------------
+
+class TestBuildCloneUrl:
+    """Verify build_clone_url converts browser URLs to clone URLs."""
+
+    # -- SSH protocol --
+
+    def test_github_ssh(self):
+        assert build_clone_url("https://github.com/owner/repo", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_gitlab_ssh(self):
+        assert build_clone_url("https://gitlab.com/owner/repo", "ssh") == "git@gitlab.com:owner/repo.git"
+
+    def test_bitbucket_ssh(self):
+        assert build_clone_url("https://bitbucket.org/owner/repo", "ssh") == "git@bitbucket.org:owner/repo.git"
+
+    # -- HTTPS protocol --
+
+    def test_github_https(self):
+        assert build_clone_url("https://github.com/owner/repo", "https") == "https://github.com/owner/repo.git"
+
+    def test_gitlab_https(self):
+        assert build_clone_url("https://gitlab.com/owner/repo", "https") == "https://gitlab.com/owner/repo.git"
+
+    def test_bitbucket_https(self):
+        assert build_clone_url("https://bitbucket.org/owner/repo", "https") == "https://bitbucket.org/owner/repo.git"
+
+    # -- Edge cases --
+
+    def test_trailing_slash_stripped(self):
+        assert build_clone_url("https://github.com/owner/repo/", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_already_has_dot_git(self):
+        assert build_clone_url("https://github.com/owner/repo.git", "ssh") == "git@github.com:owner/repo.git"
+
+    def test_self_hosted_ssh(self):
+        assert build_clone_url("https://git.mycompany.com/team/project", "ssh") == "git@git.mycompany.com:team/project.git"
+
+    def test_self_hosted_https(self):
+        assert build_clone_url("https://git.mycompany.com/team/project", "https") == "https://git.mycompany.com/team/project.git"
+
+    def test_nested_path_gitlab(self):
+        assert build_clone_url("https://gitlab.com/group/subgroup/repo", "ssh") == "git@gitlab.com:group/subgroup/repo.git"
+
+    def test_default_protocol_is_ssh(self):
+        assert build_clone_url("https://github.com/owner/repo") == "git@github.com:owner/repo.git"
+
+
 # ---------------------------------------------------------------------------
 # resolve_project_path tests
 # ---------------------------------------------------------------------------
@@ -320,3 +410,160 @@ class TestResolveProjectPath:
     def test_none_project_id(self, tmp_path: Path):
         project_map = {"p-1": tmp_path / "org" / "projects" / "api"}
         assert resolve_project_path(None, project_map) is None
+
+
+# ---------------------------------------------------------------------------
+# clone_pending_repos tests
+# ---------------------------------------------------------------------------
+
+class TestClonePendingRepos:
+    """Verify clone_pending_repos clones repos and reports results."""
+
+    @pytest.fixture
+    def mock_conn(self):
+        """Mock WebSocket connection that records sent messages."""
+        class FakeConn:
+            def __init__(self):
+                self.sent = []
+            async def send(self, data):
+                self.sent.append(data)
+        return FakeConn()
+
+    @pytest.mark.asyncio
+    async def test_clones_repo_when_no_git_dir(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo",
+                        base_branch="main",
+                    ),
+                ]),
+            ],
+        }
+
+        cloned_urls = []
+
+        async def fake_clone(url, dest, branch):
+            cloned_urls.append(url)
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / ".git").mkdir()
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", fake_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
+
+        assert cloned_urls == ["git@github.com:org/repo.git"]
+        assert len(mock_conn.sent) == 1
+        msg = mock_conn.sent[0]
+        assert msg["type"] == "repo.clone.result"
+        assert msg["status"] == "success"
+        assert msg["project_id"] == "p-1"
+
+    @pytest.mark.asyncio
+    async def test_skips_already_cloned(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        proj_dir.mkdir(parents=True)
+        (proj_dir / ".git").mkdir()  # Already cloned
+
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo.git",
+                    ),
+                ]),
+            ],
+        }
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
+
+        assert len(mock_conn.sent) == 0
+
+    @pytest.mark.asyncio
+    async def test_skips_projects_without_repository_url(self, tmp_path, mock_conn):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "no-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(slug="no-repo", project_id="p-1", repository_url=""),
+                ]),
+            ],
+        }
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
+
+        assert len(mock_conn.sent) == 0
+
+    @pytest.mark.asyncio
+    async def test_reports_error_on_clone_failure(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "fail-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="fail-repo", project_id="p-1",
+                        repository_url="https://github.com/org/private.git",
+                    ),
+                ]),
+            ],
+        }
+
+        async def failing_clone(url, dest, branch):
+            raise RuntimeError("Authentication failed")
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", failing_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="ssh")
+
+        assert len(mock_conn.sent) == 1
+        msg = mock_conn.sent[0]
+        assert msg["type"] == "repo.clone.result"
+        assert msg["status"] == "error"
+        assert "Authentication failed" in msg["error"]
+
+    @pytest.mark.asyncio
+    async def test_clones_with_https_protocol(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo",
+                        base_branch="main",
+                    ),
+                ]),
+            ],
+        }
+
+        cloned_urls = []
+
+        async def fake_clone(url, dest, branch):
+            cloned_urls.append(url)
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / ".git").mkdir()
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", fake_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="https")
+
+        assert cloned_urls == ["https://github.com/org/repo.git"]

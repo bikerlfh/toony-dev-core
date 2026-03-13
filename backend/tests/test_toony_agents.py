@@ -270,3 +270,112 @@ class TestToonyAgentAPI:
         assert str(organization.id) == org_data["id"]
         assert organization.name == org_data["name"]
         assert organization.slug == org_data["slug"]
+
+
+class TestAgentSystemEventAPI:
+    def test_list_system_events(self, authenticated_client, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            data={"repository_url": "https://github.com/org/repo.git"},
+        )
+
+        response = authenticated_client.get(
+            f"/api/toony-agents/{toony_agent.id}/system-events/"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["event_type"] == "REPO_CLONE_SUCCESS"
+
+    def test_list_system_events_filter_by_event_type(self, authenticated_client, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            data={},
+        )
+        AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_ERROR,
+            data={},
+        )
+
+        response = authenticated_client.get(
+            f"/api/toony-agents/{toony_agent.id}/system-events/?event_type=REPO_CLONE_ERROR"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["event_type"] == "REPO_CLONE_ERROR"
+
+    def test_list_system_events_filter_by_project(self, authenticated_client, toony_agent, project):
+        from tests.factories import ProjectFactory
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            project=project,
+            data={},
+        )
+        other_project = ProjectFactory(organization=project.organization)
+        AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            project=other_project,
+            data={},
+        )
+
+        response = authenticated_client.get(
+            f"/api/toony-agents/{toony_agent.id}/system-events/?project_id={project.id}"
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["results"]) == 1
+
+
+class TestAgentSystemEventModel:
+    def test_create_system_event(self, toony_agent, organization, project):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        event = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            organization=organization,
+            project=project,
+            data={"repository_url": "https://github.com/org/repo.git", "branch": "main", "clone_duration_ms": 1500},
+        )
+        assert event.event_type == AgentSystemEventType.REPO_CLONE_SUCCESS
+        assert event.data["repository_url"] == "https://github.com/org/repo.git"
+        assert event.toony_agent == toony_agent
+        assert event.organization == organization
+        assert event.project == project
+
+    def test_create_system_event_without_org_project(self, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        event = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.CONFIG_SYNC_COMPLETED,
+            data={"org_count": 2, "project_count": 5},
+        )
+        assert event.organization is None
+        assert event.project is None
+
+    def test_system_events_ordered_by_most_recent(self, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        e1 = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            data={},
+        )
+        e2 = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_ERROR,
+            data={},
+        )
+        events = list(AgentSystemEvent.objects.filter(toony_agent=toony_agent))
+        assert events[0].id == e2.id  # Most recent first
+        assert events[1].id == e1.id

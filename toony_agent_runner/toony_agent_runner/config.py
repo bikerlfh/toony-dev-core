@@ -43,6 +43,7 @@ class RunnerConfig:
     backend_url: str = "ws://localhost:8000/ws/toony-agents/runner/"
     api_key: str = ""
     workspace_root: str = ""
+    clone_protocol: str = "ssh"
     claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     reconnect: ReconnectConfig = field(default_factory=ReconnectConfig)
 
@@ -64,6 +65,7 @@ def load_config(path: str) -> RunnerConfig:
         backend_url=raw.get("backend_url", RunnerConfig.backend_url),
         api_key=raw.get("api_key", ""),
         workspace_root=raw.get("workspace_root", ""),
+        clone_protocol=raw.get("clone_protocol", RunnerConfig.clone_protocol),
         claude=ClaudeConfig(
             working_directory=claude_raw.get(
                 "working_directory", ClaudeConfig.working_directory
@@ -125,6 +127,7 @@ def save_config(path: str, config: RunnerConfig) -> None:
     data["api_key"] = config.api_key
     if config.workspace_root:
         data["workspace_root"] = config.workspace_root
+    data["clone_protocol"] = config.clone_protocol
 
     # Merge claude section (preserve unknown keys).
     claude_data: dict[str, Any] = data.get("claude", {})

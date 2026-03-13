@@ -147,6 +147,8 @@ export type {
   AgentTaskDetail,
   CreateAgentTaskPayload,
   TaskEventItem,
+  AgentSystemEventType,
+  AgentSystemEventItem,
   ToonyAgentStatusWsEvent,
   TaskStatusWsEvent,
   TaskEventWsEvent,

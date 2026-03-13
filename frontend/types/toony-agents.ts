@@ -107,6 +107,23 @@ export interface TaskEventItem {
   created_at: string;
 }
 
+// ── System events ──
+
+export type AgentSystemEventType =
+  | "REPO_CLONE_SUCCESS"
+  | "REPO_CLONE_ERROR"
+  | "CONFIG_SYNC_COMPLETED"
+  | "CONFIG_SYNC_FAILED";
+
+export interface AgentSystemEventItem {
+  id: string;
+  event_type: AgentSystemEventType;
+  organization: { id: string; name: string } | null;
+  project: { id: string; name: string } | null;
+  data: Record<string, unknown>;
+  created_at: string;
+}
+
 // WebSocket event types
 export interface ToonyAgentStatusWsEvent {
   type: "agent.status";
