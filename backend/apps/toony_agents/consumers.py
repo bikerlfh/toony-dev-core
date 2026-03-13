@@ -88,6 +88,18 @@ def _create_task_event(task_id, event_type, data, sequence):
 
 
 @database_sync_to_async
+def _create_system_event(agent_id, event_type, organization_id, project_id, data):
+    from toony_agents.models import AgentSystemEvent
+    return AgentSystemEvent.objects.create(
+        toony_agent_id=agent_id,
+        event_type=event_type,
+        organization_id=organization_id,
+        project_id=project_id,
+        data=data,
+    )
+
+
+@database_sync_to_async
 def _get_queued_tasks(agent_id):
     return list(
         AgentTask.objects.filter(
@@ -475,6 +487,33 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+        elif msg_type == "repo.clone.result":
+            clone_status = content.get("status")
+            project_id = content.get("project_id")
+            organization_id = content.get("organization_id")
+            repository_url = content.get("repository_url", "")
+
+            from toony_agents.models import AgentSystemEventType
+            event_type = (
+                AgentSystemEventType.REPO_CLONE_SUCCESS
+                if clone_status == "success"
+                else AgentSystemEventType.REPO_CLONE_ERROR
+            )
+            event_data = {"repository_url": repository_url}
+            if clone_status == "success":
+                event_data["branch"] = content.get("branch", "")
+                event_data["clone_duration_ms"] = content.get("clone_duration_ms", 0)
+            else:
+                event_data["error"] = content.get("error", "")
+
+            await _create_system_event(
+                self.agent_id, event_type, organization_id, project_id, event_data,
+            )
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {"type": "repo_clone_result", "data": content},
+            )
+
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
 
@@ -739,3 +778,6 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
     async def config_update_status(self, event):
         await self.send_json({"type": "config.update.status", **event["data"]})
+
+    async def repo_clone_result(self, event):
+        await self.send_json({"type": "repo.clone.result", **event["data"]})
