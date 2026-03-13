@@ -333,3 +333,49 @@ class TestAgentSystemEventAPI:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) == 1
+
+
+class TestAgentSystemEventModel:
+    def test_create_system_event(self, toony_agent, organization, project):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        event = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            organization=organization,
+            project=project,
+            data={"repository_url": "https://github.com/org/repo.git", "branch": "main", "clone_duration_ms": 1500},
+        )
+        assert event.event_type == AgentSystemEventType.REPO_CLONE_SUCCESS
+        assert event.data["repository_url"] == "https://github.com/org/repo.git"
+        assert event.toony_agent == toony_agent
+        assert event.organization == organization
+        assert event.project == project
+
+    def test_create_system_event_without_org_project(self, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        event = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.CONFIG_SYNC_COMPLETED,
+            data={"org_count": 2, "project_count": 5},
+        )
+        assert event.organization is None
+        assert event.project is None
+
+    def test_system_events_ordered_by_most_recent(self, toony_agent):
+        from toony_agents.models import AgentSystemEvent, AgentSystemEventType
+
+        e1 = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_SUCCESS,
+            data={},
+        )
+        e2 = AgentSystemEvent.objects.create(
+            toony_agent=toony_agent,
+            event_type=AgentSystemEventType.REPO_CLONE_ERROR,
+            data={},
+        )
+        events = list(AgentSystemEvent.objects.filter(toony_agent=toony_agent))
+        assert events[0].id == e2.id  # Most recent first
+        assert events[1].id == e1.id
