@@ -7,11 +7,18 @@ that map backend organisations and projects to on-disk paths.
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from toony_agent_runner.protocol import RepoCloneResultMessage
+
+logger = logging.getLogger(__name__)
 
 
 def process_config_sync(
@@ -85,6 +92,72 @@ def process_config_sync(
         registry_path.write_text(header + yaml_body)
 
     return project_map
+
+
+async def _async_git_clone(url: str, dest: Path, branch: str = "main") -> None:
+    """Clone a git repository using the system git CLI."""
+    cmd = ["git", "clone", "--branch", branch, "--single-branch", url, str(dest)]
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    _, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        raise RuntimeError(stderr.decode().strip() or f"git clone exited with code {proc.returncode}")
+
+
+async def clone_pending_repos(
+    project_map: dict[str, Path],
+    config_data: dict[str, Any],
+    conn,
+) -> None:
+    """Clone repositories for projects that have repository_url but no .git/ directory.
+
+    Sends a ``repo.clone.result`` message per project to the backend.
+    """
+    for org in config_data.get("organizations", []):
+        org_id = org.get("id", "")
+        for proj in org.get("projects", []):
+            repo_url = proj.get("repository_url")
+            if not repo_url:
+                continue
+
+            proj_dir = project_map.get(proj["id"])
+            if proj_dir is None:
+                continue
+
+            if (proj_dir / ".git").exists():
+                logger.debug("Repo already cloned: %s", proj_dir)
+                continue
+
+            branch = proj.get("base_branch", "main")
+            start = time.monotonic()
+            try:
+                await _async_git_clone(repo_url, proj_dir, branch=branch)
+                duration_ms = int((time.monotonic() - start) * 1000)
+                logger.info("Cloned %s -> %s (%dms)", repo_url, proj_dir, duration_ms)
+                await conn.send(
+                    RepoCloneResultMessage(
+                        project_id=proj["id"],
+                        organization_id=org_id,
+                        status="success",
+                        repository_url=repo_url,
+                        branch=branch,
+                        clone_duration_ms=duration_ms,
+                    ).to_json()
+                )
+            except Exception as exc:
+                logger.error("Failed to clone %s: %s", repo_url, exc)
+                await conn.send(
+                    RepoCloneResultMessage(
+                        project_id=proj["id"],
+                        organization_id=org_id,
+                        status="error",
+                        repository_url=repo_url,
+                        error=str(exc),
+                    ).to_json()
+                )
 
 
 def resolve_project_path(

@@ -360,3 +360,125 @@ class TestResolveProjectPath:
     def test_none_project_id(self, tmp_path: Path):
         project_map = {"p-1": tmp_path / "org" / "projects" / "api"}
         assert resolve_project_path(None, project_map) is None
+
+
+# ---------------------------------------------------------------------------
+# clone_pending_repos tests
+# ---------------------------------------------------------------------------
+
+class TestClonePendingRepos:
+    """Verify clone_pending_repos clones repos and reports results."""
+
+    @pytest.fixture
+    def mock_conn(self):
+        """Mock WebSocket connection that records sent messages."""
+        class FakeConn:
+            def __init__(self):
+                self.sent = []
+            async def send(self, data):
+                self.sent.append(data)
+        return FakeConn()
+
+    @pytest.mark.asyncio
+    async def test_clones_repo_when_no_git_dir(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo.git",
+                        base_branch="main",
+                    ),
+                ]),
+            ],
+        }
+
+        async def fake_clone(url, dest, branch):
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / ".git").mkdir()
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", fake_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn)
+
+        assert len(mock_conn.sent) == 1
+        msg = mock_conn.sent[0]
+        assert msg["type"] == "repo.clone.result"
+        assert msg["status"] == "success"
+        assert msg["project_id"] == "p-1"
+
+    @pytest.mark.asyncio
+    async def test_skips_already_cloned(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "my-repo"
+        proj_dir.mkdir(parents=True)
+        (proj_dir / ".git").mkdir()  # Already cloned
+
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="my-repo", project_id="p-1",
+                        repository_url="https://github.com/org/repo.git",
+                    ),
+                ]),
+            ],
+        }
+
+        await clone_pending_repos(project_map, config_data, mock_conn)
+
+        assert len(mock_conn.sent) == 0
+
+    @pytest.mark.asyncio
+    async def test_skips_projects_without_repository_url(self, tmp_path, mock_conn):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "no-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(slug="no-repo", project_id="p-1", repository_url=""),
+                ]),
+            ],
+        }
+
+        await clone_pending_repos(project_map, config_data, mock_conn)
+
+        assert len(mock_conn.sent) == 0
+
+    @pytest.mark.asyncio
+    async def test_reports_error_on_clone_failure(self, tmp_path, mock_conn, monkeypatch):
+        from toony_agent_runner.workspace import clone_pending_repos
+
+        proj_dir = tmp_path / "acme" / "projects" / "fail-repo"
+        project_map = {"p-1": proj_dir}
+        config_data = {
+            "organizations": [
+                _make_org(projects=[
+                    _make_project(
+                        slug="fail-repo", project_id="p-1",
+                        repository_url="https://github.com/org/private.git",
+                    ),
+                ]),
+            ],
+        }
+
+        async def failing_clone(url, dest, branch):
+            raise RuntimeError("Authentication failed")
+
+        monkeypatch.setattr("toony_agent_runner.workspace._async_git_clone", failing_clone)
+
+        await clone_pending_repos(project_map, config_data, mock_conn)
+
+        assert len(mock_conn.sent) == 1
+        msg = mock_conn.sent[0]
+        assert msg["type"] == "repo.clone.result"
+        assert msg["status"] == "error"
+        assert "Authentication failed" in msg["error"]
