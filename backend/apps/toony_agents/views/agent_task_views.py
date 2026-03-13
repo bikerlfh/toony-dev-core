@@ -10,11 +10,13 @@ from toony_agents.models import AgentTaskStatus
 from toony_agents.permissions import IsToonyAgentOrgMember
 from toony_agents.selectors import (
     get_task_by_id,
+    list_system_events_for_agent,
     list_task_events,
     list_tasks_for_agent,
 )
 from toony_agents.serializers.input import CreateAgentTaskSerializer
 from toony_agents.serializers.output import (
+    AgentSystemEventSerializer,
     AgentTaskDetailSerializer,
     AgentTaskListSerializer,
     TaskEventSerializer,
@@ -158,3 +160,16 @@ class TaskEventListView(APIView):
         events = list_task_events(task, after_sequence=after_seq)
         data = TaskEventSerializer(events, many=True, context={"request": request}).data
         return Response(data)
+
+
+class AgentSystemEventListView(PaginatedViewMixin, APIView):
+    permission_classes = [IsAuthenticated, IsToonyAgentOrgMember]
+
+    def get(self, request, agent_id):
+        agent = request.toony_agent
+        event_type = request.query_params.get("event_type")
+        project_id = request.query_params.get("project_id")
+        events = list_system_events_for_agent(
+            agent, event_type=event_type, project_id=project_id,
+        )
+        return self.paginate(events, AgentSystemEventSerializer, request)

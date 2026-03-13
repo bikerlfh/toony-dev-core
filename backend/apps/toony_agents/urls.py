@@ -1,6 +1,7 @@
 from django.urls import path
 
 from toony_agents.views.agent_task_views import (
+    AgentSystemEventListView,
     AgentTaskCancelView,
     AgentTaskDetailView,
     AgentTaskListCreateView,
@@ -53,5 +54,10 @@ urlpatterns = [
         "toony-agents/<uuid:agent_id>/tasks/<uuid:task_id>/events/",
         TaskEventListView.as_view(),
         name="task-event-list",
+    ),
+    path(
+        "toony-agents/<uuid:agent_id>/system-events/",
+        AgentSystemEventListView.as_view(),
+        name="agent-system-event-list",
     ),
 ]
