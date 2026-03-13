@@ -122,6 +122,7 @@ If this works, the runner will be able to authenticate.
 | `backend_url` | `ws://localhost:8000/ws/toony-agents/runner/` | WebSocket endpoint for backend communication |
 | `api_key` | (required) | API key generated from the web UI. Starts with `tok_ta_` |
 | `workspace_root` | `~/work` | Base directory for all org workspaces. See [Workspace Configuration](#workspace-configuration) |
+| `clone_protocol` | `ssh` | Protocol for cloning repositories: `ssh` or `https` |
 | `claude.working_directory` | `.` | Fallback directory for tasks without a `project_id` |
 | `claude.max_task_timeout` | `3600` | Max seconds per task before timeout |
 | `claude.approval_timeout` | `600` | Max seconds to wait for user approval response |
