@@ -47,6 +47,7 @@ def _make_project(
     branch_convention: str = "feat/{issue_prefix}-{issue_number}-{slug}",
     default_reviewers: list | None = None,
     issue_prefix: str = "ENG",
+    repository_url: str = "",
 ) -> dict:
     return {
         "slug": slug,
@@ -57,6 +58,7 @@ def _make_project(
         "branch_convention": branch_convention,
         "default_reviewers": default_reviewers or [],
         "issue_prefix": issue_prefix,
+        "repository_url": repository_url,
     }
 
 
@@ -302,6 +304,44 @@ class TestProcessConfigSyncIdempotent:
 
         assert result1 == result2
         assert (tmp_path / "acme-corp" / ".toony" / "workspace-registry.yaml").is_file()
+
+
+class TestProcessConfigSyncRepoUrl:
+    """Projects with repository_url should NOT have their directory created."""
+
+    def test_skips_dir_for_project_with_repository_url(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="cloned-repo", project_id="p-1", repository_url="https://github.com/org/repo.git"),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        result = process_config_sync(data, tmp_path)
+
+        proj_dir = tmp_path / "acme-corp" / "projects" / "cloned-repo"
+        assert not proj_dir.exists(), "Directory should not be created for projects with repository_url"
+        assert result["p-1"] == proj_dir
+
+    def test_creates_dir_for_project_without_repository_url(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="no-repo", project_id="p-1", repository_url=""),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        process_config_sync(data, tmp_path)
+
+        proj_dir = tmp_path / "acme-corp" / "projects" / "no-repo"
+        assert proj_dir.is_dir()
+
+    def test_mixed_projects(self, tmp_path: Path):
+        projects = [
+            _make_project(slug="with-repo", project_id="p-1", repository_url="https://github.com/org/repo.git"),
+            _make_project(slug="without-repo", project_id="p-2", repository_url=""),
+        ]
+        data = {"organizations": [_make_org(projects=projects)]}
+        result = process_config_sync(data, tmp_path)
+
+        assert not (tmp_path / "acme-corp" / "projects" / "with-repo").exists()
+        assert (tmp_path / "acme-corp" / "projects" / "without-repo").is_dir()
+        assert "p-1" in result
+        assert "p-2" in result
 
 
 # ---------------------------------------------------------------------------

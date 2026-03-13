@@ -43,7 +43,9 @@ def process_config_sync(
         for proj in org.get("projects", []):
             proj_slug: str = proj["slug"]
             proj_dir = org_dir / "projects" / proj_slug
-            proj_dir.mkdir(parents=True, exist_ok=True)
+
+            if not proj.get("repository_url"):
+                proj_dir.mkdir(parents=True, exist_ok=True)
 
             project_map[proj["id"]] = proj_dir
 
@@ -52,6 +54,7 @@ def process_config_sync(
                 "id": proj["id"],
                 "slug": proj_slug,
                 "repo": proj.get("repo", ""),
+                "repository_url": proj.get("repository_url", ""),
                 "base_branch": proj.get("base_branch", "main"),
                 "branch_convention": proj.get("branch_convention", ""),
                 "default_reviewers": proj.get("default_reviewers", []),
