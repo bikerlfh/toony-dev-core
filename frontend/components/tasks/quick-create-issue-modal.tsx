@@ -47,6 +47,7 @@ export function QuickCreateIssueModal({
   const [estimate, setEstimate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [showMore, setShowMore] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // --- Project-dependent data ---
   const [members, setMembers] = useState<ProjectMember[]>([]);
@@ -156,7 +157,7 @@ export function QuickCreateIssueModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-2xl rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl">
+      <div className={`flex w-full flex-col rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl transition-all duration-200 ${expanded ? "max-w-5xl max-h-[90vh]" : "max-w-3xl"}`}>
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-slate-800/60 px-5 py-3">
           {selectedProject ? (
@@ -171,19 +172,37 @@ export function QuickCreateIssueModal({
           )}
           <span className="text-xs text-slate-600">›</span>
           <span className="text-sm font-medium text-slate-200">New issue</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="ml-auto rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="ml-auto flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
+              title={expanded ? "Collapse" : "Expand"}
+            >
+              {expanded ? (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0v4m0-4h4m6 6l5 5m0 0v-4m0 4h-4" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h6m0 0v6m0-6L14 10M9 21H3m0 0v-6m0 6l7-7" />
+                </svg>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4">
+        <div className={`px-5 py-4 ${expanded ? "flex-1 overflow-y-auto" : ""}`}>
           {/* Title */}
           <input
             type="text"
@@ -203,8 +222,8 @@ export function QuickCreateIssueModal({
               autoResize();
             }}
             placeholder="Add description..."
-            rows={3}
-            className="mt-3 w-full resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none"
+            rows={expanded ? 12 : 3}
+            className={`mt-3 w-full resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none ${expanded ? "flex-1" : ""}`}
           />
         </div>
 
@@ -224,6 +243,18 @@ export function QuickCreateIssueModal({
             </svg>
             Backlog
           </span>
+
+          {/* Project */}
+          <PillDropdown
+            label="Project"
+            options={projects.map((p) => ({
+              value: p.id,
+              label: p.name,
+              icon: p.icon ? <span>{p.icon}</span> : undefined,
+            }))}
+            value={projectId}
+            onChange={handleProjectChange}
+          />
 
           {/* Priority */}
           <PillDropdown
@@ -246,18 +277,6 @@ export function QuickCreateIssueModal({
             disabled={!projectId}
           />
 
-          {/* Project */}
-          <PillDropdown
-            label="Project"
-            options={projects.map((p) => ({
-              value: p.id,
-              label: p.name,
-              icon: p.icon ? <span>{p.icon}</span> : undefined,
-            }))}
-            value={projectId}
-            onChange={handleProjectChange}
-          />
-
           {/* Labels */}
           <PillDropdown
             label="Labels"
@@ -272,6 +291,23 @@ export function QuickCreateIssueModal({
             selectedValues={labelIds}
             onChangeMulti={setLabelIds}
             disabled={!projectId}
+            renderLabel={(selected, opts) => {
+              if (selected.length === 0) return "Labels";
+              if (selected.length === 1) {
+                const lbl = opts.find((o) => o.value === selected[0]);
+                if (!lbl) return "Labels";
+                return (
+                  <span className="flex items-center gap-1">
+                    <span
+                      className="inline-block h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: lbl.color }}
+                    />
+                    {lbl.label}
+                  </span>
+                );
+              }
+              return `${selected.length} labels`;
+            }}
           />
 
           {/* Expandable extras */}

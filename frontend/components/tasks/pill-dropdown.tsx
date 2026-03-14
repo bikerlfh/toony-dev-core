@@ -20,6 +20,8 @@ interface PillDropdownProps {
   multi?: boolean;
   selectedValues?: string[];
   onChangeMulti?: (values: string[]) => void;
+  /** Custom render for the pill button content in multi-select mode. */
+  renderLabel?: (selectedValues: string[], options: PillOption[]) => React.ReactNode;
 }
 
 export function PillDropdown({
@@ -32,6 +34,7 @@ export function PillDropdown({
   multi = false,
   selectedValues = [],
   onChangeMulti,
+  renderLabel,
 }: PillDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -59,10 +62,12 @@ export function PillDropdown({
   }, [open]);
 
   const selectedOption = options.find((o) => o.value === value);
-  const displayLabel = multi
-    ? selectedValues.length > 0
-      ? `${label} (${selectedValues.length})`
-      : label
+  const displayContent = multi
+    ? renderLabel
+      ? renderLabel(selectedValues, options)
+      : selectedValues.length > 0
+        ? `${label} (${selectedValues.length})`
+        : label
     : selectedOption
       ? selectedOption.label
       : label;
@@ -82,7 +87,7 @@ export function PillDropdown({
         }`}
       >
         {icon && <span className="text-sm leading-none">{icon}</span>}
-        {displayLabel}
+        {displayContent}
       </button>
 
       {open && (
