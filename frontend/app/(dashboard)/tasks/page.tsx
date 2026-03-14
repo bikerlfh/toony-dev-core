@@ -6,6 +6,7 @@ import { listAllIssues, updateIssue } from "@/lib/api/issues";
 import { listProjects } from "@/lib/api/projects";
 import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { IssueSidePanel } from "@/components/tasks/issue-side-panel";
+import { QuickCreateIssueModal } from "@/components/tasks/quick-create-issue-modal";
 import { Select } from "@/components/ui/select";
 
 interface Filters {
@@ -20,6 +21,7 @@ export default function TasksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<Filters>({});
   const [selectedIssue, setSelectedIssue] = useState<{ projectId: string; issueId: string } | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchIssues = useCallback(async () => {
     try {
@@ -99,6 +101,16 @@ export default function TasksPage() {
           }
           placeholder="All Priorities"
         />
+
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="ml-auto flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Create issue
+        </button>
       </div>
 
       {/* Board */}
@@ -124,6 +136,18 @@ export default function TasksPage() {
           projectId={selectedIssue.projectId}
           issueId={selectedIssue.issueId}
           onClose={() => setSelectedIssue(null)}
+        />
+      )}
+
+      {/* Quick create modal */}
+      {showCreateModal && (
+        <QuickCreateIssueModal
+          projects={projects}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            fetchIssues();
+          }}
         />
       )}
     </div>
