@@ -25,7 +25,6 @@ from pathlib import Path
 # Directories (relative to this script's location)
 SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_DIR = SCRIPT_DIR / "toony_agent_runner"
-OBFUSCATED_DIR = SCRIPT_DIR / "_obfuscated"
 BUILD_DIR = SCRIPT_DIR / "build"
 DIST_DIR = SCRIPT_DIR / "dist"
 
@@ -116,47 +115,15 @@ def run_cmd(cmd: list[str], label: str) -> None:
         print(f"ERROR: {label} failed (exit code {result.returncode})")
         if result.stderr:
             print(result.stderr)
+        if result.stdout:
+            print(result.stdout)
         sys.exit(1)
 
 
-def obfuscate() -> Path:
-    """Run PyArmor to obfuscate the package. Returns path to obfuscated code."""
-    print("\n[2] Obfuscating with PyArmor...")
-    clean([OBFUSCATED_DIR])
-    run_cmd(
-        [
-            "pyarmor", "gen",
-            "--restrict",
-            "--private",
-            "--output", str(OBFUSCATED_DIR),
-            str(PACKAGE_DIR),
-        ],
-        "PyArmor obfuscation",
-    )
-    return OBFUSCATED_DIR
-
-
-def build_pyinstaller(
-    source_dir: Path,
-    variant: str,
-    artifact_name: str,
-    has_pyarmor_runtime: bool,
-) -> Path:
-    """Run PyInstaller for a single variant (onefile or onedir)."""
+def build_pyinstaller_only(variant: str, artifact_name: str) -> Path:
+    """Build with PyInstaller only (no obfuscation)."""
     dist_subdir = DIST_DIR / variant
-
-    # Use the wrapper entry point that has absolute imports.
-    entry_point = SCRIPT_DIR / "toony_agent_runner" / "_pyinstaller_entry.py"
-    paths_dir = str(SCRIPT_DIR)
-
-    if has_pyarmor_runtime:
-        # When obfuscated, create a copy of the entry point in the obfuscated dir
-        # and point paths to the obfuscated source.
-        obf_entry = source_dir / "toony_agent_runner" / "_pyinstaller_entry.py"
-        if not obf_entry.exists():
-            shutil.copy2(entry_point, obf_entry)
-        entry_point = obf_entry
-        paths_dir = str(source_dir)
+    entry_point = PACKAGE_DIR / "_pyinstaller_entry.py"
 
     cmd = [
         "pyinstaller",
@@ -164,34 +131,88 @@ def build_pyinstaller(
         f"--{variant}",
         "--strip",
         "--noupx",
-        "--paths", paths_dir,
+        "--paths", str(SCRIPT_DIR),
         "--distpath", str(dist_subdir),
         "--workpath", str(BUILD_DIR),
         "--specpath", str(BUILD_DIR),
         "--hidden-import", "websockets",
         "--hidden-import", "websockets.asyncio",
         "--hidden-import", "yaml",
+        "--collect-all", "toony_agent_runner",
+        str(entry_point),
     ]
-
-    # Include PyArmor runtime if obfuscation was applied.
-    if has_pyarmor_runtime:
-        runtime_dirs = list(source_dir.glob("pyarmor_runtime_*"))
-        for runtime_dir in runtime_dirs:
-            cmd.extend([
-                "--add-data", f"{runtime_dir}:{runtime_dir.name}",
-            ])
-
-    cmd.append(str(entry_point))
     run_cmd(cmd, f"PyInstaller ({variant})")
 
     # Rename artifact to include version + platform + arch.
-    original = dist_subdir / "toony-agent-runner"
-    target = dist_subdir / artifact_name
-    if original.exists():
-        original.rename(target)
-    elif not target.exists():
-        print(f"WARNING: Expected artifact not found at {original}")
-    return target
+    return _rename_artifact(dist_subdir, artifact_name, variant)
+
+
+def build_obfuscated(variant: str, artifact_name: str) -> Path:
+    """Build with PyArmor obfuscation + PyInstaller.
+
+    Two-step process:
+    1. Run PyInstaller on original code to generate a .spec file (discovers all imports)
+    2. Run PyArmor gen --pack with the .spec file (obfuscates and rebuilds)
+    """
+    dist_subdir = DIST_DIR / variant
+    entry_point = PACKAGE_DIR / "_pyinstaller_entry.py"
+    spec_file = BUILD_DIR / "toony-agent-runner.spec"
+
+    # Step 1: Generate .spec via PyInstaller on original (unobfuscated) code.
+    print("    Step 1: Generating PyInstaller spec from original code...")
+    clean([BUILD_DIR, dist_subdir])
+
+    spec_cmd = [
+        "pyinstaller",
+        "--name", "toony-agent-runner",
+        f"--{variant}",
+        "--strip",
+        "--noupx",
+        "--distpath", str(dist_subdir),
+        "--workpath", str(BUILD_DIR),
+        "--specpath", str(BUILD_DIR),
+        "--hidden-import", "websockets",
+        "--hidden-import", "websockets.asyncio",
+        "--hidden-import", "yaml",
+        "--collect-all", "toony_agent_runner",
+        str(entry_point),
+    ]
+    run_cmd(spec_cmd, "PyInstaller spec generation")
+
+    # Remove the unobfuscated build output (we only needed the .spec).
+    if dist_subdir.exists():
+        shutil.rmtree(dist_subdir)
+
+    # Step 2: Run PyArmor gen --pack with the .spec file.
+    print("    Step 2: Obfuscating and rebuilding with PyArmor...")
+    pack_cmd = [
+        "pyarmor", "gen",
+        "--private",
+        "--pack", str(spec_file),
+        str(entry_point),
+    ]
+    run_cmd(pack_cmd, "PyArmor pack")
+
+    # PyArmor outputs to dist/ (from the .spec distpath).
+    # For onefile, artifact is at dist/{variant}/toony-agent-runner
+    # But pyarmor may output to dist/ directly — check both locations.
+    return _rename_artifact(dist_subdir, artifact_name, variant)
+
+
+def _rename_artifact(dist_subdir: Path, artifact_name: str, variant: str) -> Path:
+    """Rename the PyInstaller output to include version + platform + arch."""
+    # Check in the variant subdirectory first, then in dist/ root.
+    for search_dir in [dist_subdir, DIST_DIR]:
+        original = search_dir / "toony-agent-runner"
+        if original.exists():
+            target = dist_subdir / artifact_name
+            dist_subdir.mkdir(parents=True, exist_ok=True)
+            if original != target:
+                original.rename(target)
+            return target
+
+    print(f"WARNING: Expected artifact 'toony-agent-runner' not found in {dist_subdir}")
+    return dist_subdir / artifact_name
 
 
 def print_summary(artifacts: list[Path]) -> None:
@@ -220,7 +241,7 @@ def main() -> None:
 
     if args.clean:
         print("\nCleaning build artifacts...")
-        clean([OBFUSCATED_DIR, BUILD_DIR, DIST_DIR])
+        clean([BUILD_DIR, DIST_DIR, SCRIPT_DIR / ".pyarmor"])
         print("Done.")
         return
 
@@ -243,25 +264,21 @@ def main() -> None:
     print(f"  Platform: {os_name}-{arch}")
     print(f"  Artifact: {artifact_name}")
     print(f"  Variants: {', '.join(variants)}")
-
-    source_dir = SCRIPT_DIR
-    has_pyarmor_runtime = False
-    if args.skip_obfuscation:
-        print("\n[2] Skipping obfuscation (--skip-obfuscation)")
-    else:
-        source_dir = obfuscate()
-        has_pyarmor_runtime = True
+    print(f"  Obfuscation: {'disabled' if args.skip_obfuscation else 'PyArmor (--private)'}")
 
     artifacts: list[Path] = []
     for i, variant in enumerate(variants):
-        print(f"\n[3] Building {variant} ({i + 1}/{len(variants)})...")
-        artifact = build_pyinstaller(
-            source_dir, variant, artifact_name, has_pyarmor_runtime,
-        )
+        print(f"\n[{i + 2}] Building {variant} ({i + 1}/{len(variants)})...")
+        if args.skip_obfuscation:
+            artifact = build_pyinstaller_only(variant, artifact_name)
+        else:
+            artifact = build_obfuscated(variant, artifact_name)
         artifacts.append(artifact)
 
-    print("\n[4] Cleaning temp files...")
-    clean([OBFUSCATED_DIR, BUILD_DIR])
+    # Clean temp files.
+    step = len(variants) + 2
+    print(f"\n[{step}] Cleaning temp files...")
+    clean([BUILD_DIR, SCRIPT_DIR / ".pyarmor"])
 
     print_summary(artifacts)
 
