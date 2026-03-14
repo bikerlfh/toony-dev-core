@@ -185,7 +185,7 @@ function IssueCard({
               onClick={(e) => e.stopPropagation()}
               className="flex shrink-0 items-center gap-1.5 rounded-full bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-400 transition-colors duration-150 hover:text-slate-200"
             >
-              <span className="text-[11px] leading-none">{issue.project.icon || issue.project.name[0]?.toUpperCase()}</span>
+              {issue.project.icon && <span className="text-[11px] leading-none">{issue.project.icon}</span>}
               <span className="font-medium truncate max-w-[7rem]">{issue.project.name}</span>
             </Link>
           )}
