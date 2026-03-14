@@ -1,5 +1,9 @@
 from projects.models.activity import IssueActivity
-from projects.models.artifact import ArtifactStatus, ArtifactType, IssueArtifact
+from projects.models.artifact import (
+    ArtifactStatus,
+    ArtifactType,
+    IssueArtifact,
+)
 from projects.models.comment import IssueComment
 from projects.models.cycle import Cycle, CycleStatus
 from projects.models.document import IssueDocument

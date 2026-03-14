@@ -1,4 +1,8 @@
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+    SearchVector,
+)
 
 from accounts.models import OrganizationMembership
 from projects.models import Project, ProjectMembership, ProjectSettings

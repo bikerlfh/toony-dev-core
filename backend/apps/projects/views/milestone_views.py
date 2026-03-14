@@ -7,9 +7,16 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from projects.permissions import IsProjectAccessible
 from projects.selectors import get_milestone_by_id, list_project_milestones
-from projects.serializers.input import CreateMilestoneSerializer, UpdateMilestoneSerializer
+from projects.serializers.input import (
+    CreateMilestoneSerializer,
+    UpdateMilestoneSerializer,
+)
 from projects.serializers.output import MilestoneSerializer
-from projects.services import create_milestone, delete_milestone, update_milestone
+from projects.services import (
+    create_milestone,
+    delete_milestone,
+    update_milestone,
+)
 
 
 class MilestoneListCreateView(PaginatedViewMixin, APIView):

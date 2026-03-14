@@ -3,7 +3,10 @@ from organizations.models.credential import (
     CredentialType,
     RepositoryCredential,
 )
-from organizations.models.integration import IntegrationConfig, IntegrationProvider
+from organizations.models.integration import (
+    IntegrationConfig,
+    IntegrationProvider,
+)
 from organizations.models.organization import Organization
 from organizations.models.settings import OrganizationSettings
 

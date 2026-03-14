@@ -5,7 +5,10 @@ from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
-from organizations.selectors import get_integration_by_id, list_organization_integrations
+from organizations.selectors import (
+    get_integration_by_id,
+    list_organization_integrations,
+)
 from organizations.serializers.input import (
     CreateIntegrationSerializer,
     UpdateIntegrationSerializer,

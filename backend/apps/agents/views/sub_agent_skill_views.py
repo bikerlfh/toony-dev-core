@@ -3,10 +3,22 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from agents.selectors import get_skill_by_id, get_sub_agent_by_id, get_sub_agent_skill_by_id, list_sub_agent_skills
-from agents.serializers.input import CreateSubAgentSkillSerializer, UpdateSubAgentSkillSerializer
+from agents.selectors import (
+    get_skill_by_id,
+    get_sub_agent_by_id,
+    get_sub_agent_skill_by_id,
+    list_sub_agent_skills,
+)
+from agents.serializers.input import (
+    CreateSubAgentSkillSerializer,
+    UpdateSubAgentSkillSerializer,
+)
 from agents.serializers.output import SubAgentSkillSerializer
-from agents.services import assign_skill, remove_sub_agent_skill, update_sub_agent_skill
+from agents.services import (
+    assign_skill,
+    remove_sub_agent_skill,
+    update_sub_agent_skill,
+)
 from common.mixins import PaginatedViewMixin
 
 

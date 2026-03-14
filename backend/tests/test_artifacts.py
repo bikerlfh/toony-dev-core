@@ -1,7 +1,11 @@
 import pytest
 from rest_framework import status
 
-from tests.factories import AgentTaskFactory, IssueArtifactFactory, ToonyAgentFactory
+from tests.factories import (
+    AgentTaskFactory,
+    IssueArtifactFactory,
+    ToonyAgentFactory,
+)
 
 pytestmark = pytest.mark.django_db
 

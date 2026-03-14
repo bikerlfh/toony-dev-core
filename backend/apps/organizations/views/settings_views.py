@@ -5,7 +5,9 @@ from rest_framework.views import APIView
 
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from organizations.selectors import get_organization_settings
-from organizations.serializers.input import UpdateOrganizationSettingsSerializer
+from organizations.serializers.input import (
+    UpdateOrganizationSettingsSerializer,
+)
 from organizations.serializers.output import OrganizationSettingsSerializer
 from organizations.services import update_organization_settings
 

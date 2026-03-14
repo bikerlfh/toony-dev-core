@@ -1,4 +1,8 @@
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+    SearchVector,
+)
 
 from projects.models import Issue, Project
 from workspace.models import Label, Team

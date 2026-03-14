@@ -6,7 +6,10 @@ from django.utils import timezone
 from common.broadcast import broadcast
 from projects.models import Issue, IssueActivity, IssueComment
 from projects.selectors.issue_selector import get_next_identifier
-from projects.serializers.output import IssueCommentSerializer, IssueListSerializer
+from projects.serializers.output import (
+    IssueCommentSerializer,
+    IssueListSerializer,
+)
 
 logger = logging.getLogger(__name__)
 

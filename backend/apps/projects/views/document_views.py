@@ -7,7 +7,11 @@ from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
 from projects.permissions import IsProjectAccessible
-from projects.selectors import get_document_by_id, get_issue_by_id, list_issue_documents
+from projects.selectors import (
+    get_document_by_id,
+    get_issue_by_id,
+    list_issue_documents,
+)
 from projects.serializers.input import UploadIssueDocumentSerializer
 from projects.serializers.output import IssueDocumentSerializer
 from projects.services import create_issue_document, delete_issue_document

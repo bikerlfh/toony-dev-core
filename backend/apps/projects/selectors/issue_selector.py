@@ -1,7 +1,17 @@
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+    SearchVector,
+)
 from django.db.models import Prefetch
 
-from projects.models import Issue, IssueActivity, IssueArtifact, IssueComment, IssueDocument
+from projects.models import (
+    Issue,
+    IssueActivity,
+    IssueArtifact,
+    IssueComment,
+    IssueDocument,
+)
 
 
 def get_next_identifier(project):

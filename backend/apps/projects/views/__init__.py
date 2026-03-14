@@ -18,7 +18,10 @@ from projects.views.issue_views import (
     IssueListCreateView,
     UserIssueListView,
 )
-from projects.views.milestone_views import MilestoneDetailView, MilestoneListCreateView
+from projects.views.milestone_views import (
+    MilestoneDetailView,
+    MilestoneListCreateView,
+)
 from projects.views.project_views import (
     ProjectDetailView,
     ProjectListCreateView,
@@ -26,7 +29,10 @@ from projects.views.project_views import (
     ProjectMemberListCreateView,
     ProjectSettingsView,
 )
-from projects.views.resource_views import ResourceDetailView, ResourceListCreateView
+from projects.views.resource_views import (
+    ResourceDetailView,
+    ResourceListCreateView,
+)
 
 __all__ = [
     "ProjectListCreateView",

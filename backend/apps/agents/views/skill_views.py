@@ -10,7 +10,10 @@ from agents.selectors import (
     list_skills_for_organization,
     list_skills_for_user,
 )
-from agents.serializers.input import CreateSkillSerializer, UpdateSkillSerializer
+from agents.serializers.input import (
+    CreateSkillSerializer,
+    UpdateSkillSerializer,
+)
 from agents.serializers.output import (
     SkillDetailSerializer,
     SkillListSerializer,

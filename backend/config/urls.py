@@ -4,7 +4,12 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from projects.views import GlobalArtifactDetailView, GlobalArtifactListView, IssueFullDetailView, UserIssueListView
+from projects.views import (
+    GlobalArtifactDetailView,
+    GlobalArtifactListView,
+    IssueFullDetailView,
+    UserIssueListView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

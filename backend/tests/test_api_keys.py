@@ -1,7 +1,10 @@
 import pytest
 from rest_framework import status
 
-from accounts.selectors.api_key_selector import get_api_key_by_id, list_user_api_keys
+from accounts.selectors.api_key_selector import (
+    get_api_key_by_id,
+    list_user_api_keys,
+)
 from accounts.services.api_key_service import generate_api_key, revoke_api_key
 from tests.factories import UserFactory
 

@@ -10,8 +10,15 @@ from accounts.serializers.input import (
     LoginUserSerializer,
     UpdateProfileSerializer,
 )
-from accounts.serializers.output import AuthTokenSerializer, UserDetailSerializer
-from accounts.services import authenticate_user, change_password, update_profile
+from accounts.serializers.output import (
+    AuthTokenSerializer,
+    UserDetailSerializer,
+)
+from accounts.services import (
+    authenticate_user,
+    change_password,
+    update_profile,
+)
 
 
 class LoginView(APIView):

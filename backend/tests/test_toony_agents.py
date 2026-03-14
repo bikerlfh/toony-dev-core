@@ -76,7 +76,11 @@ class TestToonyAgentService:
 
     def test_revoke_api_key(self, user):
         from toony_agents.models import ToonyAgent
-        from toony_agents.services import generate_api_key, revoke_api_key, verify_api_key
+        from toony_agents.services import (
+            generate_api_key,
+            revoke_api_key,
+            verify_api_key,
+        )
 
         agent = ToonyAgent.objects.create(name="Bot", slug="revoke-bot", registered_by=user)
         key_obj, raw_key = generate_api_key(agent, user)

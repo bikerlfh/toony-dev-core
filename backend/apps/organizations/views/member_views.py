@@ -9,9 +9,16 @@ from accounts.selectors import get_user_by_email
 from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin, IsOrganizationMember
 from organizations.selectors import list_organization_members
-from organizations.serializers.input import AddMemberSerializer, UpdateMemberRoleSerializer
+from organizations.serializers.input import (
+    AddMemberSerializer,
+    UpdateMemberRoleSerializer,
+)
 from organizations.serializers.output import MembershipSerializer
-from organizations.services import add_member, remove_member, update_member_role
+from organizations.services import (
+    add_member,
+    remove_member,
+    update_member_role,
+)
 
 
 class MemberListCreateView(PaginatedViewMixin, APIView):

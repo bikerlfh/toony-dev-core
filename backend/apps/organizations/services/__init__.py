@@ -18,7 +18,9 @@ from organizations.services.organization_service import (
     delete_organization,
     update_organization,
 )
-from organizations.services.settings_service import update_organization_settings
+from organizations.services.settings_service import (
+    update_organization_settings,
+)
 
 __all__ = [
     "create_organization",

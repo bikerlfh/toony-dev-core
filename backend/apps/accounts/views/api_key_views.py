@@ -3,7 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.selectors.api_key_selector import get_api_key_by_id, list_user_api_keys
+from accounts.selectors.api_key_selector import (
+    get_api_key_by_id,
+    list_user_api_keys,
+)
 from accounts.serializers.api_key_serializers import (
     APIKeyCreatedSerializer,
     APIKeyOutputSerializer,

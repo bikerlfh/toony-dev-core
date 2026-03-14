@@ -7,7 +7,10 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from projects.permissions import IsProjectAccessible
 from projects.selectors import get_cycle_by_id, list_project_cycles
-from projects.serializers.input import CreateCycleSerializer, UpdateCycleSerializer
+from projects.serializers.input import (
+    CreateCycleSerializer,
+    UpdateCycleSerializer,
+)
 from projects.serializers.output import CycleSerializer
 from projects.services import create_cycle, delete_cycle, update_cycle
 

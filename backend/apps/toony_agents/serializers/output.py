@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from toony_agents.models import AgentSystemEvent, AgentTask, TaskEvent, ToonyAgent, ToonyAgentKey
+from toony_agents.models import (
+    AgentSystemEvent,
+    AgentTask,
+    TaskEvent,
+    ToonyAgent,
+    ToonyAgentKey,
+)
 
 
 class ToonyAgentListSerializer(serializers.ModelSerializer):

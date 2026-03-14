@@ -5,13 +5,20 @@ from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
 from organizations.permissions import IsOrganizationAdmin
-from organizations.selectors import get_credential_by_id, list_organization_credentials
+from organizations.selectors import (
+    get_credential_by_id,
+    list_organization_credentials,
+)
 from organizations.serializers.input import (
     CreateCredentialSerializer,
     UpdateCredentialSerializer,
 )
 from organizations.serializers.output import CredentialSerializer
-from organizations.services import create_credential, delete_credential, update_credential
+from organizations.services import (
+    create_credential,
+    delete_credential,
+    update_credential,
+)
 
 
 class CredentialListCreateView(PaginatedViewMixin, APIView):

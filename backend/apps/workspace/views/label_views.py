@@ -7,7 +7,10 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from workspace.permissions import IsWorkspaceAdmin, IsWorkspaceMember
 from workspace.selectors import get_label_by_id, list_labels
-from workspace.serializers.input import CreateLabelSerializer, UpdateLabelSerializer
+from workspace.serializers.input import (
+    CreateLabelSerializer,
+    UpdateLabelSerializer,
+)
 from workspace.serializers.output import LabelSerializer
 from workspace.services import create_label, delete_label, update_label
 
