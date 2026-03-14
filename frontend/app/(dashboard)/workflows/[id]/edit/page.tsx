@@ -236,7 +236,7 @@ function LabelPicker({
   useEffect(() => {
     if (!open) return;
     function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as globalThis.Node)) {
         setOpen(false);
         setSearch("");
       }

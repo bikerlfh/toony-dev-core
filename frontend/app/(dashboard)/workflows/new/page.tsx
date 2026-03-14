@@ -90,7 +90,7 @@ export default function NewWorkflowPage() {
             : undefined,
         project:
           scope === "PROJECT" && projectId ? projectId : undefined,
-        label: labelId || undefined,
+        labels: labelId ? [labelId] : undefined,
       };
 
       const created = await createWorkflow(payload);
