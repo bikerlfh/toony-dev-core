@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import type { DragEvent } from "react";
+import Link from "next/link";
 import type { CrossProjectIssueList, IssueStatus } from "@/types";
 import { PriorityBadge } from "@/components/priority-badge";
 
@@ -135,7 +136,7 @@ function IssueCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={`rounded-xl border border-slate-800/60 bg-slate-900 p-3.5 transition-all hover:bg-slate-900/80 ${
-        draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+        draggable ? "cursor-grab active:cursor-grabbing" : ""
       } ${isDragging ? "opacity-30 scale-[0.97]" : ""}`}
     >
       {/* Top row: project dot + identifier + milestone/cycle + priority */}
@@ -175,22 +176,35 @@ function IssueCard({
         <p className="mt-1 text-xs leading-relaxed text-slate-500 line-clamp-3">{issue.description}</p>
       )}
 
-      {/* Bottom row: labels + assignee */}
+      {/* Bottom row: project + labels + assignee */}
       <div className="mt-2.5 flex items-center justify-between">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          {issue.project && (
+            <Link
+              href={`/projects/${issue.project_id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-slate-800/80 px-2 py-0.5 text-[11px] text-slate-400 transition-colors duration-150 hover:text-slate-200"
+            >
+              <span className="text-[11px] leading-none">{issue.project.icon || issue.project.name[0]?.toUpperCase()}</span>
+              <span className="font-medium truncate max-w-[7rem]">{issue.project.name}</span>
+            </Link>
+          )}
           {issue.labels.slice(0, 3).map((label) => (
             <span
               key={label.id}
-              className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
-              style={{ backgroundColor: label.color }}
+              className="flex shrink-0 items-center gap-1 rounded-full bg-slate-800/80 px-2 py-0.5 text-[11px] font-medium text-slate-400"
             >
+              <span
+                className="inline-block h-2 w-2 rounded-full shrink-0"
+                style={{ backgroundColor: label.color }}
+              />
               {label.name}
             </span>
           ))}
         </div>
         {issue.assignee && (
           <div
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400"
             title={`${issue.assignee.first_name} ${issue.assignee.last_name}`}
           >
             {issue.assignee.first_name?.[0]}{issue.assignee.last_name?.[0]}
