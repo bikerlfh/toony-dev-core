@@ -128,10 +128,12 @@ export default function ArtifactDetailPage() {
                 {artifact.issue.identifier}: {artifact.issue.title}
               </p>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-500">Agent Task</label>
-              <p className="mt-1 text-sm text-slate-300">{artifact.agent_task.title}</p>
-            </div>
+            {artifact.agent_task && (
+              <div>
+                <label className="block text-xs font-medium text-slate-500">Agent Task</label>
+                <p className="mt-1 text-sm text-slate-300">{artifact.agent_task.title}</p>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-slate-500">Session ID</label>
               <p className="mt-1 truncate text-sm text-slate-400 font-mono">{artifact.session_id}</p>

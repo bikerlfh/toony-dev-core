@@ -1,6 +1,6 @@
 # Toony MCP Server
 
-MCP (Model Context Protocol) server for Toony Dev Core. Exposes 17 tools that allow Claude to interact with the backend API to manage projects, issues, comments, artifacts, and workspace resources.
+MCP (Model Context Protocol) server for Toony Dev Core. Exposes 20 tools that allow Claude to interact with the backend API to manage projects, issues, comments, artifacts, workflows, and workspace resources.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ The API Key is generated from the user's profile page in the Toony web applicati
 | `list_project_milestones` | Lists project milestones | `project_id` (UUID) |
 | `list_project_cycles` | Lists project cycles/sprints | `project_id` (UUID) |
 
-### Issues (10 tools)
+### Issues (12 tools)
 
 | Tool | Description | Parameters |
 |---|---|---|
@@ -101,12 +101,22 @@ The API Key is generated from the user's profile page in the Toony web applicati
 | `list_issue_activities` | Views the change history of an issue | `issue_id`, `project_id` |
 | `list_issue_artifacts` | Lists attached artifacts (plans, specs, etc.) | `issue_id`, `project_id` |
 | `create_artifact` | Publishes an artifact to an issue | `issue_id`, `project_id`, `title`, `artifact_type`, `content`; `requires_approval` (optional) |
+| `update_artifact` | Updates an existing artifact | `artifact_id` (required); `title`, `content`, `status`, `requires_approval` (optional) |
+| `delete_artifact` | Deletes an artifact | `artifact_id` (UUID) |
 
 **Allowed values for `status`:** `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`, `CANCELED`
 
 **Allowed values for `priority`:** `NONE`, `URGENT`, `HIGH`, `MEDIUM`, `LOW`
 
 **Allowed values for `artifact_type`:** `PLAN`, `DESIGN_DOC`, `TECHNICAL_SPEC`, `TEST_PLAN`, `OTHER`
+
+**Allowed values for artifact `status`:** `DRAFT`, `PENDING_APPROVAL`, `IN_REVIEW`, `APPROVED`, `REJECTED`, `REVISION_REQUESTED`, `SUPERSEDED`
+
+### Workflows (1 tool)
+
+| Tool | Description | Parameters |
+|---|---|---|
+| `get_issue_workflow` | Gets the resolved workflow for an issue as YAML | `issue_id` (UUID) |
 
 ### Workspace (2 tools)
 
@@ -178,7 +188,8 @@ mcp-server/
     └── tools/
         ├── __init__.py
         ├── projects.py      # 5 project tools
-        ├── issues.py        # 10 issue tools
+        ├── issues.py        # 12 issue/artifact tools
+        ├── workflows.py     # 1 workflow tool
         └── workspace.py     # 2 workspace tools
 ```
 

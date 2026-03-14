@@ -44,10 +44,13 @@ class IssueArtifactListCreateView(PaginatedViewMixin, APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        try:
-            agent_task = AgentTask.objects.get(id=data["agent_task_id"])
-        except AgentTask.DoesNotExist:
-            raise NotFound("Agent task not found.")
+        agent_task = None
+        agent_task_id = data.get("agent_task_id")
+        if agent_task_id:
+            try:
+                agent_task = AgentTask.objects.get(id=agent_task_id)
+            except AgentTask.DoesNotExist:
+                raise NotFound("Agent task not found.")
 
         artifact = create_artifact(
             issue=issue,
@@ -55,7 +58,7 @@ class IssueArtifactListCreateView(PaginatedViewMixin, APIView):
             title=data["title"],
             artifact_type=data["artifact_type"],
             content=data["content"],
-            session_id=data["session_id"],
+            session_id=data.get("session_id", ""),
             requires_approval=data.get("requires_approval", False),
         )
         output = IssueArtifactDetailSerializer(artifact).data

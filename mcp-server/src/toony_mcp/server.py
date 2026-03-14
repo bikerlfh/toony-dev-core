@@ -28,7 +28,6 @@ def get_client() -> ToonyClient:
 
 
 def main():
-    import toony_mcp.tools.agents  # noqa: F401
     import toony_mcp.tools.issues  # noqa: F401
     import toony_mcp.tools.projects  # noqa: F401
     import toony_mcp.tools.workspace  # noqa: F401

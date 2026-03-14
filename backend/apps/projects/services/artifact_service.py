@@ -33,7 +33,7 @@ def create_artifact(
     title,
     artifact_type,
     content,
-    session_id,
+    session_id="",
     requires_approval=False,
 ):
     initial_status = ArtifactStatus.PENDING_APPROVAL if requires_approval else ArtifactStatus.DRAFT

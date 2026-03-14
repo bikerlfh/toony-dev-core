@@ -29,8 +29,10 @@ class IssueArtifact(BaseModel):
     )
     agent_task = models.ForeignKey(
         "toony_agents.AgentTask",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name="artifacts",
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=500)
     artifact_type = models.CharField(
@@ -43,7 +45,7 @@ class IssueArtifact(BaseModel):
         choices=ArtifactStatus.choices,
         default=ArtifactStatus.DRAFT,
     )
-    session_id = models.CharField(max_length=255)
+    session_id = models.CharField(max_length=255, blank=True, default="")
     requires_approval = models.BooleanField(default=False)
 
     class Meta:

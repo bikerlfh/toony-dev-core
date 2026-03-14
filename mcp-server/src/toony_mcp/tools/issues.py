@@ -71,25 +71,13 @@ def get_my_issues(
     if "error" in me:
         return json.dumps(me)
 
-    projects = client.list_projects()
-    if "error" in projects:
-        return json.dumps(projects)
-
-    all_issues = []
-    for project in projects.get("results", []):
-        issues = client.list_project_issues(
-            project["id"],
-            status=status,
-            priority=priority,
-            assignee_id=me["id"],
-            search=search,
-        )
-        if "error" not in issues:
-            for issue in issues.get("results", []):
-                issue["project_name"] = project["name"]
-                all_issues.append(issue)
-
-    return json.dumps({"count": len(all_issues), "results": all_issues})
+    result = client.list_user_issues(
+        assignee_id=me["id"],
+        status=status,
+        priority=priority,
+        search=search,
+    )
+    return json.dumps(result)
 
 
 @mcp.tool()

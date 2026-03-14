@@ -238,8 +238,8 @@ class CreateArtifactSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=500)
     artifact_type = serializers.ChoiceField(choices=ArtifactType.choices)
     content = serializers.CharField()
-    session_id = serializers.CharField(max_length=255)
-    agent_task_id = serializers.UUIDField()
+    session_id = serializers.CharField(max_length=255, required=False, default="")
+    agent_task_id = serializers.UUIDField(required=False, allow_null=True, default=None)
     requires_approval = serializers.BooleanField(default=False)
 
 

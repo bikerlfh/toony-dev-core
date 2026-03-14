@@ -49,7 +49,7 @@ class ToonyClient:
     def list_projects(self, search: str | None = None) -> dict:
         params = {}
         if search:
-            params["search"] = search
+            params["q"] = search
         return self._get("/projects/", params=params)
 
     def get_project(self, project_id: str) -> dict:
@@ -67,7 +67,15 @@ class ToonyClient:
     # -- Issues --
     def list_project_issues(self, project_id: str, **filters) -> dict:
         params = {k: v for k, v in filters.items() if v is not None}
+        if "search" in params:
+            params["q"] = params.pop("search")
         return self._get(f"/projects/{project_id}/issues/", params=params)
+
+    def list_user_issues(self, **filters) -> dict:
+        params = {k: v for k, v in filters.items() if v is not None}
+        if "search" in params:
+            params["q"] = params.pop("search")
+        return self._get("/issues/", params=params)
 
     def get_issue(self, project_id: str, issue_id: str) -> dict:
         return self._get(f"/projects/{project_id}/issues/{issue_id}/")
@@ -79,7 +87,7 @@ class ToonyClient:
         return self._post(f"/projects/{project_id}/issues/", data=data)
 
     def update_issue(self, project_id: str, issue_id: str, data: dict) -> dict:
-        return self._patch(f"/projects/{project_id}/issues/{issue_id}/", data=data)
+        return self._put(f"/projects/{project_id}/issues/{issue_id}/", data=data)
 
     # -- Comments --
     def list_issue_comments(self, project_id: str, issue_id: str) -> dict:
@@ -118,51 +126,11 @@ class ToonyClient:
     def list_labels(self, search: str | None = None) -> dict:
         params = {}
         if search:
-            params["search"] = search
+            params["q"] = search
         return self._get("/workspace/labels/", params=params)
 
     def search_global(self, organization_id: str, query: str) -> dict:
         return self._get(f"/search/{organization_id}/", params={"q": query})
-
-    # -- SubAgents --
-    def list_subagents(
-        self, search: str | None = None, organization: str | None = None
-    ) -> dict:
-        params = {}
-        if search:
-            params["search"] = search
-        if organization:
-            params["organization"] = organization
-        return self._get("/subagents/", params=params)
-
-    def get_subagent(self, subagent_id: str) -> dict:
-        return self._get(f"/subagents/{subagent_id}/")
-
-    def create_subagent(self, data: dict) -> dict:
-        return self._post("/subagents/", data=data)
-
-    def update_subagent(self, subagent_id: str, data: dict) -> dict:
-        return self._put(f"/subagents/{subagent_id}/", data=data)
-
-    # -- Skills --
-    def list_skills(
-        self, search: str | None = None, organization: str | None = None
-    ) -> dict:
-        params = {}
-        if search:
-            params["search"] = search
-        if organization:
-            params["organization"] = organization
-        return self._get("/skills/", params=params)
-
-    def get_skill(self, skill_id: str) -> dict:
-        return self._get(f"/skills/{skill_id}/")
-
-    def create_skill(self, data: dict) -> dict:
-        return self._post("/skills/", data=data)
-
-    def update_skill(self, skill_id: str, data: dict) -> dict:
-        return self._put(f"/skills/{skill_id}/", data=data)
 
     # -- Workflows --
     def resolve_issue_workflow_yaml(self, issue_id: str) -> str:
