@@ -1,9 +1,6 @@
 """Tests for build.py utilities."""
 
 import sys
-from unittest.mock import patch
-
-import pytest
 
 # build.py is a standalone script, import it by path
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))

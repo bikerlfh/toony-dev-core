@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -62,9 +63,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def get_version() -> str:
     """Read __version__ from toony_agent_runner/__init__.py."""
     init_file = PACKAGE_DIR / "__init__.py"
-    namespace: dict[str, str] = {}
-    exec(init_file.read_text(), namespace)  # noqa: S102
-    return namespace["__version__"]
+    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', init_file.read_text(), re.M)
+    if not match:
+        print("ERROR: __version__ not found in toony_agent_runner/__init__.py")
+        sys.exit(1)
+    return match.group(1)
 
 
 def get_platform_info() -> tuple[str, str]:
@@ -118,7 +121,7 @@ def run_cmd(cmd: list[str], label: str) -> None:
 
 def obfuscate() -> Path:
     """Run PyArmor to obfuscate the package. Returns path to obfuscated code."""
-    print("\n[2/5] Obfuscating with PyArmor...")
+    print("\n[2] Obfuscating with PyArmor...")
     clean([OBFUSCATED_DIR])
     run_cmd(
         [
@@ -175,6 +178,8 @@ def build_pyinstaller(
     target = dist_subdir / artifact_name
     if original.exists():
         original.rename(target)
+    elif not target.exists():
+        print(f"WARNING: Expected artifact not found at {original}")
     return target
 
 
@@ -216,7 +221,7 @@ def main() -> None:
     if not variants:
         variants = ["onefile", "onedir"]
 
-    print("\n[1/5] Validating prerequisites...")
+    print("\n[1] Validating prerequisites...")
     validate_prerequisites(args.skip_obfuscation)
     print("  All prerequisites OK.")
 
@@ -231,20 +236,20 @@ def main() -> None:
     source_dir = SCRIPT_DIR
     has_pyarmor_runtime = False
     if args.skip_obfuscation:
-        print("\n[2/5] Skipping obfuscation (--skip-obfuscation)")
+        print("\n[2] Skipping obfuscation (--skip-obfuscation)")
     else:
         source_dir = obfuscate()
         has_pyarmor_runtime = True
 
     artifacts: list[Path] = []
     for i, variant in enumerate(variants):
-        print(f"\n[3/5] Building {variant} ({i + 1}/{len(variants)})...")
+        print(f"\n[3] Building {variant} ({i + 1}/{len(variants)})...")
         artifact = build_pyinstaller(
             source_dir, variant, artifact_name, has_pyarmor_runtime,
         )
         artifacts.append(artifact)
 
-    print("\n[4/5] Cleaning temp files...")
+    print("\n[4] Cleaning temp files...")
     clean([OBFUSCATED_DIR, BUILD_DIR])
 
     print_summary(artifacts)
