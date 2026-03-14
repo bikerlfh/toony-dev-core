@@ -12,6 +12,13 @@ venv/
 .pytest_cache/
 htmlcov/
 
+# Build artifacts (PyInstaller / PyArmor)
+dist/
+build/
+_obfuscated/
+.pyarmor/
+*.spec
+
 # Node
 node_modules/
 .next/
