@@ -144,10 +144,19 @@ def build_pyinstaller(
 ) -> Path:
     """Run PyInstaller for a single variant (onefile or onedir)."""
     dist_subdir = DIST_DIR / variant
-    entry_point = source_dir / "toony_agent_runner" / "main.py"
 
-    if not has_pyarmor_runtime:
-        entry_point = PACKAGE_DIR / "main.py"
+    # Use the wrapper entry point that has absolute imports.
+    entry_point = SCRIPT_DIR / "toony_agent_runner" / "_pyinstaller_entry.py"
+    paths_dir = str(SCRIPT_DIR)
+
+    if has_pyarmor_runtime:
+        # When obfuscated, create a copy of the entry point in the obfuscated dir
+        # and point paths to the obfuscated source.
+        obf_entry = source_dir / "toony_agent_runner" / "_pyinstaller_entry.py"
+        if not obf_entry.exists():
+            shutil.copy2(entry_point, obf_entry)
+        entry_point = obf_entry
+        paths_dir = str(source_dir)
 
     cmd = [
         "pyinstaller",
@@ -155,6 +164,7 @@ def build_pyinstaller(
         f"--{variant}",
         "--strip",
         "--noupx",
+        "--paths", paths_dir,
         "--distpath", str(dist_subdir),
         "--workpath", str(BUILD_DIR),
         "--specpath", str(BUILD_DIR),
@@ -163,6 +173,7 @@ def build_pyinstaller(
         "--hidden-import", "yaml",
     ]
 
+    # Include PyArmor runtime if obfuscation was applied.
     if has_pyarmor_runtime:
         runtime_dirs = list(source_dir.glob("pyarmor_runtime_*"))
         for runtime_dir in runtime_dirs:
