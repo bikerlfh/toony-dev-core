@@ -10,6 +10,7 @@ from tests.factories import (
     LabelFactory,
     MembershipFactory,
     MilestoneFactory,
+    NotificationFactory,
     OrganizationFactory,
     OrganizationSettingsFactory,
     ProjectFactory,
@@ -158,3 +159,8 @@ def user_api_key(user):
     key_obj, raw_key = generate_api_key(user=user, name="test-key")
     key_obj._raw_key = raw_key
     return key_obj
+
+
+@pytest.fixture()
+def notification(user, organization):
+    return NotificationFactory(recipient=user, organization=organization)

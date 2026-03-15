@@ -62,6 +62,10 @@ def create_artifact(
         {"issue_id": str(issue.id), "artifact_id": str(artifact.id)},
     )
 
+    # --- Notifications ---
+    from notifications.services import notify
+    notify("artifact.created", {"artifact": artifact, "issue": issue, "actor": None})
+
     return artifact
 
 

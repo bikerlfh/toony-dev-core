@@ -284,3 +284,50 @@ class TestArtifactHandlers:
 
         assert len(result) == 1
         assert result[0].recipient == other_user
+
+
+class TestNotificationAPI:
+    def test_list_notifications(self, authenticated_client, notification):
+        response = authenticated_client.get("/api/notifications/")
+        assert response.status_code == 200
+        assert len(response.data["results"]) == 1
+
+    def test_list_filter_unread(self, authenticated_client, notification):
+        response = authenticated_client.get("/api/notifications/?is_read=false")
+        assert response.status_code == 200
+        assert len(response.data["results"]) == 1
+
+        response = authenticated_client.get("/api/notifications/?is_read=true")
+        assert response.status_code == 200
+        assert len(response.data["results"]) == 0
+
+    def test_mark_read(self, authenticated_client, notification):
+        response = authenticated_client.post(
+            "/api/notifications/mark-read/",
+            {"ids": [str(notification.id)]},
+            format="json",
+        )
+        assert response.status_code == 200
+        assert response.data["updated"] == 1
+
+        notification.refresh_from_db()
+        assert notification.is_read is True
+        assert notification.read_at is not None
+
+    def test_mark_all_read(self, authenticated_client, notification):
+        response = authenticated_client.post(
+            "/api/notifications/mark-all-read/",
+            {},
+            format="json",
+        )
+        assert response.status_code == 200
+        assert response.data["updated"] == 1
+
+    def test_unread_count(self, authenticated_client, notification):
+        response = authenticated_client.get("/api/notifications/unread-count/")
+        assert response.status_code == 200
+        assert response.data["count"] == 1
+
+    def test_unauthenticated_returns_401(self, api_client):
+        response = api_client.get("/api/notifications/")
+        assert response.status_code == 401
