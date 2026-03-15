@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { SearchCommandPalette } from "./search-command-palette";
+import { NotificationDropdown } from "./notification-dropdown";
 
 interface NavItem {
   label: string;
@@ -356,6 +357,9 @@ export function Sidebar() {
       <div className="border-t border-slate-800/60 p-4">
         {collapsed ? (
           <>
+            <div className="mb-2 flex items-center justify-center">
+              <NotificationDropdown />
+            </div>
             <Link
               href="/profile"
               title={`${user?.first_name} ${user?.last_name}`}
@@ -377,6 +381,9 @@ export function Sidebar() {
           </>
         ) : (
           <>
+            <div className="mb-2 flex items-center px-3">
+              <NotificationDropdown />
+            </div>
             <Link
               href="/profile"
               className="group mb-3 flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors hover:bg-slate-900/60"
