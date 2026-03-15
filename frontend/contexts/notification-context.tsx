@@ -8,9 +8,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import { showToast } from "nextjs-toast-notify";
 import { useAuth } from "@/contexts/auth-context";
 import { useNotificationWebSocket } from "@/hooks/use-notification-websocket";
-import { NotificationToast } from "@/components/notification-toast";
 import type { NotificationItem } from "@/types";
 import * as notificationsApi from "@/lib/api/notifications";
 
@@ -30,7 +30,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { isAuthenticated } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [toasts, setToasts] = useState<NotificationItem[]>([]);
 
   const fetchInitial = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -53,17 +52,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const handleNewNotification = useCallback((notification: NotificationItem) => {
     setNotifications((prev) => [notification, ...prev].slice(0, MAX_DROPDOWN_ITEMS));
     setUnreadCount((prev) => prev + 1);
-    setToasts((prev) => [...prev, notification]);
+
+    showToast.info(notification.title, {
+      duration: 4000,
+      progress: true,
+      position: "top-right",
+      transition: "bounceIn",
+      sound: false,
+    });
   }, []);
 
   useNotificationWebSocket({
     enabled: isAuthenticated,
     onNotification: handleNewNotification,
   });
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   const markAsRead = useCallback(async (ids: string[]) => {
     await notificationsApi.markRead(ids);
@@ -93,16 +95,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-[60] flex flex-col gap-2">
-        {toasts.map((t) => (
-          <NotificationToast
-            key={t.id}
-            notification={t}
-            onDismiss={() => dismissToast(t.id)}
-          />
-        ))}
-      </div>
     </NotificationContext.Provider>
   );
 }
