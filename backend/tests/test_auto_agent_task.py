@@ -97,8 +97,8 @@ class TestAgentTaskLifecycleOnStatusChange:
     """Tests for AgentTask lifecycle when issue status changes."""
 
     @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
-    def test_todo_to_backlog_cancels_queued_task(self, issue, toony_agent, user):
-        """Moving issue TODO→BACKLOG cancels QUEUED agent tasks."""
+    def test_todo_to_backlog_pauses_queued_task(self, issue, toony_agent, user):
+        """Moving issue TODO→BACKLOG pauses QUEUED agent tasks."""
         update_issue(issue, user, status=IssueStatus.TODO)
         task = AgentTask.objects.get(issue=issue)
         assert task.status == "QUEUED"
@@ -106,7 +106,7 @@ class TestAgentTaskLifecycleOnStatusChange:
         update_issue(issue, user, status=IssueStatus.BACKLOG)
 
         task.refresh_from_db()
-        assert task.status == "CANCELLED"
+        assert task.status == "PAUSED"
 
     @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
     def test_todo_to_backlog_blocks_if_task_assigned(self, issue, toony_agent, user):
@@ -170,16 +170,40 @@ class TestAgentTaskLifecycleOnStatusChange:
         assert issue.status == IssueStatus.BACKLOG
 
     @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
-    def test_backlog_todo_backlog_todo_creates_new_task(self, issue, toony_agent, user):
-        """Full cycle: BACKLOG→TODO→BACKLOG→TODO creates a new task each time."""
+    def test_backlog_todo_backlog_todo_reuses_paused_task(self, issue, toony_agent, user):
+        """Full cycle: BACKLOG→TODO→BACKLOG→TODO reuses the paused task."""
         update_issue(issue, user, status=IssueStatus.TODO)
         first_task = AgentTask.objects.get(issue=issue, status="QUEUED")
 
         update_issue(issue, user, status=IssueStatus.BACKLOG)
         first_task.refresh_from_db()
-        assert first_task.status == "CANCELLED"
+        assert first_task.status == "PAUSED"
 
         update_issue(issue, user, status=IssueStatus.TODO)
         queued_tasks = AgentTask.objects.filter(issue=issue, status="QUEUED")
         assert queued_tasks.count() == 1
-        assert queued_tasks.first().id != first_task.id
+        assert queued_tasks.first().id == first_task.id
+
+    @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
+    def test_reactivated_task_gets_updated_prompt(self, issue, toony_agent, user):
+        """If issue title/description changes while paused, reactivated task gets updated prompt."""
+        update_issue(issue, user, status=IssueStatus.TODO)
+        first_task = AgentTask.objects.get(issue=issue, status="QUEUED")
+        original_prompt = first_task.prompt
+
+        # Pause: TODO → BACKLOG
+        update_issue(issue, user, status=IssueStatus.BACKLOG)
+        first_task.refresh_from_db()
+        assert first_task.status == "PAUSED"
+
+        # Change title and description while in BACKLOG
+        update_issue(issue, user, title="Updated title", description="New description")
+
+        # Reactivate: BACKLOG → TODO
+        update_issue(issue, user, status=IssueStatus.TODO)
+        first_task.refresh_from_db()
+        assert first_task.status == "QUEUED"
+        assert first_task.title == "Updated title"
+        assert first_task.prompt != original_prompt
+        assert "Updated title" not in first_task.prompt  # prompt uses identifier, not title
+        assert first_task.prompt == f"Use toony skill and implement {issue.identifier}"

@@ -25,6 +25,7 @@ import type { ArtifactList } from "@/types/artifacts";
 
 const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
   QUEUED: "bg-slate-500/15 text-slate-400",
+  PAUSED: "bg-slate-500/15 text-slate-400",
   ASSIGNED: "bg-blue-500/15 text-blue-400",
   RUNNING: "bg-amber-500/15 text-amber-400",
   WAITING_FOR_ANSWER: "bg-purple-500/15 text-purple-400",
@@ -35,6 +36,7 @@ const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
 
 const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
+  PAUSED: "Paused",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
   WAITING_FOR_ANSWER: "Waiting for Answer",

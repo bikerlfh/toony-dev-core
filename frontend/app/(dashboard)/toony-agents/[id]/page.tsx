@@ -29,6 +29,7 @@ const AGENT_STATUS_STYLES: Record<ToonyAgentStatus, { dot: string; border: strin
 
 const TASK_STATUS_STYLES: Record<AgentTaskStatus, { dot: string; text: string; bg: string }> = {
   QUEUED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
+  PAUSED: { dot: "bg-slate-500", text: "text-slate-400", bg: "bg-slate-500/15" },
   ASSIGNED: { dot: "bg-blue-400", text: "text-blue-400", bg: "bg-blue-500/15" },
   RUNNING: { dot: "bg-amber-400", text: "text-amber-400", bg: "bg-amber-500/15" },
   WAITING_FOR_ANSWER: { dot: "bg-purple-400", text: "text-purple-400", bg: "bg-purple-500/15" },
@@ -39,6 +40,7 @@ const TASK_STATUS_STYLES: Record<AgentTaskStatus, { dot: string; text: string; b
 
 const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
+  PAUSED: "Paused",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
   WAITING_FOR_ANSWER: "Waiting",
