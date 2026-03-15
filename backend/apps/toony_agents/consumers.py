@@ -67,20 +67,10 @@ def _update_task_status(task_id, new_status, **kwargs):
     else:
         AgentTask.objects.filter(id=task_id).update(**updates)
 
-    # Send notifications for terminal statuses
-    if new_status in (AgentTaskStatus.COMPLETED, AgentTaskStatus.FAILED):
-        from notifications.services import notify
-
-        task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
-        event = "agent_task.completed" if new_status == AgentTaskStatus.COMPLETED else "agent_task.failed"
-        notify(event, {"task": task})
-
 
 @database_sync_to_async
 def _fail_active_tasks(agent_id):
     """Mark all active tasks for an agent as FAILED. Returns list of (task_id, previous_status)."""
-    from notifications.services import notify
-
     active_statuses = [
         AgentTaskStatus.ASSIGNED,
         AgentTaskStatus.RUNNING,
@@ -98,9 +88,59 @@ def _fail_active_tasks(agent_id):
             error=f"Agent disconnected (task was {prev_status})",
             completed_at=timezone.now(),
         )
-        task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
-        notify("agent_task.failed", {"task": task})
     return tasks
+
+
+@database_sync_to_async
+def _create_task_notification(task_id, event_type):
+    """Create notification in DB and return serialized data for broadcast.
+
+    Returns (group_name, serialized_data) or None if no notification created.
+    """
+    from notifications.models import Notification
+    from notifications.registry import get_handler
+    from notifications.serializers.output import NotificationSerializer
+
+    handler = get_handler(event_type)
+    if handler is None:
+        return None
+
+    task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
+    notifications_data = handler({"task": task})
+    if not notifications_data:
+        return None
+
+    notifications = Notification.objects.bulk_create(
+        [Notification(**nd.to_dict()) for nd in notifications_data]
+    )
+
+    # Return broadcast info to be sent from async context
+    results = []
+    for notification in notifications:
+        results.append((
+            f"user_{notification.recipient_id}",
+            NotificationSerializer(notification).data,
+        ))
+    return results
+
+
+async def _send_task_notification(task_id, event_type):
+    """Create notification in DB and broadcast via channel layer (async-safe)."""
+    from channels.layers import get_channel_layer
+
+    results = await _create_task_notification(task_id, event_type)
+    if not results:
+        return
+
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+
+    for group_name, data in results:
+        await channel_layer.group_send(
+            group_name,
+            {"type": "notification_created", "data": data},
+        )
 
 
 @database_sync_to_async
@@ -283,6 +323,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                         },
                     },
                 )
+                await _send_task_notification(str(task_id), "agent_task.failed")
 
             await _set_agent_status(self.agent_id, ToonyAgentStatus.OFFLINE)
             await self.channel_layer.group_discard(
@@ -462,6 +503,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             if session_id:
                 await _update_task_session_id(task_id, session_id)
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
+            await _send_task_notification(task_id, "agent_task.completed")
             status_data = {"task_id": task_id, "status": "COMPLETED"}
             if session_id:
                 status_data["session_id"] = session_id
@@ -490,6 +532,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 toony_agent_id=self.agent_id,
             )
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
+            await _send_task_notification(task_id, "agent_task.failed")
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
