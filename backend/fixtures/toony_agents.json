@@ -1,0 +1,28 @@
+[
+{
+  "model": "toony_agents.toonyagent",
+  "pk": "81ee270a-8f1f-4368-b019-92764e8a9f45",
+  "fields": {
+    "created_at": "2026-03-05T13:49:49.723Z",
+    "updated_at": "2026-03-11T05:18:08.510Z",
+    "name": "toonybot1",
+    "slug": "toonybot1",
+    "status": "OFFLINE",
+    "last_heartbeat": "2026-03-15T06:30:49.249Z",
+    "last_connected_at": "2026-03-15T15:58:53.973Z",
+    "metadata": {
+      "pid": 6761,
+      "hostname": "Luiss-MacBook-Pro.local",
+      "platform": "macOS-26.3.1-arm64-arm-64bit",
+      "runner_version": "0.3.0",
+      "max_task_timeout": 7200,
+      "max_concurrent_tasks": 50
+    },
+    "registered_by": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "organizations": [
+      "fdced3fe-d7d5-4cdc-9373-2c9c6f75946a",
+      "1420a00a-88d1-47b5-a069-a49664bcde57"
+    ]
+  }
+}
+]

@@ -67,6 +67,17 @@ collectstatic: ## Collect static files
 dumpdata:
 	$(MANAGE) dumpdata $(app) --indent 2 --output fixtures/$(outname).json
 
+dumpdata-all:
+	$(MANAGE) dumpdata accounts --indent 2 --output fixtures/accounts.json
+	$(MANAGE) dumpdata organizations --indent 2 --output fixtures/organizations.json
+	$(MANAGE) dumpdata projects --indent 2 --output fixtures/projects.json
+	$(MANAGE) dumpdata workspace --indent 2 --output fixtures/workspace.json
+	$(MANAGE) dumpdata agents --indent 2 --output fixtures/agents.json
+	$(MANAGE) dumpdata workflows --indent 2 --output fixtures/workflows.json
+	$(MANAGE) dumpdata toony_agents.toonyagent --indent 2 --output fixtures/toony_agents.json
+	$(MANAGE) dumpdata importers --indent 2 --output fixtures/importers.json
+	$(MANAGE) dumpdata common --indent 2 --output fixtures/common.json
+
 ## Load fixture: make loaddata file="all" (loads fixtures/<file>.json)
 loaddata:
 	$(MANAGE) loaddata fixtures/$(file).json

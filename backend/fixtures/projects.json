@@ -1,0 +1,1226 @@
+[
+{
+  "model": "projects.issueactivity",
+  "pk": "0945fcf9-2773-44a3-ac0a-8c3fa29c4df1",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T21:50:39.945Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "0af33942-1494-4776-8570-83847b91c315",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T06:30:11.055Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "0b4ddaa7-cffe-42aa-b24b-f9782c1291a4",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-15T02:07:49.548Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "172230fd-51b9-47df-a714-c58d3e1eca6e",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-06T20:07:29.043Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "1b1dd64a-f238-4287-b9f5-8cb8409a11a6",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "created",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-05T23:59:37.712Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "1b5e4ccf-90fa-4917-8b35-e4b9ae03e617",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "description",
+    "old_value": "test",
+    "new_value": "use the skill /interface-design to redisign the organization creation page in the frontend",
+    "created_at": "2026-03-05T03:18:51.910Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "1daf3a63-3f18-4c5a-866e-1e3267348fd8",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "DONE",
+    "new_value": "IN_REVIEW",
+    "created_at": "2026-03-11T04:10:13.246Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "201fcad0-b794-4e0f-b77a-17e0d5ee0ad7",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T05:51:12.546Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "20c471b6-971a-449a-ac95-f85294569083",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-06T20:07:30.938Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "20ff5e85-331f-4a33-a355-50e874f28e63",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "title",
+    "old_value": "Send commands from backend to Tonny-agent",
+    "new_value": "Send commands to Tonny-agent",
+    "created_at": "2026-03-05T23:59:56.094Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "2d183c81-492b-4ecf-b1f0-ce7906123cfb",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T02:53:24.238Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "2dad876b-a081-4653-8d1a-7d69dc0315ac",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "created",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-05T03:17:40.455Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "3036b8ea-8ae1-45a9-a7ce-657067fd1467",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_REVIEW",
+    "new_value": "IN_PROGRESS",
+    "created_at": "2026-03-11T02:53:15.042Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "30bbc4ad-3cea-4486-8304-f5cefd52ab9c",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "IN_PROGRESS",
+    "created_at": "2026-03-06T20:07:44.597Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "3133947f-e5e6-43d9-8647-6856fff1dc8c",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-07T06:09:23.616Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "31b59d60-49e1-46bc-affa-392155469257",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-15T03:53:18.828Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "31bc7124-7041-47b4-bc80-5d5d30f43223",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T03:16:23.619Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "354a7f4d-dfb4-4059-8956-29e57ec62023",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-06T20:07:34.521Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "39b6000c-5168-4857-bffe-12da89b607d2",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "milestone",
+    "old_value": "",
+    "new_value": "beta",
+    "created_at": "2026-03-11T03:31:00.755Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "44ed7ee9-7ed2-4141-8238-45609b761c73",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-15T03:07:34.843Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "44f1f210-a52f-41fb-948e-0909efab6e45",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T06:28:55.799Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "49320b4b-635a-4960-9d58-1bc2dc26b23a",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-05T03:22:14.455Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "4abe43f0-314a-408f-8752-19da417c98e7",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_PROGRESS",
+    "new_value": "IN_REVIEW",
+    "created_at": "2026-03-11T04:06:27.070Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "4c1fa76a-6e22-4aaa-a17d-1c6be7b1d7ef",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T06:20:27.476Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "518aa3ec-9517-453c-9ad9-2806582f7c6c",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "title",
+    "old_value": "issue 1",
+    "new_value": "Redesign organization view",
+    "created_at": "2026-03-05T03:18:16.424Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "5287fa8c-e668-4f55-b0c6-5ab4cf021f45",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_PROGRESS",
+    "new_value": "IN_REVIEW",
+    "created_at": "2026-03-11T02:53:00.467Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "54d662cc-9a5e-43b0-8031-b58989aadb74",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T03:06:03.088Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "5bf56f36-4eaf-4356-8245-92c2d2b33583",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "description",
+    "old_value": "Run tests and create a summary report.",
+    "new_value": "change status of the toony issue \"TODC-3\" to in_progress. Run tests and create a summary report. after that change the issue to compleated",
+    "created_at": "2026-03-11T06:30:06.834Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "5ca75bba-4dfd-4cc1-87fe-f3079d9bfc10",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T21:50:55.645Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "63b8f957-6f97-4092-9b96-58368e11b2b1",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "assignee",
+    "old_value": "",
+    "new_value": "lhenriquez",
+    "created_at": "2026-03-15T03:33:13.992Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "66559ab0-f272-451a-bc05-750206796751",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-05T14:11:48.058Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "6cca99c4-3009-48a6-8781-0ec29b6cd4c6",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T02:53:30.084Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "6e11a92d-b12a-4b59-a35b-b934b9a797e4",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "DONE",
+    "created_at": "2026-03-14T02:03:11.059Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "6f813b9b-cfdf-41d6-9444-d0b15ab023a0",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "DONE",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-14T02:59:24.601Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "6fd8a335-af29-4135-8727-1509d6b0fdc1",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T07:05:57.497Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "701c5bae-9d90-4fd3-a0ef-afecf45b5084",
+  "fields": {
+    "issue": "ddf1e67a-fd33-4152-82fb-1451d03d822b",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-15T05:32:59.780Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "70de971f-e4e7-4c42-b6ab-d9cd93966beb",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-13T21:50:13.472Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "71b7f405-b685-4f6c-a922-3302a8f0291e",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-14T22:31:49.042Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "75d9a502-fbf6-4250-acae-8c2ed804474f",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T03:06:04.273Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "7c3f5ba7-4d6e-424e-9f62-cddba5fe840f",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "IN_PROGRESS",
+    "created_at": "2026-03-11T04:06:19.749Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "7c9ecee6-e171-43fa-ad7f-ff0ed8807331",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "created",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-11T06:28:16.734Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "83339c20-8fa3-47e2-9814-add50fd74e58",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T03:16:24.275Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "8554a93e-1d75-4557-973a-ac7880351f83",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-07T06:09:21.711Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "856a3a85-4ebb-44e9-9c95-533e02a60a22",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "DONE",
+    "new_value": "IN_REVIEW",
+    "created_at": "2026-03-11T04:05:55.729Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "89a89a57-4612-48bd-aeac-75b0e6669f60",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "commented",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T02:02:25.788Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "8d6545d4-ad23-46a9-ab2b-b4d0f073b7d1",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "cycle",
+    "old_value": "",
+    "new_value": "beta features (#1)",
+    "created_at": "2026-03-11T03:32:02.471Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "8d76f317-2496-4104-bcd8-7afecb28e675",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "priority",
+    "old_value": "NONE",
+    "new_value": "URGENT",
+    "created_at": "2026-03-05T03:18:59.647Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "947ca83d-ee9c-47e3-b529-f0909109d10f",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "description",
+    "old_value": "change status of the toony issue \"TODC-3\" to in_progress. Run tests and create a summary report. after that change the issue to compleated",
+    "new_value": "Change status of the toony issue \"TODC-3\" to in_progress. Run tests and create a summary report. after that change the issue to compleated",
+    "created_at": "2026-03-14T21:51:40.950Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "9e2e8e37-af62-409e-8b4b-be8e47d4aaaa",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T06:19:59.888Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "a5273641-1fe6-434a-81b4-b8f2ec1c2f46",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T04:06:06.674Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "a5cbb140-a8fd-49ac-9364-edd7c18ea072",
+  "fields": {
+    "issue": "ddf1e67a-fd33-4152-82fb-1451d03d822b",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "created",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-15T05:32:56.486Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "ae96ae23-2c49-49d0-862b-163fe23892e3",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-15T02:06:00.499Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "ae9de655-deb1-4c0d-aa50-da2a34586ed7",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_PROGRESS",
+    "new_value": "IN_REVIEW",
+    "created_at": "2026-03-11T02:53:34.319Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "afa48bc8-f843-412e-bc32-f202c1545d11",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "title",
+    "old_value": "run tests",
+    "new_value": "Run Tests",
+    "created_at": "2026-03-14T21:51:31.198Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "b40ab475-ab2e-48b9-b049-7876699adeb7",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-14T02:00:37.611Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "b68ead7d-761c-48c7-82bb-6af5f0eb11d4",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T06:28:20.036Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "b697e527-2772-4cf2-b91c-f1dba398bf72",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T03:43:49.336Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "bc357ac3-4f66-49d9-bdd4-48cffb9345c6",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T02:52:47.843Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "bd327746-a9ca-4341-b217-8eecee433cee",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_REVIEW",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-15T02:07:36.895Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "bf0c1689-08d1-47fd-a9e4-58cf0b75b589",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "description",
+    "old_value": "use the skill /interface-design to redisign the organization creation page in the frontend",
+    "new_value": "Use the skill /interface-design to redisign the organization creation page in the frontend.",
+    "created_at": "2026-03-05T03:18:57.684Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "c224f6e0-c466-4065-b35e-bae607e96452",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_REVIEW",
+    "new_value": "DONE",
+    "created_at": "2026-03-11T04:06:29.666Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "cb689c15-ead7-4471-8fd1-9e25eaef0710",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-15T03:07:38.127Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "cec6cc07-103c-4b00-bd11-10e58532641e",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T21:50:46.951Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "cf9888b3-3915-4c01-839f-ab2d972bd3fd",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_PROGRESS",
+    "new_value": "TODO",
+    "created_at": "2026-03-11T04:10:11.967Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "d3e14a64-f706-4ef3-b825-9494bc887562",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "created",
+    "field_changed": "",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T22:29:53.859Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "d723c40b-a0a6-4ed2-838c-bd46cc43224c",
+  "fields": {
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "labels",
+    "old_value": "",
+    "new_value": "",
+    "created_at": "2026-03-14T21:50:39.636Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "da186299-1890-4169-929a-262e148ad8c8",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_REVIEW",
+    "new_value": "IN_PROGRESS",
+    "created_at": "2026-03-11T03:06:44.412Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "daf1eada-cef4-48fa-935a-0f56b5936845",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T02:52:46.861Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "df3e1221-c6e8-4710-ae02-2f7528672bd0",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "DONE",
+    "created_at": "2026-03-11T04:05:54.580Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "f2edc2f7-e38c-4dfd-a566-3d814ae8351c",
+  "fields": {
+    "issue": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "IN_REVIEW",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T04:06:04.982Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "f672e005-13b1-45d9-91c9-267ca6936ce9",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T05:50:59.255Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "f8de1d18-243e-44dd-af40-6896d15f304f",
+  "fields": {
+    "issue": "0d210be7-7156-48e2-8746-f9eedf803d03",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "BACKLOG",
+    "new_value": "TODO",
+    "created_at": "2026-03-15T02:07:50.719Z"
+  }
+},
+{
+  "model": "projects.issueactivity",
+  "pk": "fe76ff49-203d-4082-bc0f-ad550e642fca",
+  "fields": {
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "action": "updated",
+    "field_changed": "status",
+    "old_value": "TODO",
+    "new_value": "BACKLOG",
+    "created_at": "2026-03-11T06:20:36.002Z"
+  }
+},
+{
+  "model": "projects.issueartifact",
+  "pk": "23da91b3-e261-4dab-9ac5-4939807d186c",
+  "fields": {
+    "created_at": "2026-03-07T04:10:46.729Z",
+    "updated_at": "2026-03-07T06:13:05.050Z",
+    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+    "agent_task": "46e5d6e5-7ae5-4b41-8c99-0908411d3e8a",
+    "title": "test of artifact",
+    "artifact_type": "OTHER",
+    "content": "blablabla",
+    "status": "IN_REVIEW",
+    "session_id": "adasdads",
+    "requires_approval": true
+  }
+},
+{
+  "model": "projects.issueartifact",
+  "pk": "6d2f384e-cf31-4f3f-b510-5e8f6b84582f",
+  "fields": {
+    "created_at": "2026-03-14T03:00:25.930Z",
+    "updated_at": "2026-03-14T03:03:25.681Z",
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "agent_task": null,
+    "title": "Artifact de prueba",
+    "artifact_type": "OTHER",
+    "content": "# Artifact de prueba\n\nEste es un artifact creado como prueba en la tarea TODC-3.\n\n## Contenido\n\n- Item 1: Verificación de creación de artifacts\n- Item 2: Validación del flujo MCP\n- Item 3: Todo funcionando correctamente",
+    "status": "APPROVED",
+    "session_id": "",
+    "requires_approval": false
+  }
+},
+{
+  "model": "projects.issuecomment",
+  "pk": "690533bc-b892-4f72-8464-a542aeba5610",
+  "fields": {
+    "created_at": "2026-03-14T02:02:25.786Z",
+    "updated_at": "2026-03-14T02:02:25.786Z",
+    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+    "author": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "body": "# Test Run Summary Report\n\n**Date:** 2026-03-13\n**Environment:** Docker (Python 3.12.13, Django 5.1.6, pytest 8.3.4)\n\n## Result: ✅ ALL PASSED\n\n| Metric | Value |\n|--------|-------|\n| Total tests | 206 |\n| Passed | **206** |\n| Failed | 0 |\n| Errors | 0 |\n| Warnings | 212 (non-critical) |\n| Duration | 28.34s |\n\n## Test Suites\n\n| File | Tests | Status |\n|------|-------|--------|\n| test_accounts.py | 15 | PASSED |\n| test_agent_questions.py | 19 | PASSED |\n| test_api_keys.py | 12 | PASSED |\n| test_artifacts.py | 9 | PASSED |\n| test_auto_agent_task.py | 13 | PASSED |\n| test_documents.py | 12 | PASSED |\n| test_issue_full_detail.py | 12 | PASSED |\n| test_issues.py | 19 | PASSED |\n| test_organizations.py | 14 | PASSED |\n| test_toony_agents.py | 26 | PASSED |\n| test_user_issues.py | 6 | PASSED |\n| test_workflows.py | 40 | PASSED |\n| test_workspace.py | 11 | PASSED |\n\n## Notes\n\nAll 212 warnings are non-critical `DeprecationWarning`s from `factory_boy` (`UserFactory._after_postgeneration`) — no action required.",
+    "edited_at": null
+  }
+},
+{
+  "model": "projects.cycle",
+  "pk": "d6e06d49-92c0-45a5-b02e-08d5e3b9eafc",
+  "fields": {
+    "created_at": "2026-03-11T03:31:55.017Z",
+    "updated_at": "2026-03-11T03:31:57.162Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "name": "beta features",
+    "number": 1,
+    "start_date": "2026-03-11",
+    "end_date": "2026-03-15",
+    "status": "ACTIVE"
+  }
+},
+{
+  "model": "projects.issue",
+  "pk": "0d210be7-7156-48e2-8746-f9eedf803d03",
+  "fields": {
+    "created_at": "2026-03-14T22:29:53.857Z",
+    "updated_at": "2026-03-15T03:07:38.126Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "milestone": null,
+    "cycle": null,
+    "parent": null,
+    "identifier": "TODC-4",
+    "title": "test4",
+    "description": "this is another tests",
+    "status": "TODO",
+    "priority": "NONE",
+    "assignee": null,
+    "reporter": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "estimate": null,
+    "due_date": null,
+    "sort_order": 0,
+    "external_tracker_name": "",
+    "external_tracker_url": "",
+    "external_tracker_id": "",
+    "labels": [
+      "3e4dd0d0-ec00-44fe-86a4-a1b878c0396b"
+    ]
+  }
+},
+{
+  "model": "projects.issue",
+  "pk": "76698713-8b2b-4c1b-9b24-1c86e77cbe7d",
+  "fields": {
+    "created_at": "2026-03-05T23:59:37.706Z",
+    "updated_at": "2026-03-15T02:07:36.893Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "milestone": "6ebe6c6f-f5d6-4342-9804-b6122aabf6cb",
+    "cycle": "d6e06d49-92c0-45a5-b02e-08d5e3b9eafc",
+    "parent": null,
+    "identifier": "TODC-2",
+    "title": "Send commands to Tonny-agent",
+    "description": "The main point of this feature is that the backend will send commands to Tonny agents and it will execute.\r\n\r\nNote: This might be a future feature.",
+    "status": "BACKLOG",
+    "priority": "LOW",
+    "assignee": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "reporter": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "estimate": null,
+    "due_date": null,
+    "sort_order": 0,
+    "external_tracker_name": "",
+    "external_tracker_url": "",
+    "external_tracker_id": "",
+    "labels": [
+      "6f149734-e665-4c86-a1af-0dbeff45192b"
+    ]
+  }
+},
+{
+  "model": "projects.issue",
+  "pk": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
+  "fields": {
+    "created_at": "2026-03-11T06:28:16.733Z",
+    "updated_at": "2026-03-15T03:53:18.826Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "milestone": null,
+    "cycle": null,
+    "parent": null,
+    "identifier": "TODC-3",
+    "title": "Run Tests",
+    "description": "Change status of the toony issue \"TODC-3\" to in_progress. Run tests and create a summary report. after that change the issue to compleated",
+    "status": "TODO",
+    "priority": "URGENT",
+    "assignee": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "reporter": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "estimate": null,
+    "due_date": null,
+    "sort_order": 0,
+    "external_tracker_name": "",
+    "external_tracker_url": "",
+    "external_tracker_id": "",
+    "labels": [
+      "d3bdba0c-33d6-4502-bd13-ec6892bb915d",
+      "6f149734-e665-4c86-a1af-0dbeff45192b"
+    ]
+  }
+},
+{
+  "model": "projects.issue",
+  "pk": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
+  "fields": {
+    "created_at": "2026-03-05T03:17:40.454Z",
+    "updated_at": "2026-03-13T21:50:13.471Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "milestone": null,
+    "cycle": null,
+    "parent": null,
+    "identifier": "TODC-1",
+    "title": "Redesign organization view",
+    "description": "Use the skill /interface-design to redisign the organization creation page in the frontend.",
+    "status": "TODO",
+    "priority": "URGENT",
+    "assignee": null,
+    "reporter": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "estimate": null,
+    "due_date": null,
+    "sort_order": 0,
+    "external_tracker_name": "",
+    "external_tracker_url": "",
+    "external_tracker_id": "",
+    "labels": [
+      "3e4dd0d0-ec00-44fe-86a4-a1b878c0396b"
+    ]
+  }
+},
+{
+  "model": "projects.issue",
+  "pk": "ddf1e67a-fd33-4152-82fb-1451d03d822b",
+  "fields": {
+    "created_at": "2026-03-15T05:32:56.485Z",
+    "updated_at": "2026-03-15T05:32:59.779Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "milestone": null,
+    "cycle": null,
+    "parent": null,
+    "identifier": "TODC-5",
+    "title": "test7",
+    "description": "tell me a joke",
+    "status": "TODO",
+    "priority": "NONE",
+    "assignee": null,
+    "reporter": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "estimate": null,
+    "due_date": null,
+    "sort_order": 0,
+    "external_tracker_name": "",
+    "external_tracker_url": "",
+    "external_tracker_id": "",
+    "labels": []
+  }
+},
+{
+  "model": "projects.milestone",
+  "pk": "6ebe6c6f-f5d6-4342-9804-b6122aabf6cb",
+  "fields": {
+    "created_at": "2026-03-11T03:30:45.340Z",
+    "updated_at": "2026-03-11T03:30:45.340Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "name": "beta",
+    "description": "deploy beta version",
+    "target_date": "2026-03-15",
+    "status": "PLANNED",
+    "sort_order": 0
+  }
+},
+{
+  "model": "projects.project",
+  "pk": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+  "fields": {
+    "created_at": "2026-03-05T03:16:46.016Z",
+    "updated_at": "2026-03-14T21:44:07.070Z",
+    "organization": "1420a00a-88d1-47b5-a069-a49664bcde57",
+    "name": "Toony Dev Core",
+    "slug": "toony-dev-core",
+    "description": "Toony Dev Core is the central software project management platform with integrated AI agent capabilities. It enables development teams to organize their work through organizations, projects, issues, milestones, and cycles, with granular role-based access control (Owner, Admin, Manager, Member, Viewer) and real-time collaboration via WebSockets.\r\n                                                                                                                                                                                                             \r\nStack: Django 5 + DRF (backend), Next.js 15 + React 19 (frontend), PostgreSQL, Redis, Docker Compose.\r\n                                                                                                                                                                                                             \r\n  Key features:                                                                                                                                                                                              \r\n  - Multi-organization management with teams, labels, and cross-org projects\r\n  - Issues with statuses, priorities, assignments, comments, and activity tracking\r\n  - Milestones and cycles for sprint planning\r\n  - AI Studio: configurable SubAgents and Skills per organization\r\n  - Toony Agents: autonomous agents with tasks, events, and API keys\r\n  - Importers from Linear, Jira, Trello, Asana, and GitHub Projects\r\n  - Repository integrations (GitHub, GitLab, Bitbucket) and external tool connections\r\n  - JWT authentication with silent refresh and hierarchical roles\r\n  - Real-time updates per project and agent",
+    "short_summary": "AI workflow building",
+    "status": "IN_PROGRESS",
+    "priority": "URGENT",
+    "lead": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "start_date": "2026-02-27",
+    "target_date": "2026-03-31",
+    "completed_at": null,
+    "sort_order": 0,
+    "icon": "🤖",
+    "color": ""
+  }
+},
+{
+  "model": "projects.projectmembership",
+  "pk": "38745144-17b6-4de7-9e4e-96d66aabc70c",
+  "fields": {
+    "created_at": "2026-03-05T03:16:46.021Z",
+    "updated_at": "2026-03-11T06:19:42.704Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
+    "role": "LEAD",
+    "joined_at": "2026-03-05T03:16:46.021Z"
+  }
+},
+{
+  "model": "projects.projectsettings",
+  "pk": "9c63b1d8-f413-4c34-aed2-3216cb73e7d5",
+  "fields": {
+    "created_at": "2026-03-05T03:16:46.018Z",
+    "updated_at": "2026-03-13T22:02:04.682Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "repository_url": "https://github.com/bikerlfh/toony-dev-core",
+    "repository_credential": null,
+    "default_branch": "main",
+    "branch_naming_convention": "{type}/{issue_prefix}_{short_desc}",
+    "required_reviewers_count": 0,
+    "auto_close_completed_issues": false,
+    "issue_prefix": "TODC",
+    "estimation_method": "STORY_POINTS",
+    "auto_task_prompt_template": "{issue_description}"
+  }
+},
+{
+  "model": "projects.projectresource",
+  "pk": "6a949496-3a69-4719-91a1-ecbe7df83e71",
+  "fields": {
+    "created_at": "2026-03-05T14:37:36.739Z",
+    "updated_at": "2026-03-05T14:38:02.956Z",
+    "project": "78c6c54f-c31d-498c-9f7f-853787e8987b",
+    "title": "API doc",
+    "url": "http://localhost:8000/api/docs",
+    "type": "DOCUMENTATION"
+  }
+}
+]

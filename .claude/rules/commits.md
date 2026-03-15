@@ -11,9 +11,6 @@
 
   - Fix search param: send ?q= instead of ?search= (projects, issues, labels)
   - Fix update_issue: use PUT instead of PATCH to match backend view
-  - Make artifact agent_task_id and session_id optional in backend
-  - Remove 8 subagent/skill MCP tools (agents.py deleted)
-  - Optimize get_my_issues to use GET /issues/ endpoint (1 call vs N+2)
   - Update README, skill docs, and frontend for nullable agent_task
   ```
 - Valid types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci`, `style`, `perf`, `build`.
