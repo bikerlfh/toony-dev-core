@@ -23,7 +23,7 @@ check_command claude
 # --- Check existing installation ---
 
 if [ -d "$INSTALL_DIR" ]; then
-    read -rp "$INSTALL_DIR already exists. Overwrite? [y/N] " confirm
+    read -rp "$INSTALL_DIR already exists. Overwrite? [y/N] " confirm </dev/tty
     [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
     rm -rf "$INSTALL_DIR"
 fi
@@ -45,10 +45,10 @@ echo "Installed to $INSTALL_DIR"
 
 # --- Prompt for configuration ---
 
-read -rp "TOONY_API_URL [$DEFAULT_API_URL]: " api_url
+read -rp "TOONY_API_URL [$DEFAULT_API_URL]: " api_url </dev/tty
 api_url="${api_url:-$DEFAULT_API_URL}"
 
-read -rp "TOONY_API_KEY (required): " api_key
+read -rp "TOONY_API_KEY (required): " api_key </dev/tty
 [ -z "$api_key" ] && error "TOONY_API_KEY is required."
 
 # --- Register MCP in Claude Code ---
