@@ -44,7 +44,7 @@ class TestEnsureMcpInstalled:
                 call_kwargs = mock_run.call_args
                 env = call_kwargs.kwargs["env"]
                 assert env["TOONY_API_URL"] == "http://localhost:8000/api"
-                assert env["TOONY_API_KEY"] == "tok_test_key"
+                assert "TOONY_API_KEY" not in env
 
     def test_exits_on_install_failure(self):
         config = RunnerConfig(

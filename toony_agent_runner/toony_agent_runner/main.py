@@ -510,7 +510,6 @@ def _ensure_mcp_installed(config: RunnerConfig) -> None:
 
     env = os.environ.copy()
     env["TOONY_API_URL"] = api_url
-    env["TOONY_API_KEY"] = config.api_key
 
     result = subprocess.run(
         ["bash", "-c", f"curl -fsSL {MCP_INSTALL_URL} | bash"],

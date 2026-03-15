@@ -20,23 +20,12 @@ check_command git
 check_command uv
 check_command claude
 
-# --- Non-interactive mode if env vars are set ---
-
-SILENT=false
-if [ -n "${TOONY_API_KEY:-}" ]; then
-    SILENT=true
-fi
-
 # --- Check existing installation ---
 
 if [ -d "$INSTALL_DIR" ]; then
-    if [ "$SILENT" = true ]; then
-        rm -rf "$INSTALL_DIR"
-    else
-        read -rp "$INSTALL_DIR already exists. Overwrite? [y/N] " confirm </dev/tty
-        [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
-        rm -rf "$INSTALL_DIR"
-    fi
+    read -rp "$INSTALL_DIR already exists. Overwrite? [y/N] " confirm </dev/tty
+    [[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+    rm -rf "$INSTALL_DIR"
 fi
 
 # --- Clone repo ---
@@ -55,17 +44,16 @@ rm -rf "$INSTALL_DIR/.git"
 echo "Installed to $INSTALL_DIR"
 
 # --- Configuration ---
+# Use env vars as defaults if set; always prompt for API key.
 
-if [ "$SILENT" = true ]; then
-    api_url="${TOONY_API_URL:-$DEFAULT_API_URL}"
-    api_key="$TOONY_API_KEY"
-else
+api_url="${TOONY_API_URL:-}"
+if [ -z "$api_url" ]; then
     read -rp "TOONY_API_URL [$DEFAULT_API_URL]: " api_url </dev/tty
     api_url="${api_url:-$DEFAULT_API_URL}"
-
-    read -rp "TOONY_API_KEY (required): " api_key </dev/tty
-    [ -z "$api_key" ] && error "TOONY_API_KEY is required."
 fi
+
+read -rp "TOONY_API_KEY (required): " api_key </dev/tty
+[ -z "$api_key" ] && error "TOONY_API_KEY is required."
 
 # --- Register MCP in Claude Code ---
 
