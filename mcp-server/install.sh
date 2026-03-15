@@ -54,9 +54,10 @@ read -rp "TOONY_API_KEY (required): " api_key
 # --- Register MCP in Claude Code ---
 
 echo "Registering MCP server..."
-claude mcp add "$MCP_NAME" --scope user -- uv --directory "$INSTALL_DIR" run toony-mcp
-claude mcp add-env "$MCP_NAME" TOONY_API_URL "$api_url"
-claude mcp add-env "$MCP_NAME" TOONY_API_KEY "$api_key"
+claude mcp add "$MCP_NAME" --scope user \
+    -e TOONY_API_URL="$api_url" \
+    -e TOONY_API_KEY="$api_key" \
+    -- uv --directory "$INSTALL_DIR" run toony-mcp
 
 echo ""
 echo "Done! Toony MCP is now available globally in Claude Code."
