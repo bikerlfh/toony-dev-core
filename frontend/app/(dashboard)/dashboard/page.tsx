@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 import type { ToonyAgentList, AgentTaskList } from "@/types/toony-agents";
 import type { WorkflowList } from "@/types/workflows";
-import type { ArtifactList, ArtifactType } from "@/types/artifacts";
+import type { ArtifactList, ArtifactStatus } from "@/types/artifacts";
 import { useAuth } from "@/contexts/auth-context";
 import { listAllIssues } from "@/lib/api/issues";
 import { listProjects } from "@/lib/api/projects";
@@ -50,7 +50,7 @@ const AGENT_STATUS_DOT: Record<string, string> = {
 
 type IssueFilter = "ALL" | "IN_PROGRESS" | "TODO" | "IN_REVIEW" | "BACKLOG";
 type TaskFilter = "ALL" | "RUNNING" | "QUEUED" | "COMPLETED" | "FAILED";
-type ArtifactFilter = "ALL" | ArtifactType;
+type ArtifactFilter = "ALL" | ArtifactStatus;
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -180,7 +180,7 @@ export default function DashboardPage() {
     const filtered =
       artifactFilter === "ALL"
         ? artifacts
-        : artifacts.filter((a) => a.artifact_type === artifactFilter);
+        : artifacts.filter((a) => a.status === artifactFilter);
     return [...filtered]
       .sort(
         (a, b) =>
@@ -541,11 +541,11 @@ export default function DashboardPage() {
               {(
                 [
                   ["ALL", "All"],
-                  ["PLAN", "Plan"],
-                  ["DESIGN_DOC", "Design"],
-                  ["TECHNICAL_SPEC", "Spec"],
-                  ["TEST_PLAN", "Test"],
-                  ["OTHER", "Other"],
+                  ["DRAFT", "Draft"],
+                  ["IN_REVIEW", "In Review"],
+                  ["APPROVED", "Approved"],
+                  ["REJECTED", "Rejected"],
+                  ["PENDING_APPROVAL", "Pending"],
                 ] as [ArtifactFilter, string][]
               ).map(([value, label]) => (
                 <button
