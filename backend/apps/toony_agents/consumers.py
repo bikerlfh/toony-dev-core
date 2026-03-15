@@ -92,10 +92,13 @@ def _fail_active_tasks(agent_id):
 
 
 @database_sync_to_async
-def _create_task_notification(task_id, event_type):
-    """Create notification in DB and return serialized data for broadcast.
+def _create_and_serialize_notifications(event_type, context):
+    """Create notifications in DB and return serialized data for async broadcast.
 
-    Returns (group_name, serialized_data) or None if no notification created.
+    This runs in a sync thread (via @database_sync_to_async) to safely access
+    the ORM. The actual WebSocket broadcast must happen in the async caller.
+
+    Returns list of (group_name, serialized_data) tuples, or empty list.
     """
     from notifications.models import Notification
     from notifications.registry import get_handler
@@ -103,32 +106,27 @@ def _create_task_notification(task_id, event_type):
 
     handler = get_handler(event_type)
     if handler is None:
-        return None
+        return []
 
-    task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
-    notifications_data = handler({"task": task})
+    notifications_data = handler(context)
     if not notifications_data:
-        return None
+        return []
 
     notifications = Notification.objects.bulk_create(
         [Notification(**nd.to_dict()) for nd in notifications_data]
     )
 
-    # Return broadcast info to be sent from async context
-    results = []
-    for notification in notifications:
-        results.append((
-            f"user_{notification.recipient_id}",
-            NotificationSerializer(notification).data,
-        ))
-    return results
+    return [
+        (f"user_{n.recipient_id}", NotificationSerializer(n).data)
+        for n in notifications
+    ]
 
 
-async def _send_task_notification(task_id, event_type):
-    """Create notification in DB and broadcast via channel layer (async-safe)."""
+async def _send_notification(event_type, context):
+    """Create notifications in DB and broadcast via channel layer (async-safe)."""
     from channels.layers import get_channel_layer
 
-    results = await _create_task_notification(task_id, event_type)
+    results = await _create_and_serialize_notifications(event_type, context)
     if not results:
         return
 
@@ -141,6 +139,18 @@ async def _send_task_notification(task_id, event_type):
             group_name,
             {"type": "notification_created", "data": data},
         )
+
+
+@database_sync_to_async
+def _load_task_for_notification(task_id):
+    """Load an AgentTask with relations needed by notification handlers."""
+    return AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
+
+
+@database_sync_to_async
+def _load_agent_for_notification(agent_id):
+    """Load a ToonyAgent with relations needed by notification handlers."""
+    return ToonyAgent.objects.prefetch_related("organizations").get(id=agent_id)
 
 
 @database_sync_to_async
@@ -323,7 +333,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                         },
                     },
                 )
-                await _send_task_notification(str(task_id), "agent_task.failed")
+                await _send_notification("agent_task.failed", {"task": await _load_task_for_notification(task_id)})
 
             await _set_agent_status(self.agent_id, ToonyAgentStatus.OFFLINE)
             await self.channel_layer.group_discard(
@@ -334,6 +344,10 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {"type": "agent_status", "data": {"status": "OFFLINE"}},
+            )
+            await _send_notification(
+                "agent.disconnected",
+                {"agent": await _load_agent_for_notification(self.agent_id)},
             )
 
     async def receive_json(self, content, **kwargs):
@@ -353,6 +367,10 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                     "type": "agent_status",
                     "data": {"status": "ONLINE", "metadata": metadata},
                 },
+            )
+            await _send_notification(
+                "agent.connected",
+                {"agent": await _load_agent_for_notification(self.agent_id)},
             )
             # Send workspace config sync.
             workspace_config = await _get_workspace_config(self.agent_id)
@@ -503,7 +521,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             if session_id:
                 await _update_task_session_id(task_id, session_id)
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
-            await _send_task_notification(task_id, "agent_task.completed")
+            await _send_notification("agent_task.completed", {"task": await _load_task_for_notification(task_id)})
             status_data = {"task_id": task_id, "status": "COMPLETED"}
             if session_id:
                 status_data["session_id"] = session_id
@@ -532,7 +550,7 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 toony_agent_id=self.agent_id,
             )
             await _set_agent_status(self.agent_id, ToonyAgentStatus.ONLINE)
-            await _send_task_notification(task_id, "agent_task.failed")
+            await _send_notification("agent_task.failed", {"task": await _load_task_for_notification(task_id)})
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {

@@ -260,6 +260,23 @@ class TestAgentHandlers:
         assert result[0].body == "Connection timeout"
 
 
+    def test_agent_connected_notifies_org_admins(self, toony_agent, user, organization):
+        result = notify("agent.connected", {"agent": toony_agent})
+
+        assert len(result) == 1
+        assert result[0].recipient == user  # user is OWNER of org
+        assert result[0].event_type == "agent.connected"
+        assert toony_agent.name in result[0].title
+
+    def test_agent_disconnected_notifies_org_admins(self, toony_agent, user, organization):
+        result = notify("agent.disconnected", {"agent": toony_agent})
+
+        assert len(result) == 1
+        assert result[0].recipient == user
+        assert result[0].event_type == "agent.disconnected"
+        assert toony_agent.name in result[0].title
+
+
 class TestArtifactHandlers:
     def test_created_notifies_issue_participants(self, artifact, issue, user, other_user):
         issue.assignee = other_user
