@@ -19,8 +19,10 @@ import logging
 import os
 import platform
 import signal
+import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 from . import __version__
 from .config import ClaudeConfig, ReconnectConfig, RunnerConfig, load_config, save_config
@@ -475,10 +477,51 @@ def cli() -> None:
         logger.error("api_key is required in config")
         sys.exit(1)
 
+    _ensure_mcp_installed(config)
+
     try:
         asyncio.run(run(config, args.config))
     except KeyboardInterrupt:
         pass
+
+
+MCP_INSTALL_DIR = Path.home() / ".toony" / "mcp-server"
+MCP_INSTALL_URL = "https://raw.githubusercontent.com/bikerlfh/toony-mcp/main/install.sh"
+
+
+def _derive_api_url(backend_url: str) -> str:
+    """Derive the HTTP API URL from the WebSocket backend URL.
+
+    ws://host:port/ws/... -> http://host:port/api
+    wss://host:port/ws/... -> https://host:port/api
+    """
+    parsed = urlparse(backend_url)
+    scheme = "https" if parsed.scheme == "wss" else "http"
+    return f"{scheme}://{parsed.hostname}:{parsed.port}/api"
+
+
+def _ensure_mcp_installed(config: RunnerConfig) -> None:
+    """Check if Toony MCP server is installed; install if missing."""
+    if MCP_INSTALL_DIR.exists():
+        return
+
+    logger.info("Toony MCP server not found, installing...")
+    api_url = _derive_api_url(config.backend_url)
+
+    env = os.environ.copy()
+    env["TOONY_API_URL"] = api_url
+    env["TOONY_API_KEY"] = config.api_key
+
+    result = subprocess.run(
+        ["bash", "-c", f"curl -fsSL {MCP_INSTALL_URL} | bash"],
+        env=env,
+    )
+
+    if result.returncode != 0:
+        logger.error("Failed to install Toony MCP server")
+        sys.exit(1)
+
+    logger.info("Toony MCP server installed successfully")
 
 
 if __name__ == "__main__":
