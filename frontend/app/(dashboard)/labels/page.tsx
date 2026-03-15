@@ -53,55 +53,34 @@ export default function LabelsPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-medium tracking-tight text-white">Labels</h1>
-        {canManage && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-          >
-            Create label
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-medium tracking-tight text-white">Labels</h1>
+          {labels.length > 0 && (
+            <span className="text-sm text-slate-600">{labels.length}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {canManage && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+            >
+              Create label
+            </button>
+          )}
+        </div>
       </div>
 
       {labels.length === 0 ? (
         <p className="mt-6 text-slate-500">No labels yet.</p>
       ) : (
-        <div className="mt-6 space-y-2">
-          {labels.map((label) => (
-            <div
-              key={label.id}
-              className="flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900 px-5 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className="inline-block h-4 w-4 rounded-full"
-                  style={{ backgroundColor: label.color }}
-                />
-                <span className="font-medium text-slate-200">{label.name}</span>
-                {label.description && (
-                  <span className="text-sm text-slate-500">{label.description}</span>
-                )}
-              </div>
-              {canManage && (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setEditTarget(label)}
-                    className="text-sm text-indigo-400 transition-colors hover:text-indigo-300"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(label)}
-                    className="text-sm text-red-400 transition-colors hover:text-red-300"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        <ChipView
+          labels={labels}
+          canManage={canManage}
+          onEdit={setEditTarget}
+          onDelete={setDeleteTarget}
+          onCreateClick={() => setShowCreate(true)}
+        />
       )}
 
       {showCreate && (
@@ -122,6 +101,72 @@ export default function LabelsPage() {
           onConfirm={handleDelete}
           onCancel={() => setDeleteTarget(null)}
         />
+      )}
+    </div>
+  );
+}
+
+// --- Chip Wall (flowing pills) ---
+
+function ChipView({
+  labels,
+  canManage,
+  onEdit,
+  onDelete,
+  onCreateClick,
+}: {
+  labels: Label[];
+  canManage: boolean;
+  onEdit: (label: Label) => void;
+  onDelete: (label: Label) => void;
+  onCreateClick: () => void;
+}) {
+  return (
+    <div className="mt-6 flex flex-wrap gap-3">
+      {labels.map((label) => (
+        <div key={label.id} className="group relative">
+          <button
+            onClick={() => canManage && onEdit(label)}
+            className="inline-flex items-center gap-2.5 rounded-full px-5 py-2.5 text-sm font-medium transition-all hover:brightness-125"
+            style={{
+              backgroundColor: `${label.color}1a`,
+              color: label.color,
+              border: `1px solid ${label.color}30`,
+            }}
+          >
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: label.color }}
+            />
+            {label.name}
+          </button>
+
+          {/* Small delete badge on hover */}
+          {canManage && (
+            <button
+              onClick={() => onDelete(label)}
+              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-500 opacity-0 transition-all group-hover:opacity-100 hover:border-red-500/30 hover:bg-red-500/20 hover:text-red-400"
+              title="Delete"
+            >
+              <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M3 3l6 6M9 3l-6 6" />
+              </svg>
+            </button>
+          )}
+        </div>
+      ))}
+
+      {/* "Add label" chip */}
+      {canManage && (
+        <button
+          onClick={onCreateClick}
+          className="inline-flex items-center gap-2 rounded-full border border-dashed border-slate-700 px-5 py-2.5 text-sm text-slate-600 transition-colors hover:border-slate-500 hover:text-slate-400"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M8 3v10M3 8h10" />
+          </svg>
+          Add label
+        </button>
       )}
     </div>
   );
@@ -180,6 +225,23 @@ function LabelFormModal({
         <h2 className="mb-4 text-base font-medium tracking-tight text-white">
           {isEdit ? "Edit label" : "Create label"}
         </h2>
+
+        {/* Live preview */}
+        <div className="mb-5 flex items-center justify-center rounded-lg border border-slate-800/40 bg-slate-950/50 py-4">
+          <span
+            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: `${color}1a`,
+              color: color,
+            }}
+          >
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            {name || "Label preview"}
+          </span>
+        </div>
 
         {error && (
           <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400">
