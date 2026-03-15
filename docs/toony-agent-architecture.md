@@ -165,18 +165,18 @@ Immutable, append-only event stream. Does NOT extend `BaseModel` (no `updated_at
   │          │      │          │      │          │      │          │ │
   │  QUEUED  ├─────>│ ASSIGNED ├─────>│ RUNNING  ├─────>│COMPLETED │ │
   │          │      │          │      │          │      │          │ │
-  └──────────┘      └──────────┘      └─────┬────┘      └──────────┘ │
-                                            │                         │
-                                            │                         │
-                                            ▼                         │
-                                     ┌──────────────┐                 │
-                                     │  AWAITING    │                 │
-                                     │  APPROVAL    ├─────────────────┘
-                                     │              │   (on approve → RUNNING)
-                                     └──────┬───────┘
-                                            │
-                                            │ (on reject)
-                                            ▼
+  └────┬─────┘      └──────────┘      └─────┬────┘      └──────────┘ │
+       │                                     │                         │
+       │ (issue TODO→BACKLOG)                │                         │
+       ▼                                     ▼                         │
+  ┌──────────┐                        ┌──────────────┐                 │
+  │          │                        │  AWAITING    │                 │
+  │  PAUSED  │                        │  APPROVAL    ├─────────────────┘
+  │          │                        │              │   (on approve → RUNNING)
+  └──────────┘                        └──────┬───────┘
+  (issue BACKLOG→TODO                        │
+   reactivates → QUEUED)                     │ (on reject)
+                                             ▼
                            ┌──────────┐  ┌──────────┐
                            │          │  │          │
                            │  FAILED  │  │CANCELLED │
@@ -185,6 +185,8 @@ Immutable, append-only event stream. Does NOT extend `BaseModel` (no `updated_at
 
 Transitions:
   QUEUED → ASSIGNED         Runner sends "task.accepted"
+  QUEUED → PAUSED           Issue moves TODO → BACKLOG (task paused, not cancelled)
+  PAUSED → QUEUED           Issue moves BACKLOG → TODO (task reactivated with updated prompt)
   ASSIGNED → RUNNING        First task event arrives (atomic, happens once)
   RUNNING → AWAITING_APPROVAL   PreToolUse hook fires for AskUserQuestion
   AWAITING_APPROVAL → RUNNING   User approves (answer returned via permissionDecisionReason)

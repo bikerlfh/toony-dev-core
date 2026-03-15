@@ -1,6 +1,7 @@
 export type ToonyAgentStatus = "OFFLINE" | "ONLINE" | "BUSY";
 export type AgentTaskStatus =
   | "QUEUED"
+  | "PAUSED"
   | "ASSIGNED"
   | "RUNNING"
   | "WAITING_FOR_ANSWER"

@@ -59,7 +59,7 @@ def update_issue(issue, user, **kwargs):
 
     old_status = issue.status
 
-    # Block TODO→BACKLOG if active agent tasks exist; cancel QUEUED ones
+    # Block TODO→BACKLOG if active agent tasks exist; pause QUEUED ones
     new_status = kwargs.get("status")
     if old_status == IssueStatus.TODO and new_status == IssueStatus.BACKLOG:
         _handle_todo_to_backlog(issue)
@@ -215,7 +215,7 @@ def delete_comment(comment):
 
 
 def _handle_todo_to_backlog(issue):
-    """Cancel QUEUED agent tasks or block if any are actively running."""
+    """Pause QUEUED agent tasks or block if any are actively running."""
     from rest_framework.exceptions import ValidationError as DRFValidationError
 
     from toony_agents.models import AgentTaskStatus
@@ -235,18 +235,21 @@ def _handle_todo_to_backlog(issue):
             f"{active_task.status}. Wait for it to complete or cancel it first."
         )
 
-    # Cancel all QUEUED tasks
+    # Pause all QUEUED tasks
     queued_tasks = issue.agent_tasks.filter(status=AgentTaskStatus.QUEUED)
     for task in queued_tasks:
-        update_task_status(task, AgentTaskStatus.CANCELLED)
+        update_task_status(task, AgentTaskStatus.PAUSED)
 
 
 def _maybe_create_agent_task(issue, user):
-    """Auto-create an AgentTask when an issue moves from BACKLOG to TODO."""
+    """Auto-create or reactivate an AgentTask when an issue moves from BACKLOG to TODO."""
     from django.conf import settings as django_settings
 
-    from toony_agents.models import ToonyAgent
-    from toony_agents.services.agent_task_service import create_agent_task
+    from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent
+    from toony_agents.services.agent_task_service import (
+        create_agent_task,
+        update_task_status,
+    )
 
     organization = issue.project.organization
 
@@ -288,6 +291,15 @@ def _maybe_create_agent_task(issue, user):
         issue_identifier=issue.identifier,
         issue_description=issue.description,
     )
+
+    # Check for an existing PAUSED task to reactivate
+    paused_task = AgentTask.objects.filter(issue=issue, status=AgentTaskStatus.PAUSED).first()
+    if paused_task:
+        paused_task.prompt = prompt
+        paused_task.title = issue.title
+        paused_task.save(update_fields=["prompt", "title", "updated_at"])
+        update_task_status(paused_task, AgentTaskStatus.QUEUED)
+        return
 
     create_agent_task(
         organization=organization,

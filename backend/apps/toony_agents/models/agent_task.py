@@ -6,6 +6,7 @@ from common.models import BaseModel
 
 class AgentTaskStatus(models.TextChoices):
     QUEUED = "QUEUED", "Queued"
+    PAUSED = "PAUSED", "Paused"
     ASSIGNED = "ASSIGNED", "Assigned"
     RUNNING = "RUNNING", "Running"
     WAITING_FOR_ANSWER = "WAITING_FOR_ANSWER", "Waiting for Answer"

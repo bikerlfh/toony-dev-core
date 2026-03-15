@@ -25,6 +25,7 @@ import type { ArtifactList } from "@/types/artifacts";
 
 const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
   QUEUED: "bg-slate-500/15 text-slate-400",
+  PAUSED: "bg-slate-500/15 text-slate-400",
   ASSIGNED: "bg-blue-500/15 text-blue-400",
   RUNNING: "bg-amber-500/15 text-amber-400",
   WAITING_FOR_ANSWER: "bg-purple-500/15 text-purple-400",
@@ -35,6 +36,7 @@ const TASK_STATUS_COLORS: Record<AgentTaskStatus, string> = {
 
 const TASK_STATUS_LABELS: Record<AgentTaskStatus, string> = {
   QUEUED: "Queued",
+  PAUSED: "Paused",
   ASSIGNED: "Assigned",
   RUNNING: "Running",
   WAITING_FOR_ANSWER: "Waiting for Answer",
@@ -58,6 +60,7 @@ export default function TaskViewPage() {
     new Set()
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [taskArtifacts, setTaskArtifacts] = useState<ArtifactList[]>([]);
 
@@ -72,6 +75,7 @@ export default function TaskViewPage() {
       setAgent(agentData);
       setTask(taskData);
       setTaskStatus(taskData.status);
+      setTaskError(taskData.error ?? null);
       setSessionId(taskData.session_id ?? null);
       setEvents(eventsData);
 
@@ -110,6 +114,7 @@ export default function TaskViewPage() {
     (event: ToonyAgentWsEvent) => {
       if (event.type === "task.status" && event.task_id === taskId) {
         setTaskStatus(event.status);
+        setTaskError(event.error ?? null);
         if (event.session_id) {
           setSessionId(event.session_id);
         }
@@ -235,6 +240,9 @@ export default function TaskViewPage() {
                 {TASK_STATUS_LABELS[taskStatus]}
               </span>
             </div>
+            {taskStatus === "FAILED" && taskError && (
+              <p className="mt-1 text-sm text-red-400">{taskError}</p>
+            )}
             {task.organization && (
               <div className="mt-1 font-mono text-xs text-slate-500">
                 <span className="text-indigo-500">~</span>

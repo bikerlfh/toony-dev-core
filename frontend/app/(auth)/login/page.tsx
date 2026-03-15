@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/auth-context";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = searchParams.get("redirect") || "/dashboard";
   const { login } = useAuth();
 
   const [username, setUsername] = useState("");

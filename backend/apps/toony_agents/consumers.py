@@ -68,6 +68,29 @@ def _update_task_status(task_id, new_status, **kwargs):
 
 
 @database_sync_to_async
+def _fail_active_tasks(agent_id):
+    """Mark all active tasks for an agent as FAILED. Returns list of (task_id, previous_status)."""
+    active_statuses = [
+        AgentTaskStatus.ASSIGNED,
+        AgentTaskStatus.RUNNING,
+        AgentTaskStatus.WAITING_FOR_ANSWER,
+    ]
+    tasks = list(
+        AgentTask.objects.filter(
+            toony_agent_id=agent_id,
+            status__in=active_statuses,
+        ).values_list("id", "status")
+    )
+    for task_id, prev_status in tasks:
+        AgentTask.objects.filter(id=task_id).update(
+            status=AgentTaskStatus.FAILED,
+            error=f"Agent disconnected (task was {prev_status})",
+            completed_at=timezone.now(),
+        )
+    return tasks
+
+
+@database_sync_to_async
 def _mark_task_running_if_assigned(task_id):
     """Atomically transition task from ASSIGNED to RUNNING. Returns True if transitioned."""
     rows = AgentTask.objects.filter(
@@ -233,6 +256,21 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         if hasattr(self, "agent_id"):
+            # Fail active tasks before setting agent OFFLINE
+            failed_tasks = await _fail_active_tasks(self.agent_id)
+            for task_id, prev_status in failed_tasks:
+                await self.channel_layer.group_send(
+                    self.frontend_group,
+                    {
+                        "type": "task_status",
+                        "data": {
+                            "task_id": str(task_id),
+                            "status": "FAILED",
+                            "error": f"Agent disconnected (task was {prev_status})",
+                        },
+                    },
+                )
+
             await _set_agent_status(self.agent_id, ToonyAgentStatus.OFFLINE)
             await self.channel_layer.group_discard(
                 self.runner_group,
