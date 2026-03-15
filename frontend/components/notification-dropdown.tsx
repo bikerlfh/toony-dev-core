@@ -101,7 +101,7 @@ export function NotificationDropdown() {
 
       {/* Dropdown panel — positioned above */}
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-slate-800/60 bg-slate-900 shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-1.5 w-80 rounded-lg border border-slate-800/60 bg-slate-900 shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-800/60 px-4 py-3">
             <h3 className="text-sm font-medium text-white">Notifications</h3>

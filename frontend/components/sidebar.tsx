@@ -3,9 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
 import { SearchCommandPalette } from "./search-command-palette";
-import { NotificationDropdown } from "./notification-dropdown";
 
 interface NavItem {
   label: string;
@@ -68,15 +66,6 @@ const NAV_ITEMS: SidebarItem[] = [
     icon: (
       <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-      </svg>
-    ),
-  },
-  {
-    label: "Notifications",
-    path: "/notifications",
-    icon: (
-      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
       </svg>
     ),
   },
@@ -151,7 +140,6 @@ const STORAGE_KEY = "toony_sidebar_collapsed";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [collapsed, setCollapsed] = useState(false);
 
@@ -362,63 +350,6 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* User info + logout */}
-      <div className="border-t border-slate-800/60 p-4">
-        {collapsed ? (
-          <>
-            <div className="mb-2 flex items-center justify-center">
-              <NotificationDropdown />
-            </div>
-            <Link
-              href="/profile"
-              title={`${user?.first_name} ${user?.last_name}`}
-              className="mb-2 flex items-center justify-center rounded-md py-1.5 transition-colors hover:bg-slate-900/60"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-                {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-              </div>
-            </Link>
-            <button
-              onClick={logout}
-              title="Sign out"
-              className="flex w-full items-center justify-center rounded-md py-1.5 text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="mb-2 flex items-center px-3">
-              <NotificationDropdown />
-            </div>
-            <Link
-              href="/profile"
-              className="group mb-3 flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors hover:bg-slate-900/60"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-                {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-                  {user?.first_name} {user?.last_name}
-                </div>
-                <div className="truncate text-xs text-slate-600">{user?.email}</div>
-              </div>
-            </Link>
-            <button
-              onClick={logout}
-              className="flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-              Sign out
-            </button>
-          </>
-        )}
-      </div>
     </aside>
   );
 }
