@@ -13,12 +13,16 @@ jobs:
       - name: Checkout monorepo
         uses: actions/checkout@v4
 
-      - name: Checkout target repo
-        uses: actions/checkout@v4
-        with:
-          repository: bikerlfh/toony-mcp
-          path: _target
-          token: ${{ secrets.MCP_REPO_TOKEN }}
+      - name: Clone or init target repo
+        env:
+          TOKEN: ${{ secrets.MCP_REPO_TOKEN }}
+        run: |
+          if git ls-remote --exit-code "https://x-access-token:${TOKEN}@github.com/bikerlfh/toony-mcp.git" HEAD >/dev/null 2>&1; then
+            git clone "https://x-access-token:${TOKEN}@github.com/bikerlfh/toony-mcp.git" _target
+          else
+            mkdir _target && cd _target && git init -b main
+            git remote add origin "https://x-access-token:${TOKEN}@github.com/bikerlfh/toony-mcp.git"
+          fi
 
       - name: Sync files
         run: |
@@ -38,4 +42,4 @@ jobs:
             exit 0
           fi
           git commit -m "sync: update from toony-dev-core@${GITHUB_SHA::7}"
-          git push
+          git push -u origin main
