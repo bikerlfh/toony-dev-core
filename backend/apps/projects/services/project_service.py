@@ -61,18 +61,24 @@ def delete_project(project):
     project.delete()
 
 
-def add_project_member(project, user, role=ProjectMemberRole.CONTRIBUTOR):
+def add_project_member(project, user, role=ProjectMemberRole.CONTRIBUTOR, actor=None):
     existing = ProjectMembership.objects.filter(
         project=project,
         user=user,
     ).first()
     if existing:
         raise ConflictError("User is already a member of this project.")
-    return ProjectMembership.objects.create(
+    membership = ProjectMembership.objects.create(
         project=project,
         user=user,
         role=role,
     )
+
+    if actor:
+        from notifications.services import notify
+        notify("project.member_added", {"project": project, "member": user, "actor": actor})
+
+    return membership
 
 
 def update_project_member_role(membership, new_role):
@@ -81,8 +87,14 @@ def update_project_member_role(membership, new_role):
     return membership
 
 
-def remove_project_member(membership):
+def remove_project_member(membership, actor=None):
+    project = membership.project
+    member = membership.user
     membership.delete()
+
+    if actor:
+        from notifications.services import notify
+        notify("project.member_removed", {"project": project, "member": member, "actor": actor})
 
 
 def update_project_settings(settings_obj, **kwargs):

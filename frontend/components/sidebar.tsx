@@ -3,7 +3,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
 import { SearchCommandPalette } from "./search-command-palette";
 
 interface NavItem {
@@ -141,7 +140,6 @@ const STORAGE_KEY = "toony_sidebar_collapsed";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [collapsed, setCollapsed] = useState(false);
 
@@ -352,57 +350,6 @@ export function Sidebar() {
         )}
       </nav>
 
-      {/* User info + logout */}
-      <div className="border-t border-slate-800/60 p-4">
-        {collapsed ? (
-          <>
-            <Link
-              href="/profile"
-              title={`${user?.first_name} ${user?.last_name}`}
-              className="mb-2 flex items-center justify-center rounded-md py-1.5 transition-colors hover:bg-slate-900/60"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-                {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-              </div>
-            </Link>
-            <button
-              onClick={logout}
-              title="Sign out"
-              className="flex w-full items-center justify-center rounded-md py-1.5 text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              href="/profile"
-              className="group mb-3 flex items-center gap-2.5 rounded-md px-3 py-2 transition-colors hover:bg-slate-900/60"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-                {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
-                  {user?.first_name} {user?.last_name}
-                </div>
-                <div className="truncate text-xs text-slate-600">{user?.email}</div>
-              </div>
-            </Link>
-            <button
-              onClick={logout}
-              className="flex w-full items-center gap-2.5 rounded-md px-3 py-1.5 text-left text-sm text-slate-500 transition-colors hover:bg-slate-900 hover:text-slate-300"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-              </svg>
-              Sign out
-            </button>
-          </>
-        )}
-      </div>
     </aside>
   );
 }

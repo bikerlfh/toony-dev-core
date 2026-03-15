@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import {
   getIssue,
@@ -789,9 +790,12 @@ function AttachmentsSection({
               >
                 {/* Content: thumbnail or type badge */}
                 {isImage ? (
-                  <img
+                  <Image
                     src={resolveUrl(doc.file)}
                     alt={doc.original_filename}
+                    width={96}
+                    height={96}
+                    unoptimized
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -986,9 +990,12 @@ function ImageLightbox({
         className="flex max-h-[calc(100vh-8rem)] max-w-[calc(100vw-8rem)] items-center justify-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <Image
           src={resolveUrl(doc.file)}
           alt={doc.original_filename}
+          width={1200}
+          height={800}
+          unoptimized
           className="max-h-full max-w-full rounded-lg object-contain"
         />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { updateProfile, changePassword, listAPIKeys, generateAPIKey, revokeAPIKey } from "@/lib/api/auth";
 import type { UserAPIKey } from "@/types";
@@ -181,7 +182,7 @@ export default function ProfilePage() {
       <div className="flex items-center gap-5 pb-2">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xl font-medium text-slate-300">
           {user.avatar ? (
-            <img src={user.avatar} alt="" className="h-full w-full rounded-full object-cover" />
+            <Image src={user.avatar} alt="" width={64} height={64} unoptimized className="h-full w-full rounded-full object-cover" />
           ) : (
             (user.first_name?.[0] || user.email[0]).toUpperCase()
           )}

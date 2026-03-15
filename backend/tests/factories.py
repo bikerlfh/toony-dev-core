@@ -1,6 +1,7 @@
 import factory
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from notifications.models import Notification
 
 from accounts.models import User, UserAPIKey
 from accounts.models.membership import MembershipRole, OrganizationMembership
@@ -262,3 +263,15 @@ class IssueDocumentFactory(factory.django.DjangoModelFactory):
     file_size = 1024
     content_type = "application/pdf"
     file = factory.LazyAttribute(lambda obj: ContentFile(b"fake file content", name=obj.original_filename))
+
+
+class NotificationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Notification
+
+    recipient = factory.SubFactory(UserFactory)
+    organization = factory.SubFactory(OrganizationFactory)
+    event_type = "issue.assigned"
+    title = factory.Sequence(lambda n: f"Notification {n}")
+    target_type = "issue"
+    target_id = factory.LazyFunction(lambda: __import__("uuid").uuid4())

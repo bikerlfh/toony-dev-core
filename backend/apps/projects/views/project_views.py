@@ -120,6 +120,7 @@ class ProjectMemberListCreateView(PaginatedViewMixin, APIView):
             project=request.project,
             user=user,
             role=serializer.validated_data["role"],
+            actor=request.user,
         )
         output = ProjectMembershipSerializer(membership).data
         return Response(output, status=status.HTTP_201_CREATED)
@@ -155,7 +156,7 @@ class ProjectMemberDetailView(APIView):
 
     def delete(self, request, project_id, user_id):
         membership = self._get_membership(request.project, user_id)
-        remove_project_member(membership)
+        remove_project_member(membership, actor=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

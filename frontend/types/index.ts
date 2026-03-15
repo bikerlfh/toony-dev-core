@@ -132,7 +132,10 @@ export type {
   TaskAssignEvent,
   HeartbeatAckEvent,
   WsReadyState,
+  NotificationCreatedEvent,
 } from "./websocket";
+
+export type { NotificationItem } from "./notifications";
 
 export type {
   ToonyAgentStatus,

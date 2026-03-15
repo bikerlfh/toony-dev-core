@@ -49,6 +49,15 @@ def update_task_status(task, new_status, **kwargs):
         "task_status",
         {"task_id": str(task.id), "status": task.status},
     )
+
+    if new_status == AgentTaskStatus.COMPLETED:
+        from notifications.services import notify
+        notify("agent_task.completed", {"task": task})
+
+    if new_status == AgentTaskStatus.FAILED:
+        from notifications.services import notify
+        notify("agent_task.failed", {"task": task})
+
     return task
 
 

@@ -140,6 +140,24 @@ def update_issue(issue, user, **kwargs):
         IssueListSerializer(issue).data,
     )
 
+    # --- Notifications ---
+    from notifications.services import notify
+
+    for act in activities:
+        if act.field_changed == "assignee" and issue.assignee:
+            notify("issue.assigned", {
+                "issue": issue,
+                "actor": user,
+                "assignee": issue.assignee,
+            })
+        if act.field_changed == "status":
+            notify("issue.status_changed", {
+                "issue": issue,
+                "actor": user,
+                "old_status": act.old_value,
+                "new_status": act.new_value,
+            })
+
     # Auto-create AgentTask when issue transitions BACKLOG → TODO
     if old_status == IssueStatus.BACKLOG and issue.status == IssueStatus.TODO:
         _maybe_create_agent_task(issue, user)
@@ -180,6 +198,20 @@ def create_comment(issue, author, body):
             "comment": IssueCommentSerializer(comment).data,
         },
     )
+
+    # --- Notifications ---
+    from notifications.services import notify
+
+    notify("comment.created", {
+        "issue": issue,
+        "comment": comment,
+        "actor": author,
+    })
+    notify("comment.mentioned", {
+        "issue": issue,
+        "actor": author,
+        "body": body,
+    })
 
     return comment
 
