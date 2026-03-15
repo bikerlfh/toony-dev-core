@@ -48,7 +48,7 @@ type Filter = "all" | "unread";
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { markAsRead, markAllAsRead, refreshNotifications } = useNotifications();
+  const { markAsRead, markAllAsRead, deleteNotifications, deleteAllNotifications, refreshNotifications } = useNotifications();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
@@ -116,6 +116,20 @@ export default function NotificationsPage() {
     setSelected(new Set());
   }
 
+  async function handleDeleteSelected() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    await deleteNotifications(ids);
+    setItems((prev) => prev.filter((n) => !ids.includes(n.id)));
+    setSelected(new Set());
+  }
+
+  async function handleDeleteAll() {
+    await deleteAllNotifications();
+    setItems([]);
+    setSelected(new Set());
+  }
+
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -161,20 +175,40 @@ export default function NotificationsPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {unreadSelected.length > 0 && (
-            <button
-              onClick={handleMarkSelectedRead}
-              className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
-            >
-              Mark {unreadSelected.length} as read
-            </button>
+          {selected.size > 0 && (
+            <>
+              {unreadSelected.length > 0 && (
+                <button
+                  onClick={handleMarkSelectedRead}
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+                >
+                  Mark {unreadSelected.length} as read
+                </button>
+              )}
+              <button
+                onClick={handleDeleteSelected}
+                className="rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-500/10"
+              >
+                Delete {selected.size}
+              </button>
+            </>
           )}
-          <button
-            onClick={handleMarkAllRead}
-            className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
-          >
-            Mark all as read
-          </button>
+          {selected.size === 0 && (
+            <>
+              <button
+                onClick={handleMarkAllRead}
+                className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
+              >
+                Mark all as read
+              </button>
+              <button
+                onClick={handleDeleteAll}
+                className="rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-500/10"
+              >
+                Delete all
+              </button>
+            </>
+          )}
         </div>
       </div>
 

@@ -21,6 +21,8 @@ interface NotificationContextValue {
   notifications: NotificationItem[];
   markAsRead: (ids: string[]) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotifications: (ids: string[]) => Promise<void>;
+  deleteAllNotifications: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
 }
 
@@ -81,15 +83,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     setUnreadCount(0);
   }, []);
 
+  const deleteNots = useCallback(async (ids: string[]) => {
+    const unreadDeleted = notifications.filter(
+      (n) => ids.includes(n.id) && !n.is_read,
+    ).length;
+    await notificationsApi.deleteNotifications(ids);
+    setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+    setUnreadCount((prev) => Math.max(0, prev - unreadDeleted));
+  }, [notifications]);
+
+  const deleteAllNots = useCallback(async () => {
+    await notificationsApi.deleteAllNotifications();
+    setNotifications([]);
+    setUnreadCount(0);
+  }, []);
+
   const value = useMemo<NotificationContextValue>(
     () => ({
       unreadCount,
       notifications,
       markAsRead,
       markAllAsRead,
+      deleteNotifications: deleteNots,
+      deleteAllNotifications: deleteAllNots,
       refreshNotifications: fetchInitial,
     }),
-    [unreadCount, notifications, markAsRead, markAllAsRead, fetchInitial],
+    [unreadCount, notifications, markAsRead, markAllAsRead, deleteNots, deleteAllNots, fetchInitial],
   );
 
   return (

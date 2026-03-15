@@ -11,3 +11,11 @@ class MarkReadSerializer(serializers.Serializer):
 
 class MarkAllReadSerializer(serializers.Serializer):
     organization_id = serializers.UUIDField(required=False, allow_null=True)
+
+
+class DeleteNotificationsSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        min_length=1,
+        max_length=100,
+    )

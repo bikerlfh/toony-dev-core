@@ -8,6 +8,7 @@ from common.mixins import PaginatedViewMixin
 from notifications.models import Notification
 from notifications.selectors import get_unread_count, list_user_notifications
 from notifications.serializers.input import (
+    DeleteNotificationsSerializer,
     MarkAllReadSerializer,
     MarkReadSerializer,
 )
@@ -66,6 +67,32 @@ class MarkAllReadView(APIView):
         updated = qs.update(is_read=True, read_at=now)
 
         return Response({"updated": updated}, status=status.HTTP_200_OK)
+
+
+class DeleteNotificationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = DeleteNotificationsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        deleted, _ = Notification.objects.filter(
+            recipient=request.user,
+            id__in=serializer.validated_data["ids"],
+        ).delete()
+
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
+
+
+class DeleteAllNotificationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        deleted, _ = Notification.objects.filter(
+            recipient=request.user,
+        ).delete()
+
+        return Response({"deleted": deleted}, status=status.HTTP_200_OK)
 
 
 class UnreadCountView(APIView):

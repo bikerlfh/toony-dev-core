@@ -26,6 +26,16 @@ export async function markAllRead(organizationId?: string): Promise<{ updated: n
   return data;
 }
 
+export async function deleteNotifications(ids: string[]): Promise<{ deleted: number }> {
+  const { data } = await api.post<{ deleted: number }>("/notifications/delete/", { ids });
+  return data;
+}
+
+export async function deleteAllNotifications(): Promise<{ deleted: number }> {
+  const { data } = await api.post<{ deleted: number }>("/notifications/delete-all/");
+  return data;
+}
+
 export async function getUnreadCount(): Promise<number> {
   const { data } = await api.get<{ count: number }>("/notifications/unread-count/");
   return data.count;

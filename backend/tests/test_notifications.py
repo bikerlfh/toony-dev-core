@@ -348,6 +348,22 @@ class TestNotificationAPI:
         assert response.status_code == 200
         assert response.data["count"] == 1
 
+    def test_delete_notifications(self, authenticated_client, notification):
+        response = authenticated_client.post(
+            "/api/notifications/delete/",
+            {"ids": [str(notification.id)]},
+            format="json",
+        )
+        assert response.status_code == 200
+        assert response.data["deleted"] == 1
+        assert not Notification.objects.filter(id=notification.id).exists()
+
+    def test_delete_all_notifications(self, authenticated_client, notification):
+        response = authenticated_client.post("/api/notifications/delete-all/")
+        assert response.status_code == 200
+        assert response.data["deleted"] == 1
+        assert Notification.objects.filter(recipient=notification.recipient).count() == 0
+
     def test_unauthenticated_returns_401(self, api_client):
         response = api_client.get("/api/notifications/")
         assert response.status_code == 401
