@@ -92,6 +92,14 @@ export interface AgentTaskDetail extends AgentTaskList {
   updated_at: string;
 }
 
+export interface AgentTaskByIssueItem {
+  id: string;
+  title: string;
+  status: AgentTaskStatus;
+  toony_agent: { id: string; name: string } | null;
+  created_at: string;
+}
+
 export interface CreateAgentTaskPayload {
   title: string;
   prompt: string;

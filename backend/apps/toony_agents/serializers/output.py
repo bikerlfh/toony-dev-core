@@ -115,6 +115,26 @@ class AgentTaskListSerializer(serializers.ModelSerializer):
         return {"id": str(obj.issue.id), "identifier": obj.issue.identifier, "title": obj.issue.title}
 
 
+class AgentTaskByIssueSerializer(serializers.ModelSerializer):
+    toony_agent = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AgentTask
+        fields = [
+            "id",
+            "title",
+            "status",
+            "toony_agent",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+    def get_toony_agent(self, obj):
+        if not obj.toony_agent:
+            return None
+        return {"id": str(obj.toony_agent.id), "name": obj.toony_agent.name}
+
+
 class AgentTaskDetailSerializer(serializers.ModelSerializer):
     toony_agent_slug = serializers.CharField(
         source="toony_agent.slug",

@@ -44,6 +44,19 @@ export async function deleteWorkflow(id: string): Promise<void> {
   await api.delete(`/workflows/${id}/`);
 }
 
+export async function resolveWorkflowForIssue(
+  issueId: string
+): Promise<WorkflowDetail | null> {
+  try {
+    const { data } = await api.get<WorkflowDetail>(
+      `/workflows/resolve/${issueId}/`
+    );
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 // Nodes
 export async function listNodes(
   workflowId: string

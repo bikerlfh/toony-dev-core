@@ -18,6 +18,14 @@ def get_task_by_id(task_id):
     )
 
 
+def list_tasks_by_issue(issue_id):
+    return (
+        AgentTask.objects.filter(issue_id=issue_id)
+        .select_related("toony_agent")
+        .order_by("-created_at")
+    )
+
+
 def list_task_events(task, *, after_sequence=None):
     qs = TaskEvent.objects.filter(task=task)
     if after_sequence is not None:

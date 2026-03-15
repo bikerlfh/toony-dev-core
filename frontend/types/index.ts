@@ -145,6 +145,7 @@ export type {
   ToonyAgentKeyItem,
   AgentTaskList,
   AgentTaskDetail,
+  AgentTaskByIssueItem,
   CreateAgentTaskPayload,
   TaskEventItem,
   AgentSystemEventType,

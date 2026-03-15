@@ -12,11 +12,13 @@ from toony_agents.selectors import (
     get_task_by_id,
     list_system_events_for_agent,
     list_task_events,
+    list_tasks_by_issue,
     list_tasks_for_agent,
 )
 from toony_agents.serializers.input import CreateAgentTaskSerializer
 from toony_agents.serializers.output import (
     AgentSystemEventSerializer,
+    AgentTaskByIssueSerializer,
     AgentTaskDetailSerializer,
     AgentTaskListSerializer,
     TaskEventSerializer,
@@ -173,3 +175,17 @@ class AgentSystemEventListView(PaginatedViewMixin, APIView):
             agent, event_type=event_type, project_id=project_id,
         )
         return self.paginate(events, AgentSystemEventSerializer, request)
+
+
+class AgentTaskByIssueListView(PaginatedViewMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        issue_id = request.query_params.get("issue_id")
+        if not issue_id:
+            return Response(
+                {"issue_id": ["This query parameter is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tasks = list_tasks_by_issue(issue_id)
+        return self.paginate(tasks, AgentTaskByIssueSerializer, request)

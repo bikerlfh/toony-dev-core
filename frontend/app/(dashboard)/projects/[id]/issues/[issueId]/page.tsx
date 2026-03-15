@@ -29,6 +29,8 @@ import { useProjectWebSocket } from "@/hooks/use-project-websocket";
 // Role checks removed — will be re-implemented when org context is rebuilt
 import { PriorityBadge } from "@/components/priority-badge";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
+import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
 import { Select } from "@/components/ui/select";
 import type {
   IssueDetail,
@@ -79,7 +81,7 @@ const PRIORITY_OPTIONS: { value: IssuePriority; label: string }[] = [
   { value: "LOW", label: "Low" },
 ];
 
-type DetailTab = "comments" | "activity" | "artifacts";
+type DetailTab = "comments" | "activity" | "artifacts" | "automation";
 
 export default function IssueDetailPage() {
   const params = useParams<{ id: string; issueId: string }>();
@@ -379,7 +381,7 @@ export default function IssueDetailPage() {
           {/* Tabs */}
           <div className="mt-6 border-b border-slate-800/60">
             <nav className="-mb-px flex gap-4">
-              {(["comments", "activity", "artifacts"] as DetailTab[]).map((tab) => (
+              {(["comments", "activity", "artifacts", "automation"] as DetailTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -412,6 +414,12 @@ export default function IssueDetailPage() {
             )}
             {activeTab === "artifacts" && (
               <ArtifactsSection projectId={projectId} issueId={issueId} />
+            )}
+            {activeTab === "automation" && (
+              <div className="space-y-6">
+                <IssueResolvedWorkflow issueId={issueId} />
+                <IssueAgentTasks issueId={issueId} />
+              </div>
             )}
           </div>
         </div>

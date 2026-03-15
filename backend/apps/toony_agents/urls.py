@@ -2,6 +2,7 @@ from django.urls import path
 
 from toony_agents.views.agent_task_views import (
     AgentSystemEventListView,
+    AgentTaskByIssueListView,
     AgentTaskCancelView,
     AgentTaskDetailView,
     AgentTaskListCreateView,
@@ -15,6 +16,11 @@ from toony_agents.views.toony_agent_views import (
 )
 
 urlpatterns = [
+    path(
+        "agent-tasks/",
+        AgentTaskByIssueListView.as_view(),
+        name="agent-task-by-issue-list",
+    ),
     path(
         "toony-agents/",
         ToonyAgentListCreateView.as_view(),

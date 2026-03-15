@@ -7,6 +7,7 @@ import type {
   ToonyAgentKeyItem,
   AgentTaskList,
   AgentTaskDetail,
+  AgentTaskByIssueItem,
   CreateAgentTaskPayload,
   TaskEventItem,
   AgentSystemEventItem,
@@ -102,6 +103,18 @@ export async function revokeAgentKey(
   await api.delete(
     `/toony-agents/${agentId}/keys/${keyId}/`
   );
+}
+
+// ── Tasks by Issue ──
+
+export async function listAgentTasksByIssue(
+  issueId: string
+): Promise<PaginatedResponse<AgentTaskByIssueItem>> {
+  const { data } = await api.get<PaginatedResponse<AgentTaskByIssueItem>>(
+    `/agent-tasks/`,
+    { params: { issue_id: issueId } }
+  );
+  return data;
 }
 
 // ── Tasks ──

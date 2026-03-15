@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { IssueDetail, IssueStatus, ProjectPriority } from "@/types";
 import { getIssue } from "@/lib/api/issues";
 import { PriorityBadge } from "@/components/priority-badge";
+import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
+import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
 
 const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {
   BACKLOG: "bg-slate-800 text-slate-400",
@@ -152,6 +154,12 @@ export function IssueSidePanel({ projectId, issueId, onClose }: IssueSidePanelPr
                 ))}
               </div>
             )}
+
+            {/* Resolved Workflow */}
+            <IssueResolvedWorkflow issueId={issueId} />
+
+            {/* Agent Tasks */}
+            <IssueAgentTasks issueId={issueId} />
           </div>
         ) : (
           <div className="px-6 py-20 text-center text-sm text-slate-500">
