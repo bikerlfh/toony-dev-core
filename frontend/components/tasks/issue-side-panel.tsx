@@ -2,29 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import type { IssueDetail, IssueStatus, ProjectPriority } from "@/types";
+import type { IssueDetail, ProjectPriority } from "@/types";
 import { getIssue } from "@/lib/api/issues";
 import { PriorityBadge } from "@/components/priority-badge";
+import { IssueStatusBadge } from "@/components/issue-status-badge";
 import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
 import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
-
-const ISSUE_STATUS_COLORS: Record<IssueStatus, string> = {
-  BACKLOG: "bg-slate-800 text-slate-400",
-  TODO: "bg-blue-500/15 text-blue-400",
-  IN_PROGRESS: "bg-amber-500/15 text-amber-400",
-  IN_REVIEW: "bg-purple-500/15 text-purple-400",
-  DONE: "bg-emerald-500/15 text-emerald-400",
-  CANCELED: "bg-red-500/15 text-red-400",
-};
-
-const ISSUE_STATUS_LABELS: Record<IssueStatus, string> = {
-  BACKLOG: "Backlog",
-  TODO: "Todo",
-  IN_PROGRESS: "In Progress",
-  IN_REVIEW: "In Review",
-  DONE: "Done",
-  CANCELED: "Canceled",
-};
 
 interface IssueSidePanelProps {
   projectId: string;
@@ -87,11 +70,7 @@ export function IssueSidePanel({ projectId, issueId, onClose }: IssueSidePanelPr
 
             {/* Status + Priority */}
             <div className="flex items-center gap-3">
-              <span
-                className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ISSUE_STATUS_COLORS[issue.status]}`}
-              >
-                {ISSUE_STATUS_LABELS[issue.status]}
-              </span>
+              <IssueStatusBadge status={issue.status} />
               <PriorityBadge priority={issue.priority as ProjectPriority} />
             </div>
 
