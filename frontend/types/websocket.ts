@@ -56,3 +56,10 @@ export type SubAgentWsEvent = TaskAssignEvent | HeartbeatAckEvent;
 // --- WebSocket State ---
 
 export type WsReadyState = 0 | 1 | 2 | 3; // CONNECTING | OPEN | CLOSING | CLOSED
+
+// --- Notification WebSocket Events ---
+
+export interface NotificationCreatedEvent {
+  type: "notification.created";
+  data: import("./notifications").NotificationItem;
+}
