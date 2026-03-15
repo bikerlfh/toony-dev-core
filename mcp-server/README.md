@@ -1,81 +1,52 @@
 # Toony MCP Server
 
-MCP (Model Context Protocol) server for Toony Dev Core. Exposes 20 tools that allow Claude to interact with the backend API to manage projects, issues, comments, artifacts, workflows, and workspace resources.
+MCP (Model Context Protocol) server for [Toony](https://github.com/bikerlfh/toony-dev-core). Exposes 20 tools that allow Claude to manage projects, issues, comments, artifacts, workflows, and workspace resources.
 
 ## Requirements
 
 - Python >= 3.11
-- [uv](https://docs.astral.sh/uv/) (recommended package manager)
-- Toony Dev Core backend running (defaults to `http://localhost:8000`)
-- A user API Key generated from the profile page in the application
+- [uv](https://docs.astral.sh/uv/)
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
 
-## Setup
-
-### 1. Configure environment variables
-
-Copy the example file and edit the values:
+## Installation
 
 ```bash
-cd mcp-server
-cp .env.example .env
+curl -fsSL https://raw.githubusercontent.com/bikerlfh/toony-mcp/main/install.sh | bash
 ```
 
-```env
-TOONY_API_URL=http://localhost:8000/api
-TOONY_API_KEY=toony_your_key_here
+The installer will:
+1. Clone the repo to `~/.toony/mcp-server/`
+2. Prompt for your `TOONY_API_URL` and `TOONY_API_KEY`
+3. Register the MCP server in Claude Code
+
+Restart Claude Code after installation.
+
+## Update
+
+```bash
+~/.toony/mcp-server/update.sh
 ```
+
+Updates the code without changing your configuration.
+
+## Uninstall
+
+```bash
+~/.toony/mcp-server/uninstall.sh
+```
+
+Removes the MCP server and deregisters it from Claude Code.
+
+## Configuration
 
 | Variable | Description | Default |
 |---|---|---|
 | `TOONY_API_URL` | Backend API base URL | `http://localhost:8000/api` |
 | `TOONY_API_KEY` | User API Key (Bearer token) | Required |
 
-### 2. Register the server in Claude
-
-Copy the example configuration file to the project root:
-
-```bash
-cp mcp-server/.mcp.json.example .mcp.json
-```
-
-Edit `.mcp.json` with your API Key:
-
-```json
-{
-  "mcpServers": {
-    "toony": {
-      "command": "uv",
-      "args": ["--directory", "./mcp-server", "run", "toony-mcp"],
-      "env": {
-        "TOONY_API_URL": "http://localhost:8000/api",
-        "TOONY_API_KEY": "toony_your_key_here"
-      }
-    }
-  }
-}
-```
-
-Claude Code will automatically detect the `.mcp.json` file and register the server.
-
-### 3. Verify the connection
-
-Start Claude Code at the project root. The MCP server will load automatically. You can verify by asking Claude:
-
-```
-List my projects in Toony
-```
-
-## Authentication
-
-The server uses **Bearer Token** authentication. The API Key is sent in the `Authorization` header of every HTTP request to the backend:
-
-```
-Authorization: Bearer toony_your_key_here
-```
-
 The API Key is generated from the user's profile page in the Toony web application.
 
-## Available tools
+## Available Tools
 
 ### Projects (5 tools)
 
@@ -125,9 +96,7 @@ The API Key is generated from the user's profile page in the Toony web applicati
 | `list_labels` | Lists available labels for tagging issues | `search` (optional) |
 | `search_global` | Global search across issues, projects, teams, and labels | `organization_id` (UUID), `query` |
 
-## Usage examples
-
-These are example prompts you can give Claude with the MCP server active:
+## Usage Examples
 
 ```
 # Query projects
@@ -140,7 +109,6 @@ These are example prompts you can give Claude with the MCP server active:
 "Show me the urgent issues in project Y"
 "Create an issue in project Z titled 'Fix login bug' with priority HIGH"
 "Change the status of issue ENG-42 to IN_REVIEW"
-"Assign issue ENG-15 to me"
 
 # Comments and artifacts
 "Add a comment to issue ENG-42: 'Fix deployed to staging'"
@@ -173,39 +141,20 @@ Django Backend API (/api/...)
 4. The backend responds with JSON
 5. The server serializes and returns the result to Claude
 
-## Code structure
-
-```
-mcp-server/
-├── pyproject.toml          # Metadata, dependencies, entry point
-├── .mcp.json.example       # Example config for Claude
-├── .env.example            # Example environment variables
-└── src/toony_mcp/
-    ├── __init__.py
-    ├── __main__.py          # python -m toony_mcp
-    ├── server.py            # FastMCP server + get_client()
-    ├── client.py            # ToonyClient — HTTP wrapper for the backend
-    └── tools/
-        ├── __init__.py
-        ├── projects.py      # 5 project tools
-        ├── issues.py        # 12 issue/artifact tools
-        ├── workflows.py     # 1 workflow tool
-        └── workspace.py     # 2 workspace tools
-```
-
 ## Development
 
-### Run directly
+### Run locally
 
 ```bash
-cd mcp-server
+git clone https://github.com/bikerlfh/toony-mcp.git
+cd toony-mcp
+cp .env.example .env   # edit with your values
 uv run toony-mcp
 ```
 
 ### Adding a new tool
 
-1. Define the function in the corresponding module inside `src/toony_mcp/tools/`
-2. Decorate with `@mcp.tool()`:
+1. Define the function in the corresponding module inside `src/toony_mcp/tools/`:
 
 ```python
 from toony_mcp.server import mcp, get_client
@@ -218,7 +167,7 @@ def my_new_tool(param: str) -> str:
     return json.dumps(result)
 ```
 
-3. If you create a new tools module, import it in `server.py`:
+2. If you create a new tools module, import it in `server.py`:
 
 ```python
 def main():
@@ -229,4 +178,4 @@ def main():
     mcp.run()
 ```
 
-4. If you need a new client method, add it in `client.py`.
+3. If you need a new client method, add it in `client.py`.

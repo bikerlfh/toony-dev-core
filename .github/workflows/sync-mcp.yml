@@ -1,0 +1,41 @@
+name: Sync MCP Server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp-server/**"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          repository: bikerlfh/toony-mcp
+          path: _target
+          token: ${{ secrets.MCP_REPO_TOKEN }}
+
+      - name: Sync files
+        run: |
+          # Remove old files from target (except .git)
+          find _target -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
+          # Copy mcp-server contents to target root
+          cp -a mcp-server/. _target/
+
+      - name: Commit and push
+        working-directory: _target
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to sync"
+            exit 0
+          fi
+          git commit -m "sync: update from toony-dev-core@${GITHUB_SHA::7}"
+          git push

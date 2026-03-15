@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="git@github.com:bikerlfh/toony-mcp.git"
-INSTALL_DIR="$HOME/.toony"
+REPO_URL="https://github.com/bikerlfh/toony-mcp.git"
+INSTALL_DIR="$HOME/.toony/mcp-server"
 MCP_NAME="toony"
 DEFAULT_API_URL="http://localhost:8000/api"
 
@@ -38,6 +38,7 @@ git clone --depth 1 "$REPO_URL" "$TEMP_DIR" --quiet
 
 # --- Install ---
 
+mkdir -p "$HOME/.toony"
 cp -r "$TEMP_DIR" "$INSTALL_DIR"
 rm -rf "$INSTALL_DIR/.git"
 echo "Installed to $INSTALL_DIR"
@@ -53,7 +54,7 @@ read -rp "TOONY_API_KEY (required): " api_key
 # --- Register MCP in Claude Code ---
 
 echo "Registering MCP server..."
-claude mcp add "$MCP_NAME" --scope user --transport stdio -- uv --directory "$INSTALL_DIR" run toony-mcp
+claude mcp add "$MCP_NAME" --scope user -- uv --directory "$INSTALL_DIR" run toony-mcp
 claude mcp add-env "$MCP_NAME" TOONY_API_URL "$api_url"
 claude mcp add-env "$MCP_NAME" TOONY_API_KEY "$api_key"
 
