@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
   const [issues, setIssues] = useState<CrossProjectIssueList[]>([]);
   const [agents, setAgents] = useState<ToonyAgentList[]>([]);
-  const [agentTasks, setAgentTasks] = useState<(AgentTaskList & { agent_name: string })[]>([]);
+  const [agentTasks, setAgentTasks] = useState<(AgentTaskList & { agent_name: string; agent_id: string })[]>([]);
   const [projects, setProjects] = useState<ProjectList[]>([]);
   const [workflows, setWorkflows] = useState<WorkflowList[]>([]);
   const [artifacts, setArtifacts] = useState<ArtifactList[]>([]);
@@ -96,6 +96,7 @@ export default function DashboardPage() {
           taskResults[i].results.map((t) => ({
             ...t,
             agent_name: agent.name,
+            agent_id: agent.id,
           }))
         );
         setAgentTasks(merged);
@@ -369,7 +370,7 @@ export default function DashboardPage() {
                   return (
                     <Link
                       key={task.id}
-                      href={`/toony-agents/${task.toony_agent_slug}/tasks/${task.id}`}
+                      href={`/toony-agents/${task.agent_id}/tasks/${task.id}`}
                       className="flex w-full items-center gap-3 px-1 py-2.5 text-left transition-colors hover:bg-slate-800/50"
                     >
                       <span
