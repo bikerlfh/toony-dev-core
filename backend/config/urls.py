@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/organizations/<uuid:org_id>/", include("importers.urls")),
     path("api/", include("toony_agents.urls")),
     path("api/search/", include("organizations.search_urls")),
+    path("api/notifications/", include("notifications.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
