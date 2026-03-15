@@ -1,11 +1,11 @@
 import factory
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from notifications.models import Notification
 
 from accounts.models import User, UserAPIKey
 from accounts.models.membership import MembershipRole, OrganizationMembership
 from agents.models import Skill, SubAgent
-from notifications.models import Notification
 from organizations.models import Organization, OrganizationSettings
 from projects.models import (
     Cycle,

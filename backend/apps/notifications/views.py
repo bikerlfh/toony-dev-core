@@ -7,7 +7,10 @@ from rest_framework.views import APIView
 from common.mixins import PaginatedViewMixin
 from notifications.models import Notification
 from notifications.selectors import get_unread_count, list_user_notifications
-from notifications.serializers.input import MarkAllReadSerializer, MarkReadSerializer
+from notifications.serializers.input import (
+    MarkAllReadSerializer,
+    MarkReadSerializer,
+)
 from notifications.serializers.output import NotificationSerializer
 
 

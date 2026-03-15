@@ -1,12 +1,15 @@
 import pytest
-
 from notifications.models import Notification
-from notifications.registry import _registry, get_handler, get_registered_events, register
+from notifications.registry import (
+    _registry,
+    get_handler,
+    get_registered_events,
+    register,
+)
 from notifications.services import notify
+
 from tests.factories import (
-    IssueArtifactFactory,
     IssueCommentFactory,
-    IssueFactory,
     UserFactory,
 )
 
