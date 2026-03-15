@@ -112,6 +112,43 @@ export default function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
+  // Polling: refresh issues, agents, tasks, artifacts every 30s
+  const refreshLiveData = useCallback(async () => {
+    try {
+      const [issuesRes, agentsRes, artifactsRes] = await Promise.all([
+        listAllIssues(),
+        listToonyAgents(),
+        listAllArtifacts(),
+      ]);
+
+      setIssues(issuesRes.results);
+      setAgents(agentsRes.results);
+      setArtifacts(artifactsRes.results);
+
+      const allAgents = agentsRes.results;
+      if (allAgents.length > 0) {
+        const taskResults = await Promise.all(
+          allAgents.map((a) => listAgentTasks(a.id))
+        );
+        const merged = allAgents.flatMap((agent, i) =>
+          taskResults[i].results.map((t) => ({
+            ...t,
+            agent_name: agent.name,
+            agent_id: agent.id,
+          }))
+        );
+        setAgentTasks(merged);
+      }
+    } catch {
+      // Silently ignore polling errors
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(refreshLiveData, 30_000);
+    return () => clearInterval(interval);
+  }, [refreshLiveData]);
+
   const myIssues = useMemo(() => {
     if (!user) return [];
     return issues
