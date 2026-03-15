@@ -27,7 +27,7 @@ function getNotificationUrl(notification: NotificationItem): string {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "ahora";
+  if (minutes < 1) return "now";
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
@@ -77,7 +77,7 @@ export function NotificationDropdown() {
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative flex items-center justify-center rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-900/60 hover:text-slate-300"
-        title="Notificaciones"
+        title="Notifications"
       >
         <svg
           className="h-4 w-4"
@@ -104,13 +104,13 @@ export function NotificationDropdown() {
         <div className="absolute bottom-full left-0 mb-2 w-80 rounded-lg border border-slate-800/60 bg-slate-900 shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-800/60 px-4 py-3">
-            <h3 className="text-sm font-medium text-white">Notificaciones</h3>
+            <h3 className="text-sm font-medium text-white">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllAsRead()}
                 className="text-xs text-indigo-400 transition-colors hover:text-indigo-300"
               >
-                Marcar todas como le&iacute;das
+                Mark all as read
               </button>
             )}
           </div>
@@ -119,7 +119,7 @@ export function NotificationDropdown() {
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <p className="px-4 py-6 text-center text-sm text-slate-600">
-                Sin notificaciones
+                No notifications
               </p>
             ) : (
               notifications.map((n) => (
@@ -166,7 +166,7 @@ export function NotificationDropdown() {
               }}
               className="w-full rounded-md py-1.5 text-center text-xs text-slate-400 transition-colors hover:text-slate-200"
             >
-              Ver todas
+              View all
             </button>
           </div>
         </div>

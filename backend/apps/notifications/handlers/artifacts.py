@@ -26,7 +26,7 @@ def handle_artifact_created(context):
             organization=issue.project.organization,
             event_type="artifact.created",
             actor=actor,
-            title=f"Nuevo artefacto en {issue.identifier}: {artifact.title}",
+            title=f"New artifact in {issue.identifier}: {artifact.title}",
             target_type="artifact",
             target_id=artifact.id,
             metadata=metadata,

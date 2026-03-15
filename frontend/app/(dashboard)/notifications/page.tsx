@@ -28,7 +28,7 @@ function getNotificationUrl(notification: NotificationItem): string {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "ahora";
+  if (minutes < 1) return "now";
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
@@ -146,7 +146,7 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-medium tracking-tight text-white">
-          Notificaciones
+          Notifications
         </h1>
         <div className="flex items-center gap-3">
           {unreadSelected.length > 0 && (
@@ -154,14 +154,14 @@ export default function NotificationsPage() {
               onClick={handleMarkSelectedRead}
               className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white"
             >
-              Marcar {unreadSelected.length} como le&iacute;das
+              Mark {unreadSelected.length} as read
             </button>
           )}
           <button
             onClick={handleMarkAllRead}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
           >
-            Marcar todas como le&iacute;das
+            Mark all as read
           </button>
         </div>
       </div>
@@ -176,7 +176,7 @@ export default function NotificationsPage() {
               : "text-slate-500 hover:text-slate-300"
           }`}
         >
-          Todas
+          All
         </button>
         <button
           onClick={() => setFilter("unread")}
@@ -186,7 +186,7 @@ export default function NotificationsPage() {
               : "text-slate-500 hover:text-slate-300"
           }`}
         >
-          No le&iacute;das
+          Unread
         </button>
       </div>
 
@@ -195,8 +195,8 @@ export default function NotificationsPage() {
         {items.length === 0 ? (
           <p className="text-slate-500">
             {filter === "unread"
-              ? "No hay notificaciones sin leer."
-              : "No hay notificaciones."}
+              ? "No unread notifications."
+              : "No notifications."}
           </p>
         ) : (
           <div className="divide-y divide-slate-800/60 rounded-lg border border-slate-800/60">
@@ -260,7 +260,7 @@ export default function NotificationsPage() {
               disabled={isLoadingMore}
               className="rounded-lg border border-slate-700 bg-slate-900/50 px-6 py-2 text-sm font-medium text-slate-300 transition-all hover:border-slate-600 hover:text-white disabled:opacity-50"
             >
-              {isLoadingMore ? "Cargando..." : "Cargar m\u00e1s"}
+              {isLoadingMore ? "Loading..." : "Load more"}
             </button>
           </div>
         )}
