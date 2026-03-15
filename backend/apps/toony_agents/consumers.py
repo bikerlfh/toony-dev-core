@@ -60,16 +60,27 @@ def _update_task_status(task_id, new_status, **kwargs):
     if "error" in kwargs:
         updates["error"] = kwargs["error"]
     if kwargs.get("toony_agent_id"):
-        return AgentTask.objects.filter(
+        AgentTask.objects.filter(
             id=task_id,
             toony_agent_id=kwargs["toony_agent_id"],
         ).update(**updates)
-    return AgentTask.objects.filter(id=task_id).update(**updates)
+    else:
+        AgentTask.objects.filter(id=task_id).update(**updates)
+
+    # Send notifications for terminal statuses
+    if new_status in (AgentTaskStatus.COMPLETED, AgentTaskStatus.FAILED):
+        from notifications.services import notify
+
+        task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
+        event = "agent_task.completed" if new_status == AgentTaskStatus.COMPLETED else "agent_task.failed"
+        notify(event, {"task": task})
 
 
 @database_sync_to_async
 def _fail_active_tasks(agent_id):
     """Mark all active tasks for an agent as FAILED. Returns list of (task_id, previous_status)."""
+    from notifications.services import notify
+
     active_statuses = [
         AgentTaskStatus.ASSIGNED,
         AgentTaskStatus.RUNNING,
@@ -87,6 +98,8 @@ def _fail_active_tasks(agent_id):
             error=f"Agent disconnected (task was {prev_status})",
             completed_at=timezone.now(),
         )
+        task = AgentTask.objects.select_related("created_by", "organization").get(id=task_id)
+        notify("agent_task.failed", {"task": task})
     return tasks
 
 
