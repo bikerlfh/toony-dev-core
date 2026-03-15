@@ -581,9 +581,10 @@ export default function DashboardPage() {
             ) : (
               <div className="mt-3 divide-y divide-slate-800/40">
                 {recentArtifacts.map((artifact) => (
-                  <div
+                  <Link
                     key={artifact.id}
-                    className="-mx-2 px-2 py-3"
+                    href={`/artifacts/${artifact.id}`}
+                    className="-mx-2 block rounded px-2 py-3 transition-colors hover:bg-slate-800/30"
                   >
                     <p className="truncate text-sm font-medium text-white">
                       {artifact.title}
@@ -595,7 +596,7 @@ export default function DashboardPage() {
                         {timeAgo(artifact.created_at)}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
