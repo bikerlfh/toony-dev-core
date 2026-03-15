@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 import type { ToonyAgentList, AgentTaskList } from "@/types/toony-agents";
 import type { WorkflowList } from "@/types/workflows";
-import type { ArtifactList } from "@/types/artifacts";
+import type { ArtifactList, ArtifactType } from "@/types/artifacts";
 import { useAuth } from "@/contexts/auth-context";
 import { listAllIssues } from "@/lib/api/issues";
 import { listProjects } from "@/lib/api/projects";
@@ -50,6 +50,7 @@ const AGENT_STATUS_DOT: Record<string, string> = {
 
 type IssueFilter = "ALL" | "IN_PROGRESS" | "TODO" | "IN_REVIEW" | "BACKLOG";
 type TaskFilter = "ALL" | "RUNNING" | "QUEUED" | "COMPLETED" | "FAILED";
+type ArtifactFilter = "ALL" | ArtifactType;
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -64,6 +65,7 @@ export default function DashboardPage() {
 
   const [issueFilter, setIssueFilter] = useState<IssueFilter>("ALL");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("ALL");
+  const [artifactFilter, setArtifactFilter] = useState<ArtifactFilter>("ALL");
 
   const [selectedIssue, setSelectedIssue] = useState<{
     projectId: string;
@@ -174,17 +176,19 @@ export default function DashboardPage() {
     [workflows]
   );
 
-  const recentArtifacts = useMemo(
-    () =>
-      [...artifacts]
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        )
-        .slice(0, 5),
-    [artifacts]
-  );
+  const recentArtifacts = useMemo(() => {
+    const filtered =
+      artifactFilter === "ALL"
+        ? artifacts
+        : artifacts.filter((a) => a.artifact_type === artifactFilter);
+    return [...filtered]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      )
+      .slice(0, 5);
+  }, [artifacts, artifactFilter]);
 
   const stats = useMemo(() => {
     const openIssues = myIssues.length;
@@ -521,6 +525,71 @@ export default function DashboardPage() {
             )}
           </div>
 
+          {/* Recent Artifacts */}
+          <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-white">Recent Artifacts</h2>
+              <Link
+                href="/artifacts"
+                className="text-xs text-slate-400 transition-colors hover:text-white"
+              >
+                View &rarr;
+              </Link>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["ALL", "All"],
+                  ["PLAN", "Plan"],
+                  ["DESIGN_DOC", "Design"],
+                  ["TECHNICAL_SPEC", "Spec"],
+                  ["TEST_PLAN", "Test"],
+                  ["OTHER", "Other"],
+                ] as [ArtifactFilter, string][]
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setArtifactFilter(value)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                    artifactFilter === value
+                      ? "bg-indigo-500/20 text-indigo-400"
+                      : "text-slate-400 hover:bg-slate-800 hover:text-slate-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {recentArtifacts.length === 0 ? (
+              <p className="mt-4 py-4 text-center text-sm text-slate-500">
+                No artifacts yet.
+              </p>
+            ) : (
+              <div className="mt-3 divide-y divide-slate-800/40">
+                {recentArtifacts.map((artifact) => (
+                  <Link
+                    key={artifact.id}
+                    href={`/artifacts/${artifact.id}`}
+                    className="-mx-2 block rounded px-2 py-3 transition-colors hover:bg-slate-800/30"
+                  >
+                    <p className="truncate text-sm font-medium text-white">
+                      {artifact.title}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <ArtifactTypeBadge type={artifact.artifact_type} />
+                      <ArtifactStatusBadge status={artifact.status} />
+                      <span className="ml-auto text-xs text-slate-600">
+                        {timeAgo(artifact.created_at)}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Active Workflows */}
           <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
             <div className="flex items-center justify-between">
@@ -557,46 +626,6 @@ export default function DashboardPage() {
                       &middot; {wf.nodes_count} node
                       {wf.nodes_count !== 1 ? "s" : ""}
                     </p>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Recent Artifacts */}
-          <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-white">Recent Artifacts</h2>
-              <Link
-                href="/artifacts"
-                className="text-xs text-slate-400 transition-colors hover:text-white"
-              >
-                View &rarr;
-              </Link>
-            </div>
-
-            {recentArtifacts.length === 0 ? (
-              <p className="mt-4 py-4 text-center text-sm text-slate-500">
-                No artifacts yet.
-              </p>
-            ) : (
-              <div className="mt-3 divide-y divide-slate-800/40">
-                {recentArtifacts.map((artifact) => (
-                  <Link
-                    key={artifact.id}
-                    href={`/artifacts/${artifact.id}`}
-                    className="-mx-2 block rounded px-2 py-3 transition-colors hover:bg-slate-800/30"
-                  >
-                    <p className="truncate text-sm font-medium text-white">
-                      {artifact.title}
-                    </p>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <ArtifactTypeBadge type={artifact.artifact_type} />
-                      <ArtifactStatusBadge status={artifact.status} />
-                      <span className="ml-auto text-xs text-slate-600">
-                        {timeAgo(artifact.created_at)}
-                      </span>
-                    </div>
                   </Link>
                 ))}
               </div>
