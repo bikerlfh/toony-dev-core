@@ -246,7 +246,10 @@ def _maybe_create_agent_task(issue, user):
     from django.conf import settings as django_settings
 
     from toony_agents.models import AgentTask, AgentTaskStatus, ToonyAgent
-    from toony_agents.services.agent_task_service import create_agent_task, update_task_status
+    from toony_agents.services.agent_task_service import (
+        create_agent_task,
+        update_task_status,
+    )
 
     organization = issue.project.organization
 

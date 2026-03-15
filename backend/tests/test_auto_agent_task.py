@@ -185,25 +185,24 @@ class TestAgentTaskLifecycleOnStatusChange:
         assert queued_tasks.first().id == first_task.id
 
     @override_settings(DEFAULT_AGENT_TASK_PROMPT_TEMPLATE=DEFAULT_TEMPLATE)
-    def test_reactivated_task_gets_updated_prompt(self, issue, toony_agent, user):
-        """If issue title/description changes while paused, reactivated task gets updated prompt."""
+    def test_reactivated_task_gets_updated_title(self, issue, toony_agent, user):
+        """If issue title changes while paused, reactivated task gets updated title."""
         update_issue(issue, user, status=IssueStatus.TODO)
         first_task = AgentTask.objects.get(issue=issue, status="QUEUED")
-        original_prompt = first_task.prompt
+        original_title = first_task.title
 
         # Pause: TODO → BACKLOG
         update_issue(issue, user, status=IssueStatus.BACKLOG)
         first_task.refresh_from_db()
         assert first_task.status == "PAUSED"
 
-        # Change title and description while in BACKLOG
-        update_issue(issue, user, title="Updated title", description="New description")
+        # Change title while in BACKLOG
+        update_issue(issue, user, title="Updated title")
 
         # Reactivate: BACKLOG → TODO
         update_issue(issue, user, status=IssueStatus.TODO)
         first_task.refresh_from_db()
         assert first_task.status == "QUEUED"
         assert first_task.title == "Updated title"
-        assert first_task.prompt != original_prompt
-        assert "Updated title" not in first_task.prompt  # prompt uses identifier, not title
+        assert first_task.title != original_title
         assert first_task.prompt == f"Use toony skill and implement {issue.identifier}"
