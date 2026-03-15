@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { listOrganizations } from "@/lib/api/organizations";
 import type { Organization } from "@/types";
@@ -190,9 +191,12 @@ export default function OrganizationsPage() {
               <div className="flex items-start gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-800/60 text-sm font-semibold text-slate-400">
                   {org.logo ? (
-                    <img
+                    <Image
                       src={org.logo}
                       alt=""
+                      width={36}
+                      height={36}
+                      unoptimized
                       className="h-9 w-9 rounded-lg object-cover"
                     />
                   ) : (
