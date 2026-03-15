@@ -80,7 +80,7 @@ dumpdata-all:
 
 ## Load fixture: make loaddata file="all" (loads fixtures/<file>.json)
 loaddata:
-	$(MANAGE) loaddata fixtures/$(file).json
+	$(BACKEND) sh -c 'python manage.py loaddata fixtures/*.json'
 
 ## Delete all migration files and regenerate them (destructive!)
 reset-migrations:

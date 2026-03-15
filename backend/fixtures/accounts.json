@@ -15,20 +15,6 @@
 },
 {
   "model": "accounts.organizationmembership",
-  "pk": "c3e7f711-81c4-4185-8e35-99d0848a013e",
-  "fields": {
-    "created_at": "2026-03-05T03:19:25.172Z",
-    "updated_at": "2026-03-05T03:19:25.172Z",
-    "user": "481e5fe6-487f-4130-8d6b-90354e1ce9a7",
-    "organization": "fdced3fe-d7d5-4cdc-9373-2c9c6f75946a",
-    "role": "OWNER",
-    "invited_by": null,
-    "joined_at": "2026-03-05T03:19:25.172Z",
-    "is_active": true
-  }
-},
-{
-  "model": "accounts.organizationmembership",
   "pk": "d4ca7f07-f6f4-471e-bf0d-ea35295aa622",
   "fields": {
     "created_at": "2026-03-05T03:15:45.307Z",
@@ -88,7 +74,7 @@
   "pk": "8e6390d8-aa76-4bf1-a483-af584e2a33a0",
   "fields": {
     "password": "pbkdf2_sha256$870000$GwJcElnnuRqq4SLONSZR4W$A0kO8vASxcQgD/GZWOtQJa2uRJmkm88QB/QP/3UZhes=",
-    "last_login": "2026-03-11T03:23:50.505Z",
+    "last_login": "2026-03-15T17:09:21.745Z",
     "is_superuser": true,
     "username": "admin",
     "first_name": "",

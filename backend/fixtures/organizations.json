@@ -30,21 +30,6 @@
   }
 },
 {
-  "model": "organizations.organization",
-  "pk": "fdced3fe-d7d5-4cdc-9373-2c9c6f75946a",
-  "fields": {
-    "created_at": "2026-03-05T03:19:25.170Z",
-    "updated_at": "2026-03-05T13:47:23.278Z",
-    "name": "Mo",
-    "slug": "mo",
-    "description": "Fintech company",
-    "logo": "",
-    "website": "",
-    "industry": "",
-    "is_active": true
-  }
-},
-{
   "model": "organizations.organizationsettings",
   "pk": "5d55f053-cfa2-4c4c-a69b-8d1954a39136",
   "fields": {
@@ -52,20 +37,6 @@
     "updated_at": "2026-03-05T03:15:45.305Z",
     "organization": "1420a00a-88d1-47b5-a069-a49664bcde57",
     "default_project_methodology": "SCRUM",
-    "timezone": "UTC",
-    "notification_preferences": {},
-    "allowed_ip_ranges": null,
-    "audit_log_retention_days": 90
-  }
-},
-{
-  "model": "organizations.organizationsettings",
-  "pk": "85d351ac-38b6-4f50-b13a-a69a8d96de84",
-  "fields": {
-    "created_at": "2026-03-05T03:19:25.171Z",
-    "updated_at": "2026-03-06T14:12:27.751Z",
-    "organization": "fdced3fe-d7d5-4cdc-9373-2c9c6f75946a",
-    "default_project_methodology": "KANBAN",
     "timezone": "UTC",
     "notification_preferences": {},
     "allowed_ip_ranges": null,

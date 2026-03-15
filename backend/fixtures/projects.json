@@ -949,38 +949,6 @@
   }
 },
 {
-  "model": "projects.issueartifact",
-  "pk": "23da91b3-e261-4dab-9ac5-4939807d186c",
-  "fields": {
-    "created_at": "2026-03-07T04:10:46.729Z",
-    "updated_at": "2026-03-07T06:13:05.050Z",
-    "issue": "a29f9689-6d6c-43d5-93a8-f614805b7e89",
-    "agent_task": "46e5d6e5-7ae5-4b41-8c99-0908411d3e8a",
-    "title": "test of artifact",
-    "artifact_type": "OTHER",
-    "content": "blablabla",
-    "status": "IN_REVIEW",
-    "session_id": "adasdads",
-    "requires_approval": true
-  }
-},
-{
-  "model": "projects.issueartifact",
-  "pk": "6d2f384e-cf31-4f3f-b510-5e8f6b84582f",
-  "fields": {
-    "created_at": "2026-03-14T03:00:25.930Z",
-    "updated_at": "2026-03-14T03:03:25.681Z",
-    "issue": "7f4aec5f-93b6-44d8-8721-74d6ee034615",
-    "agent_task": null,
-    "title": "Artifact de prueba",
-    "artifact_type": "OTHER",
-    "content": "# Artifact de prueba\n\nEste es un artifact creado como prueba en la tarea TODC-3.\n\n## Contenido\n\n- Item 1: Verificación de creación de artifacts\n- Item 2: Validación del flujo MCP\n- Item 3: Todo funcionando correctamente",
-    "status": "APPROVED",
-    "session_id": "",
-    "requires_approval": false
-  }
-},
-{
   "model": "projects.issuecomment",
   "pk": "690533bc-b892-4f72-8464-a542aeba5610",
   "fields": {
