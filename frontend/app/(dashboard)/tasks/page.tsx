@@ -136,6 +136,7 @@ export default function TasksPage() {
           projectId={selectedIssue.projectId}
           issueId={selectedIssue.issueId}
           onClose={() => setSelectedIssue(null)}
+          onUpdated={fetchIssues}
         />
       )}
 
