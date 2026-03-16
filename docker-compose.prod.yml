@@ -49,8 +49,8 @@ services:
     build:
       context: ./frontend
       dockerfile: ../docker/Dockerfile.frontend.prod
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:8000}
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
     restart: unless-stopped
     depends_on:
       - backend

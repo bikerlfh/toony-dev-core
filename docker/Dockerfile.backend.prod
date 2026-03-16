@@ -27,6 +27,7 @@ WORKDIR /app
 COPY --chown=app:app . .
 
 RUN SECRET_KEY=build-placeholder ENVIRONMENT=production \
+    FIELD_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
     python manage.py collectstatic --noinput
 
 USER app

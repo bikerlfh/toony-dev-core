@@ -5,7 +5,7 @@
        clean
 
 COMPOSE = docker compose
-COMPOSE_PROD = docker compose -f docker-compose.prod.yml
+COMPOSE_PROD = docker compose -f docker-compose.prod.yml --env-file .env.prod
 BACKEND = $(COMPOSE) exec backend
 MANAGE = $(BACKEND) python manage.py
 
@@ -141,7 +141,13 @@ up-prod: ## Start production services
 	$(COMPOSE_PROD) up -d
 
 down-prod: ## Stop production services
-	$(COMPOSE_PROD) down
+	$(COMPOSE_PROD) down -v
+
+migrate-prod:
+	$(COMPOSE_PROD) exec backend python manage.py migrate
+
+loaddata-prod:
+	$(COMPOSE_PROD) exec backend sh -c 'python manage.py loaddata fixtures/*.json'
 
 logs-prod: ## Tail production logs
 	$(COMPOSE_PROD) logs -f
