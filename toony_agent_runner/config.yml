@@ -1,4 +1,4 @@
-backend_url: "ws://localhost:8000/ws/toony-agents/runner/"
+backend_url: "ws://localhost:8080/ws/toony-agents/runner/"
 api_key: "tok_ta_xqM6uvejjZqS3MW1uNG5bFDrzN2g2g42XtxOQpWIC74"
 workspace_root: "~/work"
 

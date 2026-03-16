@@ -31,7 +31,7 @@ services:
       context: ./backend
       dockerfile: ../docker/Dockerfile.backend
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ./backend:/app
     env_file:
@@ -47,7 +47,7 @@ services:
       context: ./frontend
       dockerfile: ../docker/Dockerfile.frontend
     ports:
-      - "3000:3000"
+      - "4000:4000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
