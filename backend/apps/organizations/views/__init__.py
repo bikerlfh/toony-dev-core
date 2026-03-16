@@ -15,14 +15,12 @@ from organizations.views.organization_views import (
     OrganizationListCreateView,
 )
 from organizations.views.search_views import GlobalSearchView
-from organizations.views.settings_views import OrganizationSettingsView
 
 __all__ = [
     "OrganizationListCreateView",
     "OrganizationDetailView",
     "MemberListCreateView",
     "MemberDetailView",
-    "OrganizationSettingsView",
     "CredentialListCreateView",
     "CredentialDetailView",
     "IntegrationListCreateView",

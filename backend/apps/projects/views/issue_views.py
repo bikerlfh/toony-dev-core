@@ -106,7 +106,7 @@ class IssueListCreateView(PaginatedViewMixin, APIView):
             kwargs["parent"] = parent
 
         # Pass through remaining fields
-        for field in ("status", "priority", "estimate", "due_date", "sort_order", "description"):
+        for field in ("status", "priority", "due_date", "sort_order", "description"):
             if field in data:
                 kwargs[field] = data[field]
 
@@ -196,7 +196,6 @@ class IssueDetailView(APIView):
             "description",
             "status",
             "priority",
-            "estimate",
             "due_date",
             "sort_order",
             "external_tracker_name",

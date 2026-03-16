@@ -107,7 +107,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
 - `OrganizationDetail` — extends Organization + `member_count`
 - `MembershipRole` — `"OWNER" | "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER"`
 - `Member` — `id`, `user` (User), `role`, `joined_at`, `is_active`
-- `OrganizationSettings` — `default_project_methodology`, `timezone`, `notification_preferences`, `allowed_ip_ranges`, `audit_log_retention_days`
+
 
 **projects.ts:**
 - `Team` — `id`, `name`, `slug`, `description`, `identifier`, `is_active`, `organization`, `created_at`
@@ -116,10 +116,10 @@ useEffect(() => { fetchData(); }, [fetchData]);
 - `Label` — `id`, `name`, `color`, `description`, `organization`, `created_at`
 - `ProjectList` / `ProjectDetail` — `id`, `name`, `slug`, `description`, `status` (ProjectStatus), `priority` (ProjectPriority), `team`, `lead`, `start_date`, `target_date`, `completed_at`, `member_count`, `issue_count`, `icon`, `color`
 - `ProjectMember` — `id`, `user`, `role` (LEAD|CONTRIBUTOR|REVIEWER), `joined_at`
-- `ProjectSettings` — `repository_url`, `repository_credential`, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix`, `estimation_method`
+- `ProjectSettings` — `repository_url`, `repository_credential`, `default_branch`, `branch_naming_convention`, `issue_prefix`, `auto_task_prompt_template`
 - `Milestone` — `id`, `name`, `description`, `target_date`, `status` (MilestoneStatus), `sort_order`, `project`
 - `Cycle` — `id`, `name`, `number`, `start_date`, `end_date`, `status` (CycleStatus), `project`
-- `IssueList` / `IssueDetail` — `id`, `identifier`, `title`, `description`, `status`, `priority`, `assignee`, `reporter`, `labels`, `milestone`, `cycle`, `parent`, `estimate`, `due_date`, `sort_order`, `sub_issue_count`, `comment_count`
+- `IssueList` / `IssueDetail` — `id`, `identifier`, `title`, `description`, `status`, `priority`, `assignee`, `reporter`, `labels`, `milestone`, `cycle`, `parent`, `due_date`, `sort_order`, `sub_issue_count`, `comment_count`
 - `IssueComment` — `id`, `body`, `author`, `edited_at`, `created_at`
 - `IssueActivity` — `id`, `action`, `field_changed`, `old_value`, `new_value`, `user`, `created_at`
 

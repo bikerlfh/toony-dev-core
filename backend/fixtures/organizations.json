@@ -28,19 +28,5 @@
     "industry": "Tech",
     "is_active": true
   }
-},
-{
-  "model": "organizations.organizationsettings",
-  "pk": "5d55f053-cfa2-4c4c-a69b-8d1954a39136",
-  "fields": {
-    "created_at": "2026-03-05T03:15:45.305Z",
-    "updated_at": "2026-03-05T03:15:45.305Z",
-    "organization": "1420a00a-88d1-47b5-a069-a49664bcde57",
-    "default_project_methodology": "SCRUM",
-    "timezone": "UTC",
-    "notification_preferences": {},
-    "allowed_ip_ranges": null,
-    "audit_log_retention_days": 90
-  }
 }
 ]

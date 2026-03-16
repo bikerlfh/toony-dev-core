@@ -10,7 +10,6 @@ from projects.models.document import IssueDocument
 from projects.models.issue import Issue, IssuePriority, IssueStatus
 from projects.models.milestone import Milestone, MilestoneStatus
 from projects.models.project import (
-    EstimationMethod,
     Project,
     ProjectMemberRole,
     ProjectMembership,
@@ -27,7 +26,6 @@ __all__ = [
     "ProjectMemberRole",
     "ProjectMembership",
     "ProjectSettings",
-    "EstimationMethod",
     "Milestone",
     "MilestoneStatus",
     "Cycle",

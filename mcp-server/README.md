@@ -65,7 +65,7 @@ The API Key is generated from the user's profile page in the Toony web applicati
 | `get_issue` | Gets issue details by UUID or identifier (e.g., `ENG-42`) | `issue_id` |
 | `list_project_issues` | Lists issues with filters | `project_id`, `status`, `priority`, `assignee_id`, `milestone_id`, `cycle_id`, `label_ids`, `search` (all optional except project_id) |
 | `get_my_issues` | Gets issues assigned to the authenticated user across all projects | `status`, `priority`, `search` (optional) |
-| `create_issue` | Creates a new issue | `project_id`, `title` (required); `description`, `status`, `priority`, `assignee_id`, `milestone_id`, `cycle_id`, `label_ids`, `estimate`, `due_date` (optional) |
+| `create_issue` | Creates a new issue | `project_id`, `title` (required); `description`, `status`, `priority`, `assignee_id`, `milestone_id`, `cycle_id`, `label_ids`, `due_date` (optional) |
 | `update_issue` | Updates an existing issue | `issue_id`, `project_id` (required); rest optional — pass `"none"` to clear fields |
 | `list_issue_comments` | Lists comments on an issue | `issue_id`, `project_id` |
 | `create_comment` | Adds a comment to an issue | `issue_id`, `project_id`, `body` (supports markdown) |

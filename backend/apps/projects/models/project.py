@@ -27,11 +27,6 @@ class ProjectMemberRole(models.TextChoices):
     REVIEWER = "REVIEWER", "Reviewer"
 
 
-class EstimationMethod(models.TextChoices):
-    STORY_POINTS = "STORY_POINTS", "Story Points"
-    T_SHIRT = "T_SHIRT", "T-Shirt"
-    HOURS = "HOURS", "Hours"
-
 
 class Project(BaseModel):
     organization = models.ForeignKey(
@@ -129,14 +124,7 @@ class ProjectSettings(BaseModel):
     )
     default_branch = models.CharField(max_length=255, default="main")
     branch_naming_convention = models.CharField(max_length=255, blank=True, default="")
-    required_reviewers_count = models.IntegerField(default=1)
-    auto_close_completed_issues = models.BooleanField(default=False)
     issue_prefix = models.CharField(max_length=10)
-    estimation_method = models.CharField(
-        max_length=20,
-        choices=EstimationMethod.choices,
-        default=EstimationMethod.STORY_POINTS,
-    )
     auto_task_prompt_template = models.TextField(blank=True, default="")
 
     class Meta:

@@ -48,7 +48,6 @@ import type {
   MilestoneStatus,
   Cycle,
   CycleStatus,
-  EstimationMethod,
   IssueList,
   IssueStatus,
   IssueFilters,
@@ -115,11 +114,6 @@ const CYCLE_STATUS_OPTIONS: { value: CycleStatus; label: string }[] = [
   { value: "COMPLETED", label: "Completed" },
 ];
 
-const ESTIMATION_OPTIONS: { value: EstimationMethod; label: string }[] = [
-  { value: "STORY_POINTS", label: "Story Points" },
-  { value: "T_SHIRT", label: "T-Shirt Sizes" },
-  { value: "HOURS", label: "Hours" },
-];
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -1419,10 +1413,7 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
       repository_url: settings.repository_url,
       default_branch: settings.default_branch,
       branch_naming_convention: settings.branch_naming_convention,
-      required_reviewers_count: settings.required_reviewers_count,
-      auto_close_completed_issues: settings.auto_close_completed_issues,
       issue_prefix: settings.issue_prefix,
-      estimation_method: settings.estimation_method,
       auto_task_prompt_template: settings.auto_task_prompt_template,
       ...override,
     };
@@ -1479,8 +1470,6 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
   if (isLoading) return <p className="text-slate-500">Loading settings...</p>;
   if (!settings) return <p className="text-red-400">Failed to load settings.</p>;
 
-  const estimationLabel = ESTIMATION_OPTIONS.find((o) => o.value === settings.estimation_method)?.label ?? settings.estimation_method;
-
   const repoRows: { field: string; label: string; value: string; inputType: "text" | "url" | "number"; mono?: boolean; placeholder?: string }[] = [
     { field: "repository_url", label: "Repository URL", value: settings.repository_url, inputType: "url", mono: true, placeholder: "https://github.com/..." },
     { field: "default_branch", label: "Default branch", value: settings.default_branch, inputType: "text", mono: true },
@@ -1488,7 +1477,6 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
   ];
 
   const workflowRows: { field: string; label: string; value: string; inputType: "text" | "url" | "number"; mono?: boolean; maxLength?: number; min?: number }[] = [
-    { field: "required_reviewers_count", label: "Required reviewers", value: String(settings.required_reviewers_count), inputType: "number", min: 0 },
     { field: "issue_prefix", label: "Issue prefix", value: settings.issue_prefix, inputType: "text", mono: true, maxLength: 10 },
   ];
 
@@ -1543,38 +1531,6 @@ function SettingsTab({ projectId, canManage, onDeleted }: { projectId: string; c
             />
           ))}
 
-          {/* Estimation method — inline select */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm font-medium text-slate-300">Estimation method</span>
-            {canManage ? (
-              <Select
-                options={ESTIMATION_OPTIONS}
-                value={settings.estimation_method}
-                onChange={(v) => saveField("estimation_method", v)}
-                             />
-            ) : (
-              <span className="text-sm text-slate-400">{estimationLabel}</span>
-            )}
-          </div>
-
-          {/* Auto-close toggle */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm font-medium text-slate-300">Auto-close completed issues</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={settings.auto_close_completed_issues}
-              disabled={!canManage || savingField === "auto_close_completed_issues"}
-              onClick={() => saveField("auto_close_completed_issues", !settings.auto_close_completed_issues)}
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
-                settings.auto_close_completed_issues ? "bg-indigo-600" : "bg-slate-700"
-              } ${!canManage ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
-                settings.auto_close_completed_issues ? "translate-x-[18px]" : "translate-x-[3px]"
-              }`} />
-            </button>
-          </div>
         </div>
       </div>
 

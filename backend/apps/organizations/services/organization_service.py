@@ -2,7 +2,7 @@ from django.db import transaction
 
 from accounts.models import MembershipRole, OrganizationMembership
 from common.exceptions import ConflictError
-from organizations.models import Organization, OrganizationSettings
+from organizations.models import Organization
 from organizations.selectors import get_organization_by_slug
 
 
@@ -16,7 +16,6 @@ def create_organization(name, slug, owner, **kwargs):
             slug=slug,
             **kwargs,
         )
-        OrganizationSettings.objects.create(organization=organization)
         OrganizationMembership.objects.create(
             user=owner,
             organization=organization,

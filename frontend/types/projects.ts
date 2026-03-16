@@ -84,7 +84,6 @@ export type ProjectPriority = "NONE" | "URGENT" | "HIGH" | "MEDIUM" | "LOW";
 
 export type ProjectMemberRole = "LEAD" | "CONTRIBUTOR" | "REVIEWER";
 
-export type EstimationMethod = "STORY_POINTS" | "T_SHIRT" | "HOURS";
 
 export interface ProjectTeam {
   id: string;
@@ -131,10 +130,7 @@ export interface ProjectSettings {
   repository_url: string;
   default_branch: string;
   branch_naming_convention: string;
-  required_reviewers_count: number;
-  auto_close_completed_issues: boolean;
   issue_prefix: string;
-  estimation_method: EstimationMethod;
   auto_task_prompt_template: string;
   updated_at: string;
 }
@@ -178,10 +174,7 @@ export interface UpdateProjectSettingsPayload {
   repository_url?: string;
   default_branch?: string;
   branch_naming_convention?: string;
-  required_reviewers_count?: number;
-  auto_close_completed_issues?: boolean;
   issue_prefix?: string;
-  estimation_method?: EstimationMethod;
   auto_task_prompt_template?: string;
 }
 
@@ -277,7 +270,6 @@ export interface IssueList {
   labels: Label[];
   milestone: IssueMilestoneMinimal | null;
   cycle: IssueCycleMinimal | null;
-  estimate: number | null;
   due_date: string | null;
   sort_order: number;
   created_at: string;
@@ -306,7 +298,6 @@ export interface CreateIssuePayload {
   cycle_id?: string | null;
   parent_identifier?: string;
   label_ids?: string[];
-  estimate?: number | null;
   due_date?: string | null;
   sort_order?: number;
 }
@@ -321,7 +312,6 @@ export interface UpdateIssuePayload {
   cycle_id?: string | null;
   parent_identifier?: string | null;
   label_ids?: string[];
-  estimate?: number | null;
   due_date?: string | null;
   sort_order?: number;
   external_tracker_name?: string;

@@ -3,7 +3,6 @@ from rest_framework import serializers
 from accounts.models import MembershipRole
 from organizations.models.credential import CredentialProvider, CredentialType
 from organizations.models.integration import IntegrationProvider
-from organizations.models.settings import MethodologyChoices
 
 
 class CreateOrganizationSerializer(serializers.Serializer):
@@ -32,20 +31,6 @@ class AddMemberSerializer(serializers.Serializer):
 
 class UpdateMemberRoleSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=MembershipRole.choices)
-
-
-class UpdateOrganizationSettingsSerializer(serializers.Serializer):
-    default_project_methodology = serializers.ChoiceField(
-        choices=MethodologyChoices.choices,
-        required=False,
-    )
-    timezone = serializers.CharField(max_length=100, required=False)
-    notification_preferences = serializers.JSONField(required=False)
-    allowed_ip_ranges = serializers.JSONField(required=False, allow_null=True)
-    audit_log_retention_days = serializers.IntegerField(
-        min_value=1,
-        required=False,
-    )
 
 
 # --- Credential ---

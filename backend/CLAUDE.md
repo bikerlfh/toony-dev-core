@@ -83,7 +83,7 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 
 ### organizations app
 - **Organization** — `id`, `name`, `slug` (unique), `description`, `website`, `industry`, `logo`, `is_active`
-- **OrganizationSettings** — 1:1 → Organization, `default_project_methodology` (SCRUM|KANBAN|CUSTOM), `timezone`, `notification_preferences` (JSON), `allowed_ip_ranges` (JSON), `audit_log_retention_days`
+
 - **RepositoryCredential** — `organization` → Org, `name`, `provider` (GITHUB|GITLAB|BITBUCKET|CUSTOM), `credential_type` (TOKEN|SSH_KEY|APP_CREDENTIAL), `encrypted_value`, `url_pattern`, `is_active`
 - **IntegrationConfig** — `organization` → Org, `provider` (LINEAR|JIRA|TRELLO|SLACK|CUSTOM), `encrypted_credentials`, `webhook_url`, `is_active`
 
@@ -93,10 +93,10 @@ Encrypted fields use `django-encrypted-model-fields` with `FIELD_ENCRYPTION_KEY`
 - **Label** — `id`, `organization` → Org, `name`, `color` (hex), `description`
 - **Project** — `id`, `organization` → Org, `team` → Team, `name`, `slug`, `description`, `status` (BACKLOG|PLANNED|IN_PROGRESS|PAUSED|COMPLETED|CANCELED), `priority` (NONE|URGENT|HIGH|MEDIUM|LOW), `lead` → User?, `start_date`, `target_date`, `completed_at`, `sort_order`, `icon`, `color`
 - **ProjectMembership** — `project` → Project, `user` → User, `role` (LEAD|CONTRIBUTOR|REVIEWER)
-- **ProjectSettings** — 1:1 → Project, `repository_url`, `repository_credential` → RepositoryCredential?, `default_branch`, `branch_naming_convention`, `required_reviewers_count`, `auto_close_completed_issues`, `issue_prefix`, `estimation_method` (STORY_POINTS|T_SHIRT|HOURS)
+- **ProjectSettings** — 1:1 → Project, `repository_url`, `repository_credential` → RepositoryCredential?, `default_branch`, `branch_naming_convention`, `issue_prefix`, `auto_task_prompt_template`
 - **Milestone** — `project` → Project, `name`, `description`, `target_date`, `status` (PLANNED|IN_PROGRESS|COMPLETED), `sort_order`
 - **Cycle** — `project` → Project, `name`, `number`, `start_date`, `end_date`, `status` (PLANNED|ACTIVE|COMPLETED)
-- **Issue** — `project` → Project, `milestone`?, `cycle`?, `parent`? (self), `identifier` (e.g. "ENG-42", unique), `title`, `description`, `status` (BACKLOG|TODO|IN_PROGRESS|IN_REVIEW|DONE|CANCELED), `priority`, `assignee` → User?, `reporter` → User, `labels` → M2M Label, `estimate`, `due_date`, `sort_order`, `external_tracker_name`, `external_tracker_url`, `external_tracker_id`
+- **Issue** — `project` → Project, `milestone`?, `cycle`?, `parent`? (self), `identifier` (e.g. "ENG-42", unique), `title`, `description`, `status` (BACKLOG|TODO|IN_PROGRESS|IN_REVIEW|DONE|CANCELED), `priority`, `assignee` → User?, `reporter` → User, `labels` → M2M Label, `due_date`, `sort_order`, `external_tracker_name`, `external_tracker_url`, `external_tracker_id`
 - **IssueComment** — `issue` → Issue, `author` → User, `body`, `edited_at`
 - **IssueActivity** — `issue` → Issue, `user` → User, `action`, `field_changed`, `old_value`, `new_value`, `created_at` (no updated_at)
 
@@ -125,7 +125,6 @@ api/auth/{register,login,refresh,me}/
 api/organizations/                                 (GET, POST)
 api/organizations/<org_id>/                        (GET, PATCH, DELETE)
   /members/, /members/<user_id>/
-  /settings/
   /credentials/, /credentials/<credential_id>/
   /integrations/, /integrations/<integration_id>/
   /imports/, /imports/<job_id>/

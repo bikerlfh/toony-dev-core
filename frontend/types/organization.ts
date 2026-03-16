@@ -53,23 +53,3 @@ export interface AddMemberPayload {
 export interface UpdateMemberRolePayload {
   role: MembershipRole;
 }
-
-export type MethodologyChoice = "SCRUM" | "KANBAN" | "CUSTOM";
-
-export interface OrganizationSettings {
-  id: string;
-  default_project_methodology: MethodologyChoice;
-  timezone: string;
-  notification_preferences: Record<string, unknown>;
-  allowed_ip_ranges: string[] | null;
-  audit_log_retention_days: number;
-  updated_at: string;
-}
-
-export interface UpdateOrganizationSettingsPayload {
-  default_project_methodology?: MethodologyChoice;
-  timezone?: string;
-  notification_preferences?: Record<string, unknown>;
-  allowed_ip_ranges?: string[] | null;
-  audit_log_retention_days?: number;
-}

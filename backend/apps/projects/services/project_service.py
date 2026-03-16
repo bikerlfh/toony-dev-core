@@ -102,10 +102,7 @@ def update_project_settings(settings_obj, **kwargs):
         "repository_url",
         "default_branch",
         "branch_naming_convention",
-        "required_reviewers_count",
-        "auto_close_completed_issues",
         "issue_prefix",
-        "estimation_method",
         "auto_task_prompt_template",
     }
     for field, value in kwargs.items():

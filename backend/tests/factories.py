@@ -6,7 +6,7 @@ from notifications.models import Notification
 from accounts.models import User, UserAPIKey
 from accounts.models.membership import MembershipRole, OrganizationMembership
 from agents.models import Skill, SubAgent
-from organizations.models import Organization, OrganizationSettings
+from organizations.models import Organization
 from projects.models import (
     Cycle,
     Issue,
@@ -51,13 +51,6 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Org {n}")
     slug = factory.Sequence(lambda n: f"org-{n}")
     description = "Test organization"
-
-
-class OrganizationSettingsFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = OrganizationSettings
-
-    organization = factory.SubFactory(OrganizationFactory)
 
 
 class MembershipFactory(factory.django.DjangoModelFactory):

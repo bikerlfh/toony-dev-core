@@ -481,21 +481,6 @@ export default function IssueDetailPage() {
               </div>
             )}
 
-            {/* Estimate */}
-            <div>
-              <label className="block text-xs font-medium text-slate-500">Estimate</label>
-              <input
-                type="number"
-                min={0}
-                value={issue.estimate ?? ""}
-                onChange={(e) =>
-                  handleFieldUpdate({ estimate: e.target.value ? parseInt(e.target.value) : null })
-                }
-                placeholder="Points"
-                className="mt-1 block w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-              />
-            </div>
-
             {/* Due date */}
             <div>
               <label className="block text-xs font-medium text-slate-500">Due date</label>

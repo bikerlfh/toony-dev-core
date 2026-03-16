@@ -44,7 +44,6 @@ export function QuickCreateIssueModal({
   const [labelIds, setLabelIds] = useState<string[]>([]);
   const [milestoneId, setMilestoneId] = useState<string | null>(null);
   const [cycleId, setCycleId] = useState<string | null>(null);
-  const [estimate, setEstimate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [showMore, setShowMore] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -128,7 +127,6 @@ export function QuickCreateIssueModal({
         milestone_id: milestoneId || null,
         cycle_id: cycleId || null,
         label_ids: labelIds.length > 0 ? labelIds : undefined,
-        estimate: estimate ? parseInt(estimate) : null,
         due_date: dueDate || null,
       });
       onCreated();
@@ -144,7 +142,7 @@ export function QuickCreateIssueModal({
     }
   }, [
     title, description, projectId, priority, assigneeId,
-    milestoneId, cycleId, labelIds, estimate, dueDate, onCreated,
+    milestoneId, cycleId, labelIds, dueDate, onCreated,
   ]);
 
   const selectedProject = projects.find((p) => p.id === projectId);
@@ -344,18 +342,6 @@ export function QuickCreateIssueModal({
                 onChange={setCycleId}
                 disabled={!projectId}
               />
-
-              {/* Estimate */}
-              <div className="flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs">
-                <input
-                  type="number"
-                  min="0"
-                  value={estimate}
-                  onChange={(e) => setEstimate(e.target.value)}
-                  placeholder="Estimate"
-                  className="w-16 border-0 bg-transparent text-xs text-slate-300 placeholder-slate-500 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                />
-              </div>
 
               {/* Due date */}
               <div className="flex items-center rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs">

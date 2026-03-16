@@ -4,7 +4,6 @@ from accounts.models import OrganizationMembership
 from organizations.models import (
     IntegrationConfig,
     Organization,
-    OrganizationSettings,
     RepositoryCredential,
 )
 
@@ -16,18 +15,6 @@ class OrganizationAdmin(admin.ModelAdmin):
     search_fields = ("name", "slug")
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("-created_at",)
-
-
-@admin.register(OrganizationSettings)
-class OrganizationSettingsAdmin(admin.ModelAdmin):
-    list_display = (
-        "organization",
-        "default_project_methodology",
-        "timezone",
-        "audit_log_retention_days",
-    )
-    list_filter = ("default_project_methodology",)
-    search_fields = ("organization__name",)
 
 
 @admin.register(OrganizationMembership)

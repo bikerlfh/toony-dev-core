@@ -91,7 +91,6 @@ def create_issue(
     milestone_id: str | None = None,
     cycle_id: str | None = None,
     label_ids: str | None = None,
-    estimate: float | None = None,
     due_date: str | None = None,
 ) -> str:
     """Create a new issue in a project.
@@ -106,7 +105,6 @@ def create_issue(
         milestone_id: UUID of the milestone
         cycle_id: UUID of the cycle
         label_ids: Comma-separated label UUIDs
-        estimate: Story points or time estimate
         due_date: Due date (YYYY-MM-DD)
     """
     client = get_client()
@@ -124,8 +122,6 @@ def create_issue(
         data["cycle_id"] = cycle_id
     if label_ids:
         data["label_ids"] = [lid.strip() for lid in label_ids.split(",")]
-    if estimate is not None:
-        data["estimate"] = estimate
     if due_date:
         data["due_date"] = due_date
 
@@ -145,7 +141,6 @@ def update_issue(
     milestone_id: str | None = None,
     cycle_id: str | None = None,
     label_ids: str | None = None,
-    estimate: float | None = None,
     due_date: str | None = None,
 ) -> str:
     """Update an existing issue.
@@ -161,7 +156,6 @@ def update_issue(
         milestone_id: UUID of milestone (or "none" to unset)
         cycle_id: UUID of cycle (or "none" to unset)
         label_ids: Comma-separated label UUIDs (replaces all labels)
-        estimate: New estimate
         due_date: New due date (YYYY-MM-DD, or "none" to unset)
     """
     client = get_client()
@@ -183,8 +177,6 @@ def update_issue(
         data["cycle_id"] = None if cycle_id == "none" else cycle_id
     if label_ids is not None:
         data["label_ids"] = [lid.strip() for lid in label_ids.split(",") if lid.strip()]
-    if estimate is not None:
-        data["estimate"] = estimate
     if due_date is not None:
         data["due_date"] = None if due_date == "none" else due_date
 

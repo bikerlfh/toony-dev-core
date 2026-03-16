@@ -12,7 +12,6 @@ from tests.factories import (
     MilestoneFactory,
     NotificationFactory,
     OrganizationFactory,
-    OrganizationSettingsFactory,
     ProjectFactory,
     ProjectMembershipFactory,
     ProjectSettingsFactory,
@@ -70,7 +69,6 @@ def authenticated_client(api_client, user):
 @pytest.fixture()
 def organization(user):
     org = OrganizationFactory()
-    OrganizationSettingsFactory(organization=org)
     MembershipFactory(user=user, organization=org, role="OWNER")
     return org
 

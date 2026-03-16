@@ -4,7 +4,6 @@ from projects.models import (
     ArtifactStatus,
     ArtifactType,
     CycleStatus,
-    EstimationMethod,
     IssuePriority,
     IssueStatus,
     MilestoneStatus,
@@ -83,17 +82,8 @@ class UpdateProjectSettingsSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
-    required_reviewers_count = serializers.IntegerField(
-        min_value=0,
-        required=False,
-    )
-    auto_close_completed_issues = serializers.BooleanField(required=False)
     issue_prefix = serializers.CharField(
         max_length=10,
-        required=False,
-    )
-    estimation_method = serializers.ChoiceField(
-        choices=EstimationMethod.choices,
         required=False,
     )
     auto_task_prompt_template = serializers.CharField(
@@ -165,7 +155,6 @@ class CreateIssueSerializer(serializers.Serializer):
         required=False,
         default=list,
     )
-    estimate = serializers.IntegerField(required=False, allow_null=True)
     due_date = serializers.DateField(required=False, allow_null=True)
     sort_order = serializers.IntegerField(required=False, default=0)
 
@@ -189,7 +178,6 @@ class UpdateIssueSerializer(serializers.Serializer):
         child=serializers.UUIDField(),
         required=False,
     )
-    estimate = serializers.IntegerField(required=False, allow_null=True)
     due_date = serializers.DateField(required=False, allow_null=True)
     sort_order = serializers.IntegerField(required=False)
     external_tracker_name = serializers.CharField(

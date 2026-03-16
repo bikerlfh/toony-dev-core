@@ -7,7 +7,7 @@ export {
   deleteOrganization,
 } from "./organizations";
 export { listMembers, addMember, updateMemberRole, removeMember } from "./members";
-export { getOrganizationSettings, updateOrganizationSettings } from "./settings";
+
 export {
   listTeams,
   createTeam,

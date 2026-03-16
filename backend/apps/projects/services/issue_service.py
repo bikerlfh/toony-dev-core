@@ -73,7 +73,6 @@ def update_issue(issue, user, **kwargs):
         "milestone",
         "cycle",
         "parent",
-        "estimate",
         "due_date",
         "sort_order",
     }
@@ -107,7 +106,6 @@ def update_issue(issue, user, **kwargs):
             "milestone",
             "cycle",
             "parent",
-            "estimate",
             "due_date",
             "sort_order",
             "external_tracker_name",

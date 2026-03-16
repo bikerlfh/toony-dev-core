@@ -53,7 +53,6 @@ export function CreateIssueModal({
   const [milestoneId, setMilestoneId] = useState("");
   const [cycleId, setCycleId] = useState("");
   const [labelIds, setLabelIds] = useState<string[]>([]);
-  const [estimate, setEstimate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,7 +72,6 @@ export function CreateIssueModal({
         milestone_id: milestoneId || null,
         cycle_id: cycleId || null,
         label_ids: labelIds,
-        estimate: estimate ? parseInt(estimate) : null,
         due_date: dueDate || null,
       });
       onCreated();
@@ -121,22 +119,15 @@ export function CreateIssueModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Assignee</label>
-              <Select
-                options={[{ value: "", label: "Unassigned" }, ...members.map((m) => ({ value: m.user.id, label: `${m.user.first_name} ${m.user.last_name}` }))]}
-                value={assigneeId}
-                onChange={(v) => setAssigneeId(v)}
-                placeholder="Unassigned"
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-400">Estimate</label>
-              <input type="number" min={0} value={estimate} onChange={(e) => setEstimate(e.target.value)}
-                placeholder="Points" className="mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors" />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-400">Assignee</label>
+            <Select
+              options={[{ value: "", label: "Unassigned" }, ...members.map((m) => ({ value: m.user.id, label: `${m.user.first_name} ${m.user.last_name}` }))]}
+              value={assigneeId}
+              onChange={(v) => setAssigneeId(v)}
+              placeholder="Unassigned"
+              className="mt-1.5"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

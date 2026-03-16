@@ -20,9 +20,6 @@ export type {
   Member,
   AddMemberPayload,
   UpdateMemberRolePayload,
-  MethodologyChoice,
-  OrganizationSettings,
-  UpdateOrganizationSettingsPayload,
 } from "./organization";
 
 export type {
@@ -40,7 +37,6 @@ export type {
   ProjectStatus,
   ProjectPriority,
   ProjectMemberRole,
-  EstimationMethod,
   ProjectTeam,
   ProjectList,
   ProjectDetail,

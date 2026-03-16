@@ -78,7 +78,6 @@ class Issue(BaseModel):
         blank=True,
         related_name="issues",
     )
-    estimate = models.IntegerField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     sort_order = models.IntegerField(default=0)
     external_tracker_name = models.CharField(max_length=100, blank=True, default="")

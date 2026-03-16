@@ -32,8 +32,7 @@ class ProjectMembershipAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectSettings)
 class ProjectSettingsAdmin(admin.ModelAdmin):
-    list_display = ("project", "estimation_method", "default_branch", "required_reviewers_count")
-    list_filter = ("estimation_method",)
+    list_display = ("project", "default_branch", "issue_prefix")
     search_fields = ("project__name",)
 
 

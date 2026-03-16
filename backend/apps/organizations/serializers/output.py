@@ -5,7 +5,6 @@ from accounts.serializers.output import UserDetailSerializer
 from organizations.models import (
     IntegrationConfig,
     Organization,
-    OrganizationSettings,
     RepositoryCredential,
 )
 from projects.serializers.output import (
@@ -66,21 +65,6 @@ class MembershipSerializer(serializers.ModelSerializer):
             "role",
             "joined_at",
             "is_active",
-        ]
-        read_only_fields = fields
-
-
-class OrganizationSettingsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrganizationSettings
-        fields = [
-            "id",
-            "default_project_methodology",
-            "timezone",
-            "notification_preferences",
-            "allowed_ip_ranges",
-            "audit_log_retention_days",
-            "updated_at",
         ]
         read_only_fields = fields
 

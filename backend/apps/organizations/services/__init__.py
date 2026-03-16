@@ -18,9 +18,6 @@ from organizations.services.organization_service import (
     delete_organization,
     update_organization,
 )
-from organizations.services.settings_service import (
-    update_organization_settings,
-)
 
 __all__ = [
     "create_organization",
@@ -29,7 +26,6 @@ __all__ = [
     "add_member",
     "update_member_role",
     "remove_member",
-    "update_organization_settings",
     "create_credential",
     "update_credential",
     "delete_credential",
