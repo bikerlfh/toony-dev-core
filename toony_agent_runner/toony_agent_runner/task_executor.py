@@ -121,7 +121,11 @@ async def execute_task(
                     session_id = str(event["session_id"])
 
                 if event.get("is_error"):
-                    error_msg = event.get("result", "Claude CLI error")
+                    error_msg = (
+                        event.get("result")
+                        or "; ".join(event.get("errors", []))
+                        or "Claude CLI error"
+                    )
                     await conn.send(
                         TaskFailedMessage(task_id, error=error_msg).to_json()
                     )
@@ -246,7 +250,11 @@ async def execute_task_reply(
                 final_sid = new_session_id or session_id
 
                 if event.get("is_error"):
-                    error_msg = event.get("result", "Claude CLI error")
+                    error_msg = (
+                        event.get("result")
+                        or "; ".join(event.get("errors", []))
+                        or "Claude CLI error"
+                    )
                     await conn.send(
                         TaskFailedMessage(task_id, error=error_msg).to_json()
                     )

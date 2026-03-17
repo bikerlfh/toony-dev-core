@@ -147,6 +147,7 @@ class QuestionAnswered:
     answer: str
     session_id: str = ""
     sequence_offset: int = 0
+    project_id: str | None = None
 
 
 @dataclass
@@ -164,6 +165,7 @@ class TaskReply:
     message: str
     session_id: str
     sequence_offset: int = 0
+    project_id: str | None = None
 
 
 @dataclass
@@ -308,6 +310,7 @@ def parse_server_message(data: dict) -> IncomingMessage:
             answer=data.get("answer", ""),
             session_id=data.get("session_id", ""),
             sequence_offset=data.get("sequence_offset", 0),
+            project_id=data.get("project_id"),
         )
 
     if msg_type == "task.cancel":
@@ -319,6 +322,7 @@ def parse_server_message(data: dict) -> IncomingMessage:
             message=data["message"],
             session_id=data["session_id"],
             sequence_offset=data.get("sequence_offset", 0),
+            project_id=data.get("project_id"),
         )
 
     if msg_type == "heartbeat.ack":

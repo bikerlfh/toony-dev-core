@@ -88,6 +88,27 @@ async def _handle_command(
     )
 
 
+def _resolve_task_config(
+    config: RunnerConfig,
+    project_id: str | None,
+    workspace_root: Path | None,
+    project_map: dict[str, Path],
+    task_id: str,
+) -> RunnerConfig:
+    """Return a config copy with project-specific working directory if available."""
+    if not project_id or not workspace_root:
+        return config
+    task_cwd = resolve_project_path(project_id, project_map)
+    if task_cwd and task_cwd.exists():
+        from copy import copy
+        task_config = copy(config)
+        task_config.claude = copy(config.claude)
+        task_config.claude.working_directory = str(task_cwd)
+        logger.info("Task %s will run in %s", task_id, task_cwd)
+        return task_config
+    return config
+
+
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
@@ -206,16 +227,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                     msg.task_id, msg.title,
                     len(active_tasks) + 1, max_tasks,
                 )
-                # Resolve project-specific working directory.
-                task_config = config
-                if msg.project_id and workspace_root:
-                    task_cwd = resolve_project_path(msg.project_id, project_map)
-                    if task_cwd and task_cwd.exists():
-                        from copy import copy
-                        task_config = copy(config)
-                        task_config.claude = copy(config.claude)
-                        task_config.claude.working_directory = str(task_cwd)
-                        logger.info("Task %s will run in %s", msg.task_id, task_cwd)
+                task_config = _resolve_task_config(config, msg.project_id, workspace_root, project_map, msg.task_id)
                 ce = asyncio.Event()
                 cancel_events[msg.task_id] = ce
                 active_tasks[msg.task_id] = asyncio.create_task(
@@ -255,6 +267,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                     msg.task_id, msg.session_id,
                     len(active_tasks) + 1, max_tasks,
                 )
+                task_config = _resolve_task_config(config, msg.project_id, workspace_root, project_map, msg.task_id)
                 ce = asyncio.Event()
                 cancel_events[msg.task_id] = ce
                 active_tasks[msg.task_id] = asyncio.create_task(
@@ -263,7 +276,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         msg.message,
                         msg.session_id,
                         conn,
-                        config,
+                        task_config,
                         ce,
                         sequence_offset=msg.sequence_offset,
                     )
@@ -299,6 +312,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                     )
                     continue
 
+                task_config = _resolve_task_config(config, msg.project_id, workspace_root, project_map, msg.task_id)
                 ce = asyncio.Event()
                 cancel_events[msg.task_id] = ce
                 active_tasks[msg.task_id] = asyncio.create_task(
@@ -307,7 +321,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         msg.answer,
                         msg.session_id,
                         conn,
-                        config,
+                        task_config,
                         ce,
                         sequence_offset=msg.sequence_offset,
                     )

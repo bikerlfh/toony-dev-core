@@ -245,7 +245,7 @@ def _update_task_session_id(task_id, session_id):
 @database_sync_to_async
 def _get_task_session_info(task_id):
     try:
-        return AgentTask.objects.values("session_id", "toony_agent_id").get(id=task_id)
+        return AgentTask.objects.values("session_id", "toony_agent_id", "project_id").get(id=task_id)
     except AgentTask.DoesNotExist:
         return None
 
@@ -639,16 +639,17 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
     # Group handlers (receive from frontend consumer via channel layer)
 
     async def question_answered(self, event):
-        await self.send_json(
-            {
-                "type": "question.answered",
-                "task_id": event["data"]["task_id"],
-                "question_id": event["data"]["question_id"],
-                "answer": event["data"]["answer"],
-                "session_id": event["data"].get("session_id", ""),
-                "sequence_offset": event["data"].get("sequence_offset", 0),
-            }
-        )
+        msg = {
+            "type": "question.answered",
+            "task_id": event["data"]["task_id"],
+            "question_id": event["data"]["question_id"],
+            "answer": event["data"]["answer"],
+            "session_id": event["data"].get("session_id", ""),
+            "sequence_offset": event["data"].get("sequence_offset", 0),
+        }
+        if event["data"].get("project_id"):
+            msg["project_id"] = event["data"]["project_id"]
+        await self.send_json(msg)
 
     async def task_cancel(self, event):
         await self.send_json(
@@ -670,15 +671,16 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json(msg)
 
     async def task_reply(self, event):
-        await self.send_json(
-            {
-                "type": "task.reply",
-                "task_id": event["data"]["task_id"],
-                "message": event["data"]["message"],
-                "session_id": event["data"]["session_id"],
-                "sequence_offset": event["data"].get("sequence_offset", 0),
-            }
-        )
+        msg = {
+            "type": "task.reply",
+            "task_id": event["data"]["task_id"],
+            "message": event["data"]["message"],
+            "session_id": event["data"]["session_id"],
+            "sequence_offset": event["data"].get("sequence_offset", 0),
+        }
+        if event["data"].get("project_id"):
+            msg["project_id"] = event["data"]["project_id"]
+        await self.send_json(msg)
 
     async def config_sync_request(self, event):
         """Frontend requested config sync — query fresh data and send to runner."""
@@ -765,8 +767,10 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                     },
                 },
             )
-            # Fetch session_id and sequence_offset for the runner to resume.
+            # Fetch session_id, project_id, and sequence_offset for the runner to resume.
             session_id = await _get_question_session_id(question_id)
+            task_info = await _get_task_session_info(task_id)
+            project_id = str(task_info["project_id"]) if task_info and task_info.get("project_id") else None
             await self.channel_layer.group_send(
                 runner_group,
                 {
@@ -777,6 +781,7 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                         "answer": answer,
                         "session_id": session_id,
                         "sequence_offset": answer_seq + 1,
+                        "project_id": project_id,
                     },
                 },
             )
@@ -810,6 +815,7 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 return
             session_id = task_info["session_id"]
             agent_id = str(task_info["toony_agent_id"])
+            project_id = str(task_info["project_id"]) if task_info.get("project_id") else None
             # Query max sequence so reply events don't collide
             max_seq = await _get_max_event_sequence(task_id)
             reply_seq = max_seq + 1
@@ -854,6 +860,7 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                         "message": message,
                         "session_id": session_id,
                         "sequence_offset": reply_seq,
+                        "project_id": project_id,
                     },
                 },
             )
