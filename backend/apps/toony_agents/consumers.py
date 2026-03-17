@@ -74,7 +74,6 @@ def _fail_active_tasks(agent_id):
     active_statuses = [
         AgentTaskStatus.ASSIGNED,
         AgentTaskStatus.RUNNING,
-        AgentTaskStatus.WAITING_FOR_ANSWER,
     ]
     tasks = list(
         AgentTask.objects.filter(
@@ -482,18 +481,19 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 question_text,
                 session_id,
             )
+            # Build structured question data for storage and frontend forwarding.
+            if isinstance(question, dict):
+                question_data = question
+            else:
+                question_data = {"text": question_text, "type": "free_text"}
             await _create_task_event(
                 task_id,
                 TaskEventType.QUESTION_ASKED,
-                {"question_id": question_id, "text": question_text},
+                {"question_id": question_id, "question": question_data},
                 sequence,
             )
-            # Forward structured question data to frontend.
             frontend_question_data = {"task_id": task_id, "question_id": question_id, "sequence": sequence}
-            if isinstance(question, dict):
-                frontend_question_data["question"] = question
-            else:
-                frontend_question_data["question"] = {"text": question_text, "type": "free_text"}
+            frontend_question_data["question"] = question_data
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
