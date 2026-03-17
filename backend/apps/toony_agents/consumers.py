@@ -437,6 +437,13 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             transitioned = await _mark_task_running_if_assigned(task_id)
             if transitioned:
                 await _set_agent_status(self.agent_id, ToonyAgentStatus.BUSY)
+                await self.channel_layer.group_send(
+                    self.frontend_group,
+                    {
+                        "type": "task_status",
+                        "data": {"task_id": task_id, "status": "RUNNING"},
+                    },
+                )
             await self.channel_layer.group_send(
                 self.frontend_group,
                 {
