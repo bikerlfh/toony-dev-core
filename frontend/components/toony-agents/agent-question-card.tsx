@@ -15,6 +15,7 @@ interface AgentQuestionCardProps {
   onAnswer: (questionId: string, answer: string) => void;
   isAnswered: boolean;
   previousAnswer?: string;
+  disabled?: boolean;
 }
 
 export function AgentQuestionCard({
@@ -25,6 +26,7 @@ export function AgentQuestionCard({
   onAnswer,
   isAnswered,
   previousAnswer,
+  disabled,
 }: AgentQuestionCardProps) {
   const [answerText, setAnswerText] = useState("");
 
@@ -73,7 +75,8 @@ export function AgentQuestionCard({
             <button
               key={opt.label}
               onClick={() => handleOptionClick(opt.label)}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-left transition-colors hover:border-indigo-500/50 hover:bg-indigo-500/10"
+              disabled={disabled}
+              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-left transition-colors hover:border-indigo-500/50 hover:bg-indigo-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="block text-sm font-medium text-slate-200">
                 {opt.label}
@@ -95,12 +98,13 @@ export function AgentQuestionCard({
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your answer..."
-            className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+            disabled={disabled}
+            placeholder={disabled ? "Agent offline" : "Type your answer..."}
+            className="flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <button
             onClick={handleSend}
-            disabled={!answerText.trim()}
+            disabled={disabled || !answerText.trim()}
             className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send

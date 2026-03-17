@@ -16,6 +16,7 @@ import { TaskPipelinePanel } from "@/components/toony-agents/task-pipeline-panel
 import { TaskLiveOutput } from "@/components/toony-agents/task-live-output";
 import type {
   ToonyAgentDetail,
+  ToonyAgentStatus,
   AgentTaskDetail,
   AgentTaskStatus,
   TaskEventItem,
@@ -54,6 +55,7 @@ export default function TaskViewPage() {
   const [agent, setAgent] = useState<ToonyAgentDetail | null>(null);
   const [task, setTask] = useState<AgentTaskDetail | null>(null);
   const [taskStatus, setTaskStatus] = useState<AgentTaskStatus>("QUEUED");
+  const [agentStatus, setAgentStatus] = useState<ToonyAgentStatus>("OFFLINE");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [events, setEvents] = useState<TaskEventItem[]>([]);
   const [answeredSequences, setAnsweredSequences] = useState<Set<number>>(
@@ -73,6 +75,7 @@ export default function TaskViewPage() {
         listTaskEvents(agentId, taskId),
       ]);
       setAgent(agentData);
+      setAgentStatus(agentData.status);
       setTask(taskData);
       setTaskStatus(taskData.status);
       setTaskError(taskData.error ?? null);
@@ -112,7 +115,9 @@ export default function TaskViewPage() {
   // WebSocket handler
   const handleWsEvent = useCallback(
     (event: ToonyAgentWsEvent) => {
-      if (event.type === "task.status" && event.task_id === taskId) {
+      if (event.type === "agent.status") {
+        setAgentStatus(event.status);
+      } else if (event.type === "task.status" && event.task_id === taskId) {
         setTaskStatus(event.status);
         setTaskError(event.error ?? null);
         if (event.session_id) {
@@ -217,6 +222,7 @@ export default function TaskViewPage() {
     taskStatus !== "FAILED" &&
     taskStatus !== "CANCELLED";
   const canReply = taskStatus === "COMPLETED" && !!sessionId;
+  const agentConnected = agentStatus !== "OFFLINE";
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -307,6 +313,7 @@ export default function TaskViewPage() {
             onMessage={handleMessage}
             answeredSequences={answeredSequencesSet}
             canReply={canReply}
+            agentConnected={agentConnected}
           />
         </div>
       </div>

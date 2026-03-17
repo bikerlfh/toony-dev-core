@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { AgentQuestionCard } from "@/components/toony-agents/agent-question-card";
 import type { TaskEventItem as TaskEventItemType } from "@/types";
 
@@ -9,24 +11,37 @@ interface TaskEventItemProps {
   onAnswer?: (questionId: string, answer: string) => void;
   onMessage?: (text: string) => void;
   isAnswered?: boolean;
+  disabled?: boolean;
 }
 
 export function TaskEventItem({
   event,
   onAnswer,
   isAnswered,
+  disabled,
 }: TaskEventItemProps) {
   const [showToolResult, setShowToolResult] = useState(false);
 
   switch (event.event_type) {
-    case "LOG":
+    case "LOG": {
+      const logText = String(event.data.message ?? event.data.text ?? "");
+      const isMultiLine = logText.includes("\n");
       return (
         <div className="py-0.5">
-          <span className="text-slate-400 font-mono text-sm">
-            {String(event.data.message ?? event.data.text ?? "")}
-          </span>
+          {isMultiLine ? (
+            <div className="prose prose-invert prose-sm max-w-none prose-headings:text-slate-200 prose-p:text-slate-300 prose-a:text-indigo-400 prose-strong:text-slate-200 prose-code:text-indigo-300 prose-pre:bg-slate-950 prose-pre:border prose-pre:border-slate-800 prose-table:text-sm prose-th:text-slate-300 prose-td:text-slate-400">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {logText}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <span className="text-slate-400 font-mono text-sm">
+              {logText}
+            </span>
+          )}
         </div>
       );
+    }
 
     case "TOOL_USE": {
       const toolName = String(event.data.tool_name ?? "");
@@ -105,6 +120,7 @@ export function TaskEventItem({
             questionId={String(data.question_id ?? "")}
             onAnswer={onAnswer ?? (() => {})}
             isAnswered={isAnswered ?? false}
+            disabled={disabled}
           />
         </div>
       );
