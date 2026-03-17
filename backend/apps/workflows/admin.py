@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from jsoneditor.forms import JSONEditor
 
 from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 
@@ -6,6 +8,7 @@ from workflows.models import Workflow, WorkflowEdge, WorkflowNode
 class WorkflowNodeInline(admin.TabularInline):
     model = WorkflowNode
     extra = 0
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 class WorkflowEdgeInline(admin.TabularInline):

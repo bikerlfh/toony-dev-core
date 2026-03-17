@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
     "channels",
+    "jsoneditor",
     # Local apps
     "common",
     "accounts",

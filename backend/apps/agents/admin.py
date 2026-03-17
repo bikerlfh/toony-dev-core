@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from jsoneditor.forms import JSONEditor
 
 from agents.models import Skill, SkillVersion, SubAgent, SubAgentSkill
 
@@ -10,6 +12,7 @@ class SubAgentAdmin(admin.ModelAdmin):
     search_fields = ("name", "slug", "organization__name")
     exclude = ("encrypted_configuration",)
     ordering = ("-created_at",)
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(Skill)
@@ -18,6 +21,7 @@ class SkillAdmin(admin.ModelAdmin):
     list_filter = ("status", "category")
     search_fields = ("name", "slug", "organization__name")
     ordering = ("-created_at",)
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(SubAgentSkill)
@@ -26,6 +30,7 @@ class SubAgentSkillAdmin(admin.ModelAdmin):
     list_filter = ("is_enabled",)
     search_fields = ("sub_agent__name", "skill__name")
     ordering = ("sub_agent", "priority")
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(SkillVersion)

@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from jsoneditor.forms import JSONEditor
 
 from toony_agents.models import (
     AgentSystemEvent,
@@ -15,6 +17,7 @@ class ToonyAgentAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("name", "slug", "registered_by__email")
     ordering = ("-created_at",)
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(ToonyAgentKey)
@@ -39,6 +42,7 @@ class TaskEventAdmin(admin.ModelAdmin):
     list_filter = ("event_type",)
     search_fields = ("task__title",)
     ordering = ("task", "sequence")
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(AgentSystemEvent)
@@ -47,3 +51,4 @@ class AgentSystemEventAdmin(admin.ModelAdmin):
     list_filter = ("event_type",)
     search_fields = ("toony_agent__name", "organization__name", "project__name")
     ordering = ("-created_at",)
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}

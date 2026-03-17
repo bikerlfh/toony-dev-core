@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.db import models
+from jsoneditor.forms import JSONEditor
 
 from importers.models import ImportJob, ImportMapping
 
@@ -9,6 +11,7 @@ class ImportJobAdmin(admin.ModelAdmin):
     list_filter = ("status", "provider")
     search_fields = ("organization__name",)
     ordering = ("-created_at",)
+    formfield_overrides = {models.JSONField: {"widget": JSONEditor}}
 
 
 @admin.register(ImportMapping)
