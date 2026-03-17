@@ -57,6 +57,7 @@ export function TaskEventItem({
         "";
       const hasExpandableDetail =
         (toolName === "Edit" && input.old_string && input.new_string) ||
+        (toolName === "Write" && input.content) ||
         (toolName === "Bash" && input.command);
       return (
         <div className="py-0.5">
@@ -89,6 +90,16 @@ export function TaskEventItem({
                   ))}
                 </pre>
               </div>
+            </div>
+          )}
+          {showToolDetail && toolName === "Write" && input.content && (
+            <div className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
+              <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
+                {String(input.file_path ?? "")}
+              </div>
+              <pre className="px-3 py-2 whitespace-pre-wrap text-slate-400">
+                {String(input.content)}
+              </pre>
             </div>
           )}
           {showToolDetail && toolName === "Bash" && input.command && (

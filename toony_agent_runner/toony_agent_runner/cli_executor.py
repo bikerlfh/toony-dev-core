@@ -22,7 +22,7 @@ logger = logging.getLogger("toony_agent_runner")
 _TOOL_INPUT_KEYS: dict[str, list[str]] = {
     "Read": ["file_path"],
     "Edit": ["file_path", "old_string", "new_string"],
-    "Write": ["file_path"],
+    "Write": ["file_path", "content"],
     "Bash": ["command", "description"],
     "Grep": ["pattern", "path", "glob"],
     "Glob": ["pattern", "path"],
