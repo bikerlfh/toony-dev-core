@@ -65,6 +65,7 @@ export default function TaskViewPage() {
   const [taskError, setTaskError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [taskArtifacts, setTaskArtifacts] = useState<ArtifactList[]>([]);
+  const [pipelineCollapsed, setPipelineCollapsed] = useState(false);
 
   // Fetch agent (need id for WS), task, and initial events
   const fetchData = useCallback(async () => {
@@ -298,9 +299,14 @@ export default function TaskViewPage() {
 
       {/* Split layout */}
       <div className="flex flex-1 min-h-0">
-        {/* Pipeline panel (25%) */}
-        <div className="w-1/4 flex-shrink-0">
-          <TaskPipelinePanel events={events} taskStatus={taskStatus} />
+        {/* Pipeline panel */}
+        <div className={`flex-shrink-0 transition-all ${pipelineCollapsed ? "w-28" : "w-52"}`}>
+          <TaskPipelinePanel
+            events={events}
+            taskStatus={taskStatus}
+            collapsed={pipelineCollapsed}
+            onToggle={() => setPipelineCollapsed((v) => !v)}
+          />
         </div>
 
         {/* Live output (75%) */}

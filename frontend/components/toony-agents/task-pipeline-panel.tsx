@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type {
   TaskEventItem,
   AgentTaskStatus,
@@ -36,7 +36,7 @@ function classifyEvent(event: TaskEventItem): string | null {
     return "Processing";
   }
 
-  return null; // Non-tool events don't create new stages
+  return null;
 }
 
 function stageIcon(name: string): string {
@@ -51,6 +51,8 @@ function stageIcon(name: string): string {
 interface TaskPipelinePanelProps {
   events: TaskEventItem[];
   taskStatus: AgentTaskStatus;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
 const TERMINAL_STATUSES: AgentTaskStatus[] = [
@@ -62,6 +64,8 @@ const TERMINAL_STATUSES: AgentTaskStatus[] = [
 export function TaskPipelinePanel({
   events,
   taskStatus,
+  collapsed,
+  onToggle,
 }: TaskPipelinePanelProps) {
   const stages = useMemo(() => {
     const result: PipelineStage[] = [];
@@ -72,7 +76,6 @@ export function TaskPipelinePanel({
       if (!classification) continue;
 
       if (classification === "__GATE__") {
-        // Mark the current stage as having a question
         if (result.length > 0) {
           result[result.length - 1].hasQuestion = true;
         }
@@ -80,7 +83,6 @@ export function TaskPipelinePanel({
       }
 
       if (classification !== currentStageName) {
-        // New stage
         result.push({
           name: classification,
           icon: stageIcon(classification),
@@ -90,15 +92,16 @@ export function TaskPipelinePanel({
         });
         currentStageName = classification;
       } else {
-        // Same stage - increment
         result[result.length - 1].eventCount += 1;
       }
     }
 
-    return result;
+    // Reverse so newest stage is at the top
+    return result.reverse();
   }, [events]);
 
   const isTerminal = TERMINAL_STATUSES.includes(taskStatus);
+  const totalStages = stages.length;
 
   function formatElapsed(startTime: string): string {
     const diff = Math.floor(
@@ -110,87 +113,104 @@ export function TaskPipelinePanel({
   }
 
   return (
-    <div className="h-full overflow-y-auto border-r border-slate-800 bg-slate-900/50 px-4 py-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">
-        Pipeline
-      </h3>
+    <div className="h-full flex flex-col border-r border-slate-800 bg-slate-900/50">
+      {/* Header — always visible */}
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-400 transition-colors flex-shrink-0"
+      >
+        <span>Pipeline {totalStages > 0 && `(${totalStages})`}</span>
+        <svg
+          className={`h-3.5 w-3.5 transition-transform ${collapsed ? "-rotate-90" : ""}`}
+          viewBox="0 0 12 12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M3 4.5l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
-      {stages.length === 0 ? (
-        <p className="text-xs text-slate-600 italic">No stages yet</p>
-      ) : (
-        <div className="space-y-0">
-          {stages.map((stage, idx) => {
-            const isLast = idx === stages.length - 1;
-            const isActive = isLast && !isTerminal;
-            const isCompleted = !isLast || isTerminal;
+      {/* Collapsible body */}
+      {!collapsed && (
+        <div className="flex-1 overflow-y-auto px-3 pb-3">
+          {stages.length === 0 ? (
+            <p className="text-xs text-slate-600 italic">No stages yet</p>
+          ) : (
+            <div className="space-y-0">
+              {stages.map((stage, idx) => {
+                // After reversing: idx 0 is the newest (was last), idx last is the oldest (was first)
+                const isNewest = idx === 0;
+                const isActive = isNewest && !isTerminal;
+                const isCompleted = !isNewest || isTerminal;
 
-            return (
-              <div key={`${stage.name}-${idx}`} className="relative">
-                {/* Connecting line */}
-                {idx < stages.length - 1 && (
-                  <div className="absolute left-[11px] top-[24px] w-px h-[calc(100%-8px)] bg-slate-700" />
-                )}
-
-                <div className="flex items-start gap-3 pb-6">
-                  {/* Status indicator */}
-                  <div className="flex-shrink-0 mt-0.5">
-                    {isCompleted ? (
-                      <div className="h-[22px] w-[22px] rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <svg
-                          className="h-3 w-3 text-emerald-400"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            d="M2.5 6l2.5 2.5 4.5-5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    ) : isActive ? (
-                      <div className="h-[22px] w-[22px] rounded-full bg-indigo-500/20 flex items-center justify-center">
-                        <div className="h-2.5 w-2.5 rounded-full bg-indigo-400 animate-pulse" />
-                      </div>
-                    ) : (
-                      <div className="h-[22px] w-[22px] rounded-full bg-slate-800 flex items-center justify-center">
-                        <div className="h-2 w-2 rounded-full bg-slate-600" />
-                      </div>
+                return (
+                  <div key={`${stage.name}-${idx}`} className="relative">
+                    {/* Connecting line */}
+                    {idx < stages.length - 1 && (
+                      <div className="absolute left-[9px] top-[20px] w-px h-[calc(100%-4px)] bg-slate-700/60" />
                     )}
-                  </div>
 
-                  {/* Stage info */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{stage.icon}</span>
-                      <span
-                        className={`text-sm font-medium ${
-                          isActive ? "text-slate-200" : "text-slate-400"
-                        }`}
-                      >
-                        {stage.name}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-600">
-                      <span>{stage.eventCount} actions</span>
-                      {isActive && (
-                        <span className="text-indigo-400">
-                          {formatElapsed(stage.startTime)}
-                        </span>
-                      )}
-                    </div>
-                    {stage.hasQuestion && (
-                      <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs text-indigo-400">
-                        <span>Question</span>
+                    <div className="flex items-start gap-2.5 pb-4">
+                      {/* Status indicator */}
+                      <div className="flex-shrink-0 mt-0.5">
+                        {isCompleted ? (
+                          <div className="h-[18px] w-[18px] rounded-full bg-emerald-500/20 flex items-center justify-center">
+                            <svg
+                              className="h-2.5 w-2.5 text-emerald-400"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                d="M2.5 6l2.5 2.5 4.5-5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </div>
+                        ) : isActive ? (
+                          <div className="h-[18px] w-[18px] rounded-full bg-indigo-500/20 flex items-center justify-center">
+                            <div className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
+                          </div>
+                        ) : (
+                          <div className="h-[18px] w-[18px] rounded-full bg-slate-800 flex items-center justify-center">
+                            <div className="h-1.5 w-1.5 rounded-full bg-slate-600" />
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {/* Stage info */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs">{stage.icon}</span>
+                          <span
+                            className={`text-xs font-medium ${
+                              isActive ? "text-slate-200" : "text-slate-400"
+                            }`}
+                          >
+                            {stage.name}
+                          </span>
+                          {stage.hasQuestion && (
+                            <span className="text-[10px] text-indigo-400">Q</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                          <span>{stage.eventCount} actions</span>
+                          {isActive && (
+                            <span className="text-indigo-400">
+                              {formatElapsed(stage.startTime)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

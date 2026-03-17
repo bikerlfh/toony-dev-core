@@ -164,6 +164,64 @@ def extract_text_from_assistant(event: dict[str, Any]) -> str | None:
     return "".join(parts) if parts else None
 
 
+def _log_event_summary(event: dict[str, Any]) -> None:
+    """Log a concise info-level summary of a CLI stream event."""
+    etype = event.get("type", "")
+    summary: dict[str, Any] = {"type": etype}
+
+    if etype == "assistant":
+        message = event.get("message", {})
+        tools = []
+        texts = []
+        for block in message.get("content", []):
+            if block.get("type") == "tool_use":
+                name = block.get("name", "unknown")
+                inp = block.get("input", {})
+                if name == "AskUserQuestion":
+                    text = inp.get("question", "")
+                    if not text:
+                        qs = inp.get("questions")
+                        if isinstance(qs, list) and qs:
+                            text = qs[0].get("question", "")
+                    summary["question"] = text[:100]
+                else:
+                    keys = _TOOL_INPUT_KEYS.get(name)
+                    detail = ""
+                    if keys:
+                        detail = next(
+                            (str(inp[k])[:120] for k in keys if k in inp),
+                            "",
+                        )
+                    tools.append(f"{name}: {detail}" if detail else name)
+            elif block.get("type") == "text" and block.get("text"):
+                preview = block["text"][:80].replace("\n", " ")
+                if len(block["text"]) > 80:
+                    preview += "..."
+                texts.append(preview)
+        if tools:
+            summary["tools"] = tools
+        if texts:
+            summary["text"] = texts
+
+    elif etype == "result":
+        usage = event.get("usage", {})
+        summary["duration_s"] = round(event.get("duration_ms", 0) / 1000, 1)
+        summary["cost_usd"] = event.get("total_cost_usd", 0)
+        summary["tokens_in"] = usage.get("input_tokens", 0)
+        summary["tokens_out"] = usage.get("output_tokens", 0)
+        summary["session_id"] = event.get("session_id", "")
+        if event.get("is_error"):
+            summary["error"] = (
+                event.get("result")
+                or "; ".join(event.get("errors", []))
+                or "unknown error"
+            )[:200]
+    else:
+        return
+
+    logger.info("Event: %s", json.dumps(summary, ensure_ascii=False))
+
+
 async def run_claude(
     prompt: str,
     config: ClaudeConfig,
@@ -203,7 +261,8 @@ async def run_claude(
                 continue
             try:
                 event = json.loads(line)
-                logger.info("Event: %s", event)
+                logger.debug("Event: %s", event)
+                _log_event_summary(event)
                 yield parse_stream_event(event)
             except json.JSONDecodeError:
                 logger.debug("Non-JSON line from CLI: %s", line[:200])
