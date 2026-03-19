@@ -69,7 +69,7 @@ export function TaskEventItem({
             {toolName}
             {toolDetail ? `: ${toolDetail}` : ""}
           </span>
-          {showToolDetail && toolName === "Edit" && input.old_string && input.new_string && (
+          {showToolDetail && toolName === "Edit" && Boolean(input.old_string) && Boolean(input.new_string) && (
             <div className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
               <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
                 {String(input.file_path ?? "")}
@@ -92,7 +92,7 @@ export function TaskEventItem({
               </div>
             </div>
           )}
-          {showToolDetail && toolName === "Write" && input.content && (
+          {showToolDetail && toolName === "Write" && Boolean(input.content) && (
             <div className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
               <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
                 {String(input.file_path ?? "")}
@@ -102,7 +102,7 @@ export function TaskEventItem({
               </pre>
             </div>
           )}
-          {showToolDetail && toolName === "Bash" && input.command && (
+          {showToolDetail && toolName === "Bash" && Boolean(input.command) && (
             <pre className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-40 text-xs font-mono text-amber-400/80 whitespace-pre-wrap">
               $ {String(input.command)}
             </pre>
