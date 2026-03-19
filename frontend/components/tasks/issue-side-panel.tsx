@@ -110,9 +110,25 @@ export function IssueSidePanel({ projectId, issueId, onClose, onUpdated }: Issue
       <div className="relative w-[480px] bg-slate-950 border-l border-slate-800/60 overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800/60 bg-slate-950 px-6 py-4">
-          <span className="text-sm font-mono text-slate-500">
-            {issue?.identifier}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-mono text-slate-500">
+              {issue?.identifier}
+            </span>
+            {(issue?.milestone || issue?.cycle) && (
+              <>
+                <span className="text-slate-700 text-[10px]">/</span>
+                {issue.milestone && (
+                  <span className="text-[11px] font-mono text-slate-600 truncate max-w-[8rem]" title={issue.milestone.name}>{issue.milestone.name}</span>
+                )}
+                {issue.milestone && issue.cycle && (
+                  <span className="text-slate-700 text-[10px]">/</span>
+                )}
+                {issue.cycle && (
+                  <span className="text-[11px] font-mono text-slate-600 truncate max-w-[8rem]" title={issue.cycle.name}>{issue.cycle.name}</span>
+                )}
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Link
               href={`/projects/${projectId}/issues/${issueId}`}
@@ -253,26 +269,6 @@ export function IssueSidePanel({ projectId, issueId, onClose, onUpdated }: Issue
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Due date</span>
                   <span className="text-slate-300">{issue.due_date}</span>
-                </div>
-              )}
-              {issue.milestone && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Milestone</span>
-                  <span className="text-slate-300">{issue.milestone.name}</span>
-                </div>
-              )}
-              {issue.cycle && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Cycle</span>
-                  <span className="text-slate-300">{issue.cycle.name}</span>
-                </div>
-              )}
-              {issue.reporter && (
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Reporter</span>
-                  <span className="text-slate-300">
-                    {issue.reporter.first_name} {issue.reporter.last_name}
-                  </span>
                 </div>
               )}
             </div>

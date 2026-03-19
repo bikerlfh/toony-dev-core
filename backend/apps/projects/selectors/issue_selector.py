@@ -3,7 +3,7 @@ from django.contrib.postgres.search import (
     SearchRank,
     SearchVector,
 )
-from django.db.models import Prefetch
+from django.db.models import OuterRef, Prefetch, Subquery
 
 from projects.models import (
     Issue,
@@ -12,6 +12,7 @@ from projects.models import (
     IssueComment,
     IssueDocument,
 )
+from toony_agents.models import AgentTask
 
 
 def get_next_identifier(project):
@@ -133,6 +134,13 @@ def list_user_issues(user, *, filters=None, search=None):
         )
         .prefetch_related("labels")
     )
+
+    latest_task = (
+        AgentTask.objects.filter(issue=OuterRef("pk"))
+        .order_by("-created_at")
+        .values("status")[:1]
+    )
+    qs = qs.annotate(latest_agent_task_status=Subquery(latest_task))
 
     if search:
         vector = SearchVector("title", weight="A") + SearchVector("description", weight="B")

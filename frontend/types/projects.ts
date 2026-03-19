@@ -1,5 +1,6 @@
 import type { User } from "./auth";
 import type { Organization } from "./organization";
+import type { AgentTaskStatus } from "./toony-agents";
 
 // --- Team ---
 
@@ -337,6 +338,7 @@ export interface IssueProject {
 
 export interface CrossProjectIssueList extends IssueList {
   project: IssueProject;
+  latest_agent_task_status: AgentTaskStatus | null;
 }
 
 // --- Comment ---

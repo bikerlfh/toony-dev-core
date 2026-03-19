@@ -229,6 +229,7 @@ class CrossProjectIssueListSerializer(serializers.ModelSerializer):
     project = _IssueProjectSerializer(read_only=True)
     milestone = _MilestoneMinimalSerializer(read_only=True)
     cycle = _CycleMinimalSerializer(read_only=True)
+    latest_agent_task_status = serializers.CharField(allow_null=True, default=None)
 
     class Meta:
         model = Issue
@@ -248,6 +249,7 @@ class CrossProjectIssueListSerializer(serializers.ModelSerializer):
             "due_date",
             "sort_order",
             "created_at",
+            "latest_agent_task_status",
         ]
         read_only_fields = fields
 

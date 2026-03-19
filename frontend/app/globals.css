@@ -10,6 +10,15 @@ form.submitted [data-select-invalid] {
   box-shadow: 0 0 0 1px #ef4444;
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@utility animate-blink {
+  animation: blink 1.2s step-start infinite;
+}
+
 @keyframes selectDropdown {
   from {
     opacity: 0;

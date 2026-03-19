@@ -2,10 +2,12 @@ import pytest
 from rest_framework import status
 
 from tests.factories import (
+    AgentTaskFactory,
     IssueFactory,
     ProjectFactory,
     ProjectMembershipFactory,
     ProjectSettingsFactory,
+    ToonyAgentFactory,
     UserFactory,
 )
 
@@ -97,3 +99,61 @@ class TestUserIssueList:
         assert issue["project"]["name"] == p.name
         assert issue["project"]["color"] == "#FF0000"
         assert issue["project"]["icon"] == "bug"
+
+    def test_includes_latest_agent_task_status(self, authenticated_client, user, organization):
+        p = ProjectFactory(organization=organization, lead=user)
+        ProjectSettingsFactory(project=p)
+        ProjectMembershipFactory(project=p, user=user, role="LEAD")
+        issue = IssueFactory(project=p, reporter=user)
+
+        agent = ToonyAgentFactory(registered_by=user)
+        AgentTaskFactory(
+            organization=organization,
+            project=p,
+            issue=issue,
+            toony_agent=agent,
+            created_by=user,
+            status="RUNNING",
+        )
+
+        response = authenticated_client.get(URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["results"][0]["latest_agent_task_status"] == "RUNNING"
+
+    def test_latest_agent_task_status_null_when_no_tasks(self, authenticated_client, user, organization):
+        p = ProjectFactory(organization=organization, lead=user)
+        ProjectSettingsFactory(project=p)
+        ProjectMembershipFactory(project=p, user=user, role="LEAD")
+        IssueFactory(project=p, reporter=user)
+
+        response = authenticated_client.get(URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["results"][0]["latest_agent_task_status"] is None
+
+    def test_latest_agent_task_status_picks_most_recent(self, authenticated_client, user, organization):
+        p = ProjectFactory(organization=organization, lead=user)
+        ProjectSettingsFactory(project=p)
+        ProjectMembershipFactory(project=p, user=user, role="LEAD")
+        issue = IssueFactory(project=p, reporter=user)
+
+        agent = ToonyAgentFactory(registered_by=user)
+        AgentTaskFactory(
+            organization=organization,
+            project=p,
+            issue=issue,
+            toony_agent=agent,
+            created_by=user,
+            status="COMPLETED",
+        )
+        AgentTaskFactory(
+            organization=organization,
+            project=p,
+            issue=issue,
+            toony_agent=agent,
+            created_by=user,
+            status="RUNNING",
+        )
+
+        response = authenticated_client.get(URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["results"][0]["latest_agent_task_status"] == "RUNNING"
