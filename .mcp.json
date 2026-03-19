@@ -4,7 +4,7 @@
       "command": "/opt/homebrew/bin/uv",
       "args": ["--directory", "./mcp-server", "run", "toony-mcp"],
       "env": {
-        "TOONY_API_URL": "http://localhost:8000/api",
+        "TOONY_API_URL": "http://localhost:8080/api",
         "TOONY_API_KEY": "toony_10aac12acaf35c7641f8f1a74be2dfbad875a9a2"
       }
     }
