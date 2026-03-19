@@ -2,7 +2,49 @@
 
 Full-stack project management application with AI agent automation. Django 5 + DRF backend, Next.js 15 + React 19 frontend, orchestrated with Docker Compose.
 
-## Quick Start
+## Self-Hosted Install
+
+Run Toony locally with a single command. Requires [Docker](https://docs.docker.com/get-docker/) with Compose v2.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/bikerlfh/toony-dev-core/main/install.sh | bash
+```
+
+The installer will prompt for:
+- Admin email, username, and password
+- Port (default: `18789`)
+- Whether to load demo data
+
+Once complete, the app is available at `http://localhost:18789`.
+
+To install a specific version:
+
+```bash
+TOONY_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/bikerlfh/toony-dev-core/main/install.sh)
+```
+
+### Managing the installation
+
+```bash
+# Logs
+cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+
+# Stop
+cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod stop
+
+# Start
+cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+### Uninstall
+
+```bash
+~/.toony/uninstall.sh
+```
+
+This stops all services, removes Docker volumes (including the database), and deletes `~/.toony/`.
+
+## Development Setup
 
 ```bash
 cp .env.example .env    # configure environment variables
@@ -10,7 +52,7 @@ make up                 # start all services (postgres, redis, backend, frontend
 make migrate            # run database migrations
 ```
 
-The app will be available at `http://localhost:3000` (frontend) and `http://localhost:8000` (backend API).
+The app will be available at `http://localhost:4000` (frontend) and `http://localhost:8080` (backend API).
 
 ## Commands
 
