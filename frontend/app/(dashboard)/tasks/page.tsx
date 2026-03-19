@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import type { CrossProjectIssueList, ProjectList, IssueStatus, IssuePriority } from "@/types";
+import type { CrossProjectIssueList, ProjectList, IssueStatus, IssuePriority, ProjectWsEvent } from "@/types";
 import { listAllIssues, updateIssue } from "@/lib/api/issues";
 import { listProjects } from "@/lib/api/projects";
+import { useUserIssuesWebSocket } from "@/hooks/use-user-issues-websocket";
 import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { IssueSidePanel } from "@/components/tasks/issue-side-panel";
 import { QuickCreateIssueModal } from "@/components/tasks/quick-create-issue-modal";
@@ -56,6 +57,25 @@ export default function TasksPage() {
     },
     [fetchIssues]
   );
+
+  const handleWsEvent = useCallback(
+    (event: ProjectWsEvent) => {
+      if (event.type === "issue.updated") {
+        setIssues((prev) =>
+          prev.map((i) =>
+            i.id === event.data.id ? { ...i, ...event.data } : i
+          )
+        );
+      } else if (event.type === "issue.deleted") {
+        setIssues((prev) => prev.filter((i) => i.id !== event.data.id));
+      } else if (event.type === "issue.created") {
+        fetchIssues();
+      }
+    },
+    [fetchIssues]
+  );
+
+  useUserIssuesWebSocket({ onEvent: handleWsEvent });
 
   return (
     <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getAccessToken } from "@/lib/auth";
 import { useWebSocket } from "@/hooks/use-websocket";
 import type { ToonyAgentWsEvent, WsReadyState } from "@/types";
@@ -23,7 +23,7 @@ export function useToonyAgentWebSocket({
   sendConfigSync: () => void;
   sendConfigUpdate: (config: { max_concurrent_tasks?: number; max_task_timeout?: number }) => void;
 } {
-  const url = useMemo(() => {
+  const getUrl = useCallback(() => {
     if (!agentId) return null;
     const token = getAccessToken();
     if (!token) return null;
@@ -41,7 +41,7 @@ export function useToonyAgentWebSocket({
   );
 
   const { readyState, send } = useWebSocket({
-    url,
+    url: getUrl,
     onMessage: handleMessage,
   });
 

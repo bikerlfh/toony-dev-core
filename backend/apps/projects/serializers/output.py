@@ -192,6 +192,7 @@ class IssueListSerializer(serializers.ModelSerializer):
     labels = LabelSerializer(many=True, read_only=True)
     milestone = _MilestoneMinimalSerializer(read_only=True)
     cycle = _CycleMinimalSerializer(read_only=True)
+    project_id = serializers.UUIDField(read_only=True)
 
     class Meta:
         model = Issue

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { getAccessToken } from "@/lib/auth";
 import { useWebSocket } from "@/hooks/use-websocket";
 import type { ProjectWsEvent, WsReadyState } from "@/types";
@@ -16,7 +16,7 @@ export function useProjectWebSocket({
   projectId,
   onEvent,
 }: UseProjectWebSocketOptions): { readyState: WsReadyState } {
-  const url = useMemo(() => {
+  const getUrl = useCallback(() => {
     if (!projectId) return null;
     const token = getAccessToken();
     if (!token) return null;
@@ -34,7 +34,7 @@ export function useProjectWebSocket({
   );
 
   const { readyState } = useWebSocket({
-    url,
+    url: getUrl,
     onMessage: handleMessage,
   });
 

@@ -7,7 +7,7 @@ const AUTH_CLOSE_CODES = new Set([4001, 4003]);
 const MAX_RETRIES = 10;
 
 interface UseWebSocketOptions {
-  url: string | null;
+  url: string | null | (() => string | null);
   onMessage?: (data: unknown) => void;
   onOpen?: () => void;
   onClose?: (code: number) => void;
@@ -35,9 +35,10 @@ export function useWebSocket({
   onCloseRef.current = onClose;
 
   const connect = useCallback(() => {
-    if (!url) return;
+    const resolvedUrl = typeof url === "function" ? url() : url;
+    if (!resolvedUrl) return;
 
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(resolvedUrl);
     wsRef.current = ws;
     setReadyState(0); // CONNECTING
 
