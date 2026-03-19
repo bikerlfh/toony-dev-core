@@ -4,17 +4,22 @@ from django.contrib.postgres.search import (
     SearchVector,
 )
 
+from accounts.models import OrganizationMembership
 from projects.models import Issue, Project
 from workspace.models import Label, Team
 
 
-def global_search(organization, query, *, limit=5):
-    """Search across issues, projects, teams, and labels within an organization."""
+def global_search(user, query, *, limit=5):
+    """Search across issues, projects, teams, and labels for all user's organizations."""
     sq = SearchQuery(query)
 
-    # Issues — search title + description across all org projects
+    user_org_ids = OrganizationMembership.objects.filter(
+        user=user, is_active=True
+    ).values_list("organization_id", flat=True)
+
+    # Issues — search title + description across all user's org projects
     issue_qs = (
-        Issue.objects.filter(project__organization=organization)
+        Issue.objects.filter(project__organization_id__in=user_org_ids)
         .select_related("project", "assignee")
         .prefetch_related("labels")
         .annotate(
@@ -29,7 +34,7 @@ def global_search(organization, query, *, limit=5):
 
     # Projects
     project_qs = (
-        Project.objects.filter(organization=organization)
+        Project.objects.filter(organization_id__in=user_org_ids)
         .select_related("lead")
         .annotate(
             rank=SearchRank(
