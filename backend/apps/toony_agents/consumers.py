@@ -74,6 +74,7 @@ def _fail_active_tasks(agent_id):
     active_statuses = [
         AgentTaskStatus.ASSIGNED,
         AgentTaskStatus.RUNNING,
+        AgentTaskStatus.WAITING_FOR_ANSWER,
     ]
     tasks = list(
         AgentTask.objects.filter(
