@@ -60,10 +60,10 @@ download() {
 find_latest_backup() {
     local latest=""
     local latest_time=0
+    local backup_dir="$INSTALL_DIR/backups/db"
 
-    # Search ~/.toony/backups/
-    if [ -d "$INSTALL_DIR/backups" ]; then
-        for f in "$INSTALL_DIR/backups"/toony-backup-*.sql; do
+    if [ -d "$backup_dir" ]; then
+        for f in "$backup_dir"/toony-backup-*.sql; do
             [ -f "$f" ] || continue
             local mtime
             mtime=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null || echo 0)
@@ -73,17 +73,6 @@ find_latest_backup() {
             fi
         done
     fi
-
-    # Search ~/toony-backup-*.sql
-    for f in "$HOME"/toony-backup-*.sql; do
-        [ -f "$f" ] || continue
-        local mtime
-        mtime=$(stat -f %m "$f" 2>/dev/null || stat -c %Y "$f" 2>/dev/null || echo 0)
-        if [ "$mtime" -gt "$latest_time" ]; then
-            latest_time="$mtime"
-            latest="$f"
-        fi
-    done
 
     echo "$latest"
 }
@@ -128,14 +117,15 @@ check_prerequisites() {
 # ──────────────────────────────────────────────
 
 check_existing() {
-    if [ -d "$INSTALL_DIR" ]; then
-        warn "$INSTALL_DIR already exists."
+    if [ -d "$APP_DIR" ]; then
+        warn "Existing installation found."
         read -rp "Overwrite existing installation? [y/N] " confirm </dev/tty
         [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Cancelled."; exit 0; }
 
         info "Stopping existing services..."
         (cd "$APP_DIR" 2>/dev/null && docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down -v 2>/dev/null || true)
-        rm -rf "$INSTALL_DIR"
+        rm -rf "$APP_DIR"
+        rm -f "$ENV_FILE"
     fi
 }
 
@@ -145,6 +135,26 @@ check_existing() {
 
 prompt_user() {
     printf "\n\033[1mSetup Configuration\033[0m\n\n"
+
+    # Port (always asked)
+    read -rp "Port [$DEFAULT_PORT]: " USER_PORT </dev/tty
+    USER_PORT="${USER_PORT:-$DEFAULT_PORT}"
+
+    # Validate port is a number in valid range
+    if ! [[ "$USER_PORT" =~ ^[0-9]+$ ]] || [ "$USER_PORT" -lt 1 ] || [ "$USER_PORT" -gt 65535 ]; then
+        error "Invalid port number (must be 1-65535)."
+    fi
+
+    # Check port is free (ignore sockets in closing states like FIN_WAIT/CLOSE_WAIT)
+    if command -v lsof >/dev/null 2>&1 && lsof -i :"$USER_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+        error "Port $USER_PORT is already in use."
+    fi
+
+    # Skip admin/demo prompts when restoring from backup
+    if [ -n "$RESTORE_FILE" ]; then
+        printf "\n"
+        return
+    fi
 
     # Superuser email
     while true; do
@@ -169,20 +179,6 @@ prompt_user() {
         fi
         warn "Password must be at least 8 characters."
     done
-
-    # Port
-    read -rp "Port [$DEFAULT_PORT]: " USER_PORT </dev/tty
-    USER_PORT="${USER_PORT:-$DEFAULT_PORT}"
-
-    # Validate port is a number in valid range
-    if ! [[ "$USER_PORT" =~ ^[0-9]+$ ]] || [ "$USER_PORT" -lt 1 ] || [ "$USER_PORT" -gt 65535 ]; then
-        error "Invalid port number (must be 1-65535)."
-    fi
-
-    # Check port is free (ignore sockets in closing states like FIN_WAIT/CLOSE_WAIT)
-    if command -v lsof >/dev/null 2>&1 && lsof -i :"$USER_PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-        error "Port $USER_PORT is already in use."
-    fi
 
     # Demo data
     read -rp "Load demo data? [y/N] " LOAD_DEMO </dev/tty
@@ -403,7 +399,9 @@ print_summary() {
     printf "\033[1;32m✅ Toony is up and running!\033[0m\n"
     printf "\n"
     printf "  \033[1mURL:\033[0m        http://localhost:%s\n" "$USER_PORT"
-    printf "  \033[1mAdmin:\033[0m      %s (%s)\n" "$ADMIN_USERNAME" "$ADMIN_EMAIL"
+    if [ -n "${ADMIN_USERNAME:-}" ]; then
+        printf "  \033[1mAdmin:\033[0m      %s (%s)\n" "$ADMIN_USERNAME" "$ADMIN_EMAIL"
+    fi
     printf "\n"
     printf "  \033[1mManage:\033[0m     toony start | stop | restart | logs | status\n"
     printf "  \033[1mUninstall:\033[0m  toony uninstall\n"

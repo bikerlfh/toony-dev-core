@@ -50,27 +50,6 @@
 },
 {
   "model": "accounts.user",
-  "pk": "48ab364d-ada7-45e6-b5b2-dc14e43237e3",
-  "fields": {
-    "password": "pbkdf2_sha256$870000$R77Aq7vPb80qbvIXwi9zgY$1NgcrCzBrnPtQAvRIfO7MYvdVDEYQ9fiUL8p2YQ2aaA=",
-    "last_login": null,
-    "is_superuser": false,
-    "username": "user0",
-    "first_name": "Beth",
-    "last_name": "Avery",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2026-03-07T01:20:54.213Z",
-    "email": "user0@test.com",
-    "avatar": "",
-    "created_at": "2026-03-07T01:20:54.228Z",
-    "updated_at": "2026-03-07T01:20:54.324Z",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
-  "model": "accounts.user",
   "pk": "8e6390d8-aa76-4bf1-a483-af584e2a33a0",
   "fields": {
     "password": "pbkdf2_sha256$870000$GwJcElnnuRqq4SLONSZR4W$A0kO8vASxcQgD/GZWOtQJa2uRJmkm88QB/QP/3UZhes=",

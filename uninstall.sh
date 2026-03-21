@@ -5,7 +5,7 @@ INSTALL_DIR="$HOME/.toony"
 APP_DIR="$INSTALL_DIR/app"
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE="$INSTALL_DIR/.env.prod"
-BACKUP_DIR="$INSTALL_DIR/backups"
+BACKUP_DIR="$INSTALL_DIR/backups/db"
 
 # --- Helpers ---
 info()  { printf "\033[1;34m→\033[0m %s\n" "$1"; }
@@ -60,11 +60,11 @@ if [[ "$do_backup" =~ ^[Yy]$ ]]; then
         db_name=$(grep -E '^DB_NAME=' "$ENV_FILE" | cut -d= -f2)
         timestamp=$(date +"%Y-%m-%dT%H-%M-%S")
 
-        # Save to home dir (survives rm -rf ~/.toony/)
-        BACKUP_FILE="$HOME/toony-backup-${timestamp}.sql"
+        mkdir -p "$BACKUP_DIR"
+        BACKUP_FILE="$BACKUP_DIR/toony-backup-${timestamp}.sql"
 
         info "Creating backup..."
-        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T db pg_dump -U "$db_user" "$db_name" > "$BACKUP_FILE"
+        docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T db pg_dump --data-only -U "$db_user" "$db_name" > "$BACKUP_FILE"
         success "Backup saved to $BACKUP_FILE"
     else
         warn "Cannot backup — application files not found."
@@ -82,9 +82,12 @@ fi
 info "Removing 'toony' command..."
 rm -f "$HOME/.local/bin/toony"
 
-info "Removing $INSTALL_DIR..."
+info "Removing application files..."
 cd "$HOME"
-rm -rf "$INSTALL_DIR"
+rm -rf "$APP_DIR"
+rm -f "$ENV_FILE"
+rm -f "$INSTALL_DIR/toony.sh"
+rm -f "$INSTALL_DIR/uninstall.sh"
 
 printf "\n\033[1;32m✓\033[0m Toony has been completely removed.\n"
 if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then

@@ -5,7 +5,7 @@ INSTALL_DIR="$HOME/.toony"
 APP_DIR="$INSTALL_DIR/app"
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE="$INSTALL_DIR/.env.prod"
-BACKUP_DIR="$INSTALL_DIR/backups"
+BACKUP_DIR="$INSTALL_DIR/backups/db"
 
 # --- Helpers ---
 info()    { printf "\033[1;34m→\033[0m %s\n" "$1"; }
@@ -78,7 +78,7 @@ cmd_backup() {
     db_name=$(grep -E '^DB_NAME=' "$ENV_FILE" | cut -d= -f2)
 
     info "Creating backup..."
-    compose exec -T db pg_dump -U "$db_user" "$db_name" > "$backup_file"
+    compose exec -T db pg_dump --data-only -U "$db_user" "$db_name" > "$backup_file"
 
     local size
     size=$(ls -lh "$backup_file" | awk '{print $5}')
