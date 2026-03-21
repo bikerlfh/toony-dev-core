@@ -26,23 +26,37 @@ TOONY_VERSION=v1.0.0 bash <(curl -fsSL https://raw.githubusercontent.com/bikerlf
 ### Managing the installation
 
 ```bash
-# Logs
-cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+toony start         # Start all services
+toony stop          # Stop all services
+toony restart       # Restart all services
+toony logs          # Tail all logs (or: toony logs backend)
+toony status        # Show service status
+```
 
-# Stop
-cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod stop
+### Backup & Restore
 
-# Start
-cd ~/.toony && docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```bash
+toony backup            # Create a backup in ~/.toony/backups/
+toony backup --list     # List existing backups
+```
+
+To restore a backup during installation:
+
+```bash
+# Auto-detect the most recent backup
+install.sh --local . --restore
+
+# Or specify a backup file
+install.sh --local . --restore ~/toony-backup-2026-03-21T15-30-00.sql
 ```
 
 ### Uninstall
 
 ```bash
-~/.toony/uninstall.sh
+toony uninstall
 ```
 
-This stops all services, removes Docker volumes (including the database), and deletes `~/.toony/`.
+The uninstaller will offer to backup the database before removing everything. If accepted, the backup is saved to `~/toony-backup-<timestamp>.sql` (outside `~/.toony/` so it survives deletion).
 
 ## Development Setup
 
