@@ -1,94 +1,121 @@
-#!/usr/bin/env bash
-set -euo pipefail
+# `toony update` Command — Implementation Plan
 
-INSTALL_DIR="$HOME/.toony"
-APP_DIR="$INSTALL_DIR/app"
-COMPOSE_FILE="docker-compose.prod.yml"
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Add a `toony update` command that updates an existing installation from GitHub or a local checkout, with automatic DB backup and installation metadata tracking.
+
+**Architecture:** `install.sh` writes a `.install-meta` file recording the installation source. `toony.sh` gains a `cmd_update()` function that reads that metadata, backs up the DB, fetches new code to a temp dir, swaps it in, rebuilds containers, runs migrations, and reinstalls the CLI scripts.
+
+**Tech Stack:** Bash, Docker Compose, rsync, curl/wget
+
+---
+
+### Task 1: Add `.install-meta` writing to `install.sh`
+
+**Files:**
+- Modify: `install.sh:8-17` (add META_FILE variable)
+- Modify: `install.sh:456-484` (write metadata at end of main)
+
+**Step 1: Add META_FILE config variable**
+
+In `install.sh`, add a new variable after line 14 (`ENV_FILE`):
+
+```bash
+# Line 14 currently:
 ENV_FILE="$INSTALL_DIR/.env.prod"
+# Add after it:
+META_FILE="$INSTALL_DIR/.install-meta"
+```
+
+**Step 2: Add `write_meta()` function**
+
+Add this function after `install_cli()` (after line 391), before the success summary section:
+
+```bash
+# ──────────────────────────────────────────────
+# Write installation metadata
+# ──────────────────────────────────────────────
+
+write_meta() {
+    local source="remote"
+    local local_path=""
+
+    if [ -n "$LOCAL_DIR" ]; then
+        source="local"
+        local_path="$LOCAL_DIR"
+    fi
+
+    cat > "$META_FILE" <<EOF
+SOURCE=$source
+LOCAL_PATH=$local_path
+INSTALLED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+UPDATED_AT=
+EOF
+
+    success "Installation metadata saved."
+}
+```
+
+**Step 3: Call `write_meta()` in `main()`**
+
+In the `main()` function, add `write_meta` call after `install_cli` (line 482):
+
+```bash
+    install_cli
+    write_meta
+    print_summary
+```
+
+**Step 4: Verify**
+
+Run: `cat install.sh | grep -n 'META_FILE\|write_meta\|install-meta'`
+
+Expected: 3+ matches showing the variable, function, and call.
+
+**Step 5: Commit**
+
+```
+feat(installer): write .install-meta after installation
+
+- Add META_FILE variable pointing to ~/.toony/.install-meta
+- Add write_meta() function to record SOURCE, LOCAL_PATH, timestamps
+- Call write_meta() at end of main() after install_cli
+```
+
+---
+
+### Task 2: Add `cmd_update()` to `toony.sh`
+
+**Files:**
+- Modify: `toony.sh:4-8` (add META_FILE, REPO, HEALTH_TIMEOUT variables)
+- Modify: `toony.sh:10-13` (add warn helper)
+- Modify: `toony.sh:87-90` (add cmd_update after cmd_backup)
+- Modify: `toony.sh:92-103` (add update to help text)
+- Modify: `toony.sh:110-120` (add update case to dispatch)
+
+**Step 1: Add new variables and `warn` helper**
+
+In `toony.sh`, add variables after line 8 (`BACKUP_DIR`):
+
+```bash
 BACKUP_DIR="$INSTALL_DIR/backups/db"
 META_FILE="$INSTALL_DIR/.install-meta"
 REPO="bikerlfh/toony-dev-core"
 HEALTH_TIMEOUT=60
+```
 
-# --- Helpers ---
-info()    { printf "\033[1;34m→\033[0m %s\n" "$1"; }
-success() { printf "\033[1;32m✓\033[0m %s\n" "$1"; }
+Add `warn` helper after the `error` helper on line 13:
+
+```bash
 error()   { printf "\033[1;31m✗\033[0m %s\n" "$1" >&2; exit 1; }
 warn()    { printf "\033[1;33m⚠\033[0m %s\n" "$1"; }
+```
 
-# --- Guard ---
-if [ ! -d "$INSTALL_DIR" ]; then
-    error "Toony is not installed ($INSTALL_DIR does not exist)."
-fi
+**Step 2: Add the `cmd_update()` function**
 
-compose() {
-    cd "$APP_DIR"
-    docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
-}
+Add this function after `cmd_backup()` (after line 86), before `cmd_uninstall()`:
 
-# --- Commands ---
-
-cmd_start() {
-    info "Starting Toony..."
-    compose up -d
-    success "Toony is running at http://localhost:$(grep -E '^NGINX_PORT=' "$ENV_FILE" | cut -d= -f2)"
-}
-
-cmd_stop() {
-    info "Stopping Toony..."
-    compose stop
-    success "Toony stopped."
-}
-
-cmd_restart() {
-    info "Restarting Toony..."
-    compose restart
-    success "Toony restarted."
-}
-
-cmd_logs() {
-    compose logs -f "$@"
-}
-
-cmd_status() {
-    compose ps
-}
-
-cmd_backup() {
-    local subcmd="${1:-}"
-
-    if [ "$subcmd" = "--list" ]; then
-        if [ -d "$BACKUP_DIR" ] && ls "$BACKUP_DIR"/*.sql >/dev/null 2>&1; then
-            printf "\033[1mBackups in %s:\033[0m\n\n" "$BACKUP_DIR"
-            ls -lh "$BACKUP_DIR"/*.sql
-        else
-            info "No backups found."
-        fi
-        return
-    fi
-
-    # Check db container is running
-    if ! compose ps db --format '{{.State}}' 2>/dev/null | grep -q "running"; then
-        error "Database container is not running. Start Toony first: toony start"
-    fi
-
-    mkdir -p "$BACKUP_DIR"
-    local timestamp
-    timestamp=$(date +"%Y-%m-%dT%H-%M-%S")
-    local backup_file="$BACKUP_DIR/toony-backup-${timestamp}.sql"
-
-    local db_user db_name
-    db_user=$(grep -E '^DB_USER=' "$ENV_FILE" | cut -d= -f2)
-    db_name=$(grep -E '^DB_NAME=' "$ENV_FILE" | cut -d= -f2)
-
-    info "Creating backup..."
-    compose exec -T db pg_dump --data-only -U "$db_user" "$db_name" > "$backup_file"
-
-    local size
-    size=$(ls -lh "$backup_file" | awk '{print $5}')
-    success "Backup saved to $backup_file ($size)"
-}
-
+```bash
 cmd_update() {
     local use_local="" no_backup=false
 
@@ -263,30 +290,23 @@ EOF
     printf "  \033[1mURL:\033[0m  http://localhost:%s\n" "$port"
     printf "\n"
 }
+```
 
-cmd_uninstall() {
-    exec "$INSTALL_DIR/uninstall.sh"
-}
+**Step 3: Add `update` to `cmd_help()`**
 
-cmd_help() {
-    printf "Usage: toony <command>\n\n"
-    printf "Commands:\n"
-    printf "  \033[1mstart\033[0m       Start all services\n"
-    printf "  \033[1mstop\033[0m        Stop all services\n"
-    printf "  \033[1mrestart\033[0m     Restart all services\n"
-    printf "  \033[1mlogs\033[0m        Tail logs (optionally: toony logs backend)\n"
-    printf "  \033[1mstatus\033[0m      Show service status\n"
+In the `cmd_help()` function, add the update line after the backup line:
+
+```bash
     printf "  \033[1mbackup\033[0m      Backup the database (--list to show backups)\n"
     printf "  \033[1mupdate\033[0m      Update to the latest version (--local PATH, --no-backup)\n"
     printf "  \033[1muninstall\033[0m   Remove Toony and all data\n"
-    printf "  \033[1mhelp\033[0m        Show this help\n"
-}
+```
 
-# --- Main ---
+**Step 4: Add `update` case to the dispatch**
 
-command="${1:-help}"
-shift 2>/dev/null || true
+In the case statement at the bottom, add the update case:
 
+```bash
 case "$command" in
     start)      cmd_start ;;
     stop)       cmd_stop ;;
@@ -299,3 +319,104 @@ case "$command" in
     help|--help|-h) cmd_help ;;
     *)          error "Unknown command: $command. Run 'toony help' for usage." ;;
 esac
+```
+
+**Step 5: Verify syntax**
+
+Run: `bash -n toony.sh`
+
+Expected: No output (no syntax errors).
+
+**Step 6: Commit**
+
+```
+feat(cli): add toony update command
+
+- Add cmd_update() with --local PATH and --no-backup flags
+- Read .install-meta to resolve default source (remote/local)
+- Backup DB before updating (skippable with --no-backup)
+- Fetch to temp dir, stop services, swap code, rebuild, start, migrate
+- Update .install-meta timestamps and source after success
+- Reinstall CLI scripts from updated app directory
+- Add update to help text and command dispatch
+```
+
+---
+
+### Task 3: Update `uninstall.sh` to clean up `.install-meta`
+
+**Files:**
+- Modify: `uninstall.sh:85-90` (add rm for .install-meta)
+
+**Step 1: Add cleanup line**
+
+In `uninstall.sh`, after line 90 (`rm -f "$INSTALL_DIR/uninstall.sh"`), add:
+
+```bash
+rm -f "$INSTALL_DIR/uninstall.sh"
+rm -f "$INSTALL_DIR/.install-meta"
+```
+
+**Step 2: Verify**
+
+Run: `grep -n 'install-meta' uninstall.sh`
+
+Expected: 1 match showing the rm line.
+
+**Step 3: Commit**
+
+```
+chore(uninstall): clean up .install-meta on uninstall
+
+- Add rm -f for .install-meta in teardown section
+```
+
+---
+
+### Task 4: Update `install.sh` summary to mention update command
+
+**Files:**
+- Modify: `install.sh:397-409` (add update to manage line in print_summary)
+
+**Step 1: Add update to the summary**
+
+In `print_summary()`, update the manage line to include `update`:
+
+```bash
+    printf "  \033[1mManage:\033[0m     toony start | stop | restart | logs | status\n"
+    printf "  \033[1mUpdate:\033[0m     toony update\n"
+    printf "  \033[1mUninstall:\033[0m  toony uninstall\n"
+```
+
+**Step 2: Commit**
+
+```
+docs(installer): mention toony update in post-install summary
+
+- Add Update line to print_summary output
+```
+
+---
+
+### Task 5: Smoke test (manual)
+
+**Verification steps** (not automated — these are Docker-dependent):
+
+1. **Syntax check both scripts:**
+   ```bash
+   bash -n install.sh && echo "install.sh OK"
+   bash -n toony.sh && echo "toony.sh OK"
+   bash -n uninstall.sh && echo "uninstall.sh OK"
+   ```
+
+2. **Verify help output:**
+   ```bash
+   # Simulate (without needing ~/.toony to exist):
+   grep -A1 'update' toony.sh | head -5
+   ```
+
+3. **Check all .install-meta references are consistent:**
+   ```bash
+   grep -rn 'install-meta' install.sh toony.sh uninstall.sh
+   ```
+   Expected: install.sh (META_FILE var + write_meta), toony.sh (META_FILE var + read in cmd_update + write in cmd_update), uninstall.sh (rm -f)

@@ -12,6 +12,7 @@ APP_DIR="$INSTALL_DIR/app"
 DEFAULT_PORT=18789
 COMPOSE_FILE="docker-compose.prod.yml"
 ENV_FILE="$INSTALL_DIR/.env.prod"
+META_FILE="$INSTALL_DIR/.install-meta"
 HEALTH_TIMEOUT=60  # seconds
 LOCAL_DIR=""
 RESTORE_FILE=""
@@ -391,6 +392,29 @@ install_cli() {
 }
 
 # ──────────────────────────────────────────────
+# Write installation metadata
+# ──────────────────────────────────────────────
+
+write_meta() {
+    local source="remote"
+    local local_path=""
+
+    if [ -n "$LOCAL_DIR" ]; then
+        source="local"
+        local_path="$LOCAL_DIR"
+    fi
+
+    cat > "$META_FILE" <<EOF
+SOURCE=$source
+LOCAL_PATH=$local_path
+INSTALLED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+UPDATED_AT=
+EOF
+
+    success "Installation metadata saved."
+}
+
+# ──────────────────────────────────────────────
 # Success summary
 # ──────────────────────────────────────────────
 
@@ -404,6 +428,7 @@ print_summary() {
     fi
     printf "\n"
     printf "  \033[1mManage:\033[0m     toony start | stop | restart | logs | status\n"
+    printf "  \033[1mUpdate:\033[0m     toony update\n"
     printf "  \033[1mUninstall:\033[0m  toony uninstall\n"
     printf "\n"
 }
@@ -480,6 +505,7 @@ main() {
     fi
 
     install_cli
+    write_meta
     print_summary
 }
 

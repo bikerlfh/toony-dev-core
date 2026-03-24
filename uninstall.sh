@@ -88,6 +88,7 @@ rm -rf "$APP_DIR"
 rm -f "$ENV_FILE"
 rm -f "$INSTALL_DIR/toony.sh"
 rm -f "$INSTALL_DIR/uninstall.sh"
+rm -f "$INSTALL_DIR/.install-meta"
 
 printf "\n\033[1;32m✓\033[0m Toony has been completely removed.\n"
 if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
