@@ -13,9 +13,26 @@ import yaml
 logger = logging.getLogger("toony_agent_runner")
 
 _DEFAULT_ALLOWED_TOOLS = [
+    # File operations
     "Read", "Edit", "Write", "Bash", "Grep", "Glob",
-    "WebFetch", "WebSearch", "NotebookEdit",
+    # Web
+    "WebFetch", "WebSearch",
+    # Notebook
+    "NotebookEdit",
+    # User interaction
     "AskUserQuestion",
+    # Skills and agents
+    "Skill", "Agent",
+    # Task management
+    "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop", "TaskUpdate",
+    # Code intelligence
+    "LSP", "ToolSearch",
+    # Plan and worktree
+    "EnterPlanMode", "ExitPlanMode", "EnterWorktree", "ExitWorktree",
+    # Scheduling
+    "CronCreate", "CronDelete", "CronList", "RemoteTrigger",
+    # MCP resources
+    "ReadMcpResourceTool", "ListMcpResourcesTool",
 ]
 
 
