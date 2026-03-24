@@ -86,9 +86,9 @@ export default function TeamsPage() {
                       e.stopPropagation();
                       setDeleteTarget(team);
                     }}
-                    className="text-sm text-red-400 transition-colors hover:text-red-300"
+                    className="text-sm text-amber-400 transition-colors hover:text-amber-300"
                   >
-                    Delete
+                    Deactivate
                   </button>
                 )}
               </div>
@@ -106,9 +106,9 @@ export default function TeamsPage() {
 
       {deleteTarget && (
         <ConfirmModal
-          title="Delete team"
-          message={`Delete team "${deleteTarget.name}"? This action cannot be undone.`}
-          confirmLabel="Delete"
+          title="Deactivate team"
+          message={`Deactivate team "${deleteTarget.name}"? The team will be hidden but its data will be preserved.`}
+          confirmLabel="Deactivate"
           confirmVariant="danger"
           isLoading={isDeleting}
           onConfirm={handleDelete}

@@ -297,16 +297,16 @@ export default function TeamDetailPage() {
       {/* Danger zone */}
       {canManage && (
         <div className="mt-8 rounded-xl border border-red-500/20 bg-slate-900 p-6">
-          <h2 className="text-base font-medium text-red-400">Danger zone</h2>
+          <h2 className="text-base font-medium text-amber-400">Deactivate</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Permanently delete this team. Issues linked to this team will not be affected.
+            Deactivate this team. The team will be hidden but its data will be preserved.
           </p>
           <button
             type="button"
             onClick={() => setShowDeleteTeam(true)}
-            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500"
+            className="mt-4 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-500"
           >
-            Delete team
+            Deactivate team
           </button>
         </div>
       )}
@@ -379,9 +379,9 @@ export default function TeamDetailPage() {
       {/* Delete team confirm */}
       {showDeleteTeam && (
         <ConfirmModal
-          title="Delete team"
-          message={`Delete "${team.name}"? This action cannot be undone.`}
-          confirmLabel="Delete"
+          title="Deactivate team"
+          message={`Deactivate "${team.name}"? The team will be hidden but its data will be preserved.`}
+          confirmLabel="Deactivate"
           confirmVariant="danger"
           isLoading={isDeleting}
           onConfirm={handleDeleteTeam}
