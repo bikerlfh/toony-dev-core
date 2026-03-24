@@ -37,6 +37,7 @@ import { FilterBar } from "@/components/issues/filter-bar";
 import { KanbanBoard } from "@/components/issues/kanban-board";
 import { CreateIssueModal } from "@/components/issues/create-issue-modal";
 import { Select } from "@/components/ui/select";
+import { ProjectIconPicker } from "@/components/ui/project-icon-picker";
 import type {
   ProjectDetail,
   ProjectMember,
@@ -202,6 +203,14 @@ export default function ProjectDetailPage() {
     }
   }
 
+  async function saveIcon(field: "icon" | "color", value: string) {
+    if (!project) return;
+    try {
+      await updateProject(projectId, { [field]: value });
+      setProject({ ...project, [field]: value });
+    } catch { /* silent */ }
+  }
+
   if (isLoading) return <p className="text-slate-500">Loading project...</p>;
   if (!project) return <p className="text-red-400">Project not found.</p>;
 
@@ -219,11 +228,31 @@ export default function ProjectDetailPage() {
       </button>
 
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
+      <div>
+        {/* Icon + Title row */}
+        <div className="flex items-center gap-3">
+          {canManage ? (
+            <ProjectIconPicker
+              icon={project.icon}
+              color={project.color}
+              onIconChange={(v) => saveIcon("icon", v)}
+              onColorChange={(v) => saveIcon("color", v)}
+            />
+          ) : (
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base"
+              style={{
+                backgroundColor: project.color ? `${project.color}18` : "rgb(30 41 59 / 0.6)",
+                color: project.color || "rgb(148 163 184)",
+              }}
+            >
+              {project.icon || project.name[0]?.toUpperCase()}
+            </div>
+          )}
+
           {/* Title — click to edit */}
           {editingTitle ? (
-            <div>
+            <div className="min-w-0 flex-1">
               <input
                 type="text"
                 value={titleDraft}
@@ -251,69 +280,70 @@ export default function ProjectDetailPage() {
           ) : (
             <h1
               onClick={canManage ? startEditTitle : undefined}
-              className={`text-2xl font-medium tracking-tight text-white ${
-                canManage ? "cursor-text rounded-lg px-3 py-2 -mx-3 -my-2 transition-colors hover:bg-slate-800/40" : ""
+              className={`min-w-0 flex-1 text-2xl font-medium tracking-tight text-white ${
+                canManage ? "cursor-text rounded-lg px-3 py-2 -mx-3 transition-colors hover:bg-slate-800/40" : ""
               }`}
               title={canManage ? "Click to edit title" : undefined}
             >
               {project.name}
             </h1>
           )}
+        </div>
 
-          <div className="mt-2 flex items-center gap-2">
-            <StatusBadge status={project.status} />
-            <PriorityBadge priority={project.priority} />
-            {project.lead && (
-              <>
-                <span className="text-slate-700">&middot;</span>
-                <span className="text-sm text-slate-500">
-                  {project.lead.first_name} {project.lead.last_name}
-                </span>
-              </>
-            )}
-          </div>
-
-          {/* Short summary — click to edit */}
-          {editingSummary ? (
-            <div className="mt-2">
-              <input
-                type="text"
-                value={summaryDraft}
-                onChange={(e) => setSummaryDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveSummary();
-                  if (e.key === "Escape") setEditingSummary(false);
-                }}
-                disabled={isSavingSummary}
-                autoFocus
-                maxLength={255}
-                placeholder="A brief tagline for the project"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-300 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
-              />
-              <div className="mt-1.5 flex items-center gap-2">
-                <button onClick={saveSummary} disabled={isSavingSummary}
-                  className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
-                  {isSavingSummary ? "Saving..." : "Save"}
-                </button>
-                <button onClick={() => setEditingSummary(false)} disabled={isSavingSummary}
-                  className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white">
-                  Cancel
-                </button>
-                <span className="text-[10px] text-slate-600">Enter to save · Esc to cancel</span>
-              </div>
-            </div>
-          ) : (
-            <p
-              onClick={canManage ? startEditSummary : undefined}
-              className={`mt-2 text-sm ${
-                project.short_summary ? "text-slate-400" : "text-slate-600 italic"
-              } ${canManage ? "cursor-text rounded-lg px-3 py-1.5 -mx-3 transition-colors hover:bg-slate-800/40" : ""}`}
-              title={canManage ? "Click to edit summary" : undefined}
-            >
-              {project.short_summary || "Add a short summary..."}
-            </p>
+        {/* Status badges */}
+        <div className="mt-2 flex items-center gap-2">
+          <StatusBadge status={project.status} />
+          <PriorityBadge priority={project.priority} />
+          {project.lead && (
+            <>
+              <span className="text-slate-700">&middot;</span>
+              <span className="text-sm text-slate-500">
+                {project.lead.first_name} {project.lead.last_name}
+              </span>
+            </>
           )}
         </div>
+
+        {/* Short summary — click to edit */}
+        {editingSummary ? (
+          <div className="mt-2">
+            <input
+              type="text"
+              value={summaryDraft}
+              onChange={(e) => setSummaryDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveSummary();
+                if (e.key === "Escape") setEditingSummary(false);
+              }}
+              disabled={isSavingSummary}
+              autoFocus
+              maxLength={255}
+              placeholder="A brief tagline for the project"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-300 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+            />
+            <div className="mt-1.5 flex items-center gap-2">
+              <button onClick={saveSummary} disabled={isSavingSummary}
+                className="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+                {isSavingSummary ? "Saving..." : "Save"}
+              </button>
+              <button onClick={() => setEditingSummary(false)} disabled={isSavingSummary}
+                className="rounded-lg border border-slate-700 px-3 py-1 text-xs font-medium text-slate-300 transition-colors hover:text-white">
+                Cancel
+              </button>
+              <span className="text-[10px] text-slate-600">Enter to save · Esc to cancel</span>
+            </div>
+          </div>
+        ) : (
+          <p
+            onClick={canManage ? startEditSummary : undefined}
+            className={`mt-2 text-sm ${
+              project.short_summary ? "text-slate-400" : "text-slate-600 italic"
+            } ${canManage ? "cursor-text rounded-lg px-3 py-1.5 -mx-3 transition-colors hover:bg-slate-800/40" : ""}`}
+            title={canManage ? "Click to edit summary" : undefined}
+          >
+            {project.short_summary || "Add a short summary..."}
+          </p>
+        )}
       </div>
 
       {/* Tabs */}

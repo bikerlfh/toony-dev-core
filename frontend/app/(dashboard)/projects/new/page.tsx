@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createProject } from "@/lib/api/projects";
 import { listOrganizations } from "@/lib/api/organizations";
 import { Select } from "@/components/ui/select";
+import { ProjectIconPicker } from "@/components/ui/project-icon-picker";
 import type { Organization, ProjectStatus, ProjectPriority } from "@/types";
 
 function slugify(text: string): string {
@@ -48,6 +49,8 @@ export default function CreateProjectPage() {
   const [priority, setPriority] = useState<ProjectPriority>("NONE");
   const [startDate, setStartDate] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  const [icon, setIcon] = useState("");
+  const [color, setColor] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -95,6 +98,8 @@ export default function CreateProjectPage() {
         priority,
         start_date: startDate || null,
         target_date: targetDate || null,
+        icon: icon || undefined,
+        color: color || undefined,
       });
       router.push(`/projects/${project.id}`);
     } catch (err: unknown) {
@@ -175,14 +180,22 @@ export default function CreateProjectPage() {
               <label className="block text-sm font-medium text-slate-400">
                 Name <span className="text-red-400">*</span>
               </label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="My Project"
-                className={INPUT_CLASS}
-              />
+              <div className="mt-1.5 flex items-start gap-3">
+                <ProjectIconPicker
+                  icon={icon}
+                  color={color}
+                  onIconChange={setIcon}
+                  onColorChange={setColor}
+                />
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="My Project"
+                  className="block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
+                />
+              </div>
             </div>
 
             <div>

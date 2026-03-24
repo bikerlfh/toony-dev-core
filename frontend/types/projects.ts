@@ -147,6 +147,8 @@ export interface CreateProjectPayload {
   priority?: ProjectPriority;
   start_date?: string | null;
   target_date?: string | null;
+  icon?: string;
+  color?: string;
 }
 
 export interface UpdateProjectPayload {

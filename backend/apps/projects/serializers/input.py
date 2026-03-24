@@ -37,6 +37,8 @@ class CreateProjectSerializer(serializers.Serializer):
     start_date = serializers.DateField(required=False, allow_null=True)
     target_date = serializers.DateField(required=False, allow_null=True)
     issue_prefix = serializers.CharField(max_length=10)
+    icon = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
+    color = serializers.CharField(max_length=7, required=False, allow_blank=True, default="")
 
 
 class UpdateProjectSerializer(serializers.Serializer):
