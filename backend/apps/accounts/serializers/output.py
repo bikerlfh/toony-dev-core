@@ -12,7 +12,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "avatar",
+            "avatar_style",
             "created_at",
             "updated_at",
         ]

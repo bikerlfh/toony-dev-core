@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/contexts/notification-context";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { NotificationItem } from "@/types";
 
 function getNotificationUrl(notification: NotificationItem): string {
@@ -129,11 +130,20 @@ export function NotificationDropdown() {
                   className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-slate-800/50"
                 >
                   {/* Actor avatar */}
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-                    {n.actor
-                      ? n.actor.first_name?.[0]?.toUpperCase() || "?"
-                      : "?"}
-                  </div>
+                  {n.actor ? (
+                    <UserAvatar
+                      userId={n.actor.id}
+                      firstName={n.actor.first_name}
+                      lastName={n.actor.last_name}
+                      email={n.actor.email}
+                      avatarStyle={n.actor.avatar_style}
+                      size={28}
+                    />
+                  ) : (
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
+                      ?
+                    </div>
+                  )}
                   {/* Content */}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-snug text-slate-300">

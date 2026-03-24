@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { CrossProjectIssueList, IssueStatus } from "@/types";
 import type { AgentTaskStatus } from "@/types/toony-agents";
 import { PriorityBadge } from "@/components/priority-badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const AGENT_TASK_STATUS_CONFIG: Record<AgentTaskStatus, { color: string; label: string; animate?: string }> = {
   QUEUED: { color: "text-slate-400", label: "Queued" },
@@ -227,12 +228,14 @@ function IssueCard({
           ))}
         </div>
         {issue.assignee && (
-          <div
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400"
-            title={`${issue.assignee.first_name} ${issue.assignee.last_name}`}
-          >
-            {issue.assignee.first_name?.[0]}{issue.assignee.last_name?.[0]}
-          </div>
+          <UserAvatar
+            userId={issue.assignee.id}
+            firstName={issue.assignee.first_name}
+            lastName={issue.assignee.last_name}
+            email={issue.assignee.email}
+            avatarStyle={issue.assignee.avatar_style}
+            size={24}
+          />
         )}
       </div>
     </div>

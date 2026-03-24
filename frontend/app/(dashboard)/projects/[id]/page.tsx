@@ -38,6 +38,7 @@ import { KanbanBoard } from "@/components/issues/kanban-board";
 import { CreateIssueModal } from "@/components/issues/create-issue-modal";
 import { Select } from "@/components/ui/select";
 import { ProjectIconPicker } from "@/components/ui/project-icon-picker";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type {
   ProjectDetail,
   ProjectMember,
@@ -1092,9 +1093,14 @@ function MembersTab({ projectId, canManage }: { projectId: string; canManage: bo
               <tr key={m.id} className="hover:bg-slate-900/60">
                 <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-medium text-slate-400">
-                      {m.user.first_name?.[0]}{m.user.last_name?.[0]}
-                    </div>
+                    <UserAvatar
+                      userId={m.user.id}
+                      firstName={m.user.first_name}
+                      lastName={m.user.last_name}
+                      email={m.user.email}
+                      avatarStyle={m.user.avatar_style}
+                      size={32}
+                    />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-slate-200">{m.user.first_name} {m.user.last_name}</p>
                       <p className="text-sm text-slate-500">{m.user.email}</p>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { NotificationDropdown } from "./notification-dropdown";
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -110,9 +111,16 @@ export function Header() {
             onClick={() => setUserMenuOpen((prev) => !prev)}
             className="flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-slate-900/60"
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-medium text-slate-400">
-              {user?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-            </div>
+            {user && (
+              <UserAvatar
+                userId={user.id}
+                firstName={user.first_name}
+                lastName={user.last_name}
+                email={user.email}
+                avatarStyle={user.avatar_style}
+                size={28}
+              />
+            )}
             <span className="text-sm text-slate-400">
               {user?.first_name}
             </span>

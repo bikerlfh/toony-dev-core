@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/workspace";
 // Role checks removed — will be re-implemented when org context is rebuilt
 import { ConfirmModal } from "@/components/confirm-modal";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Select } from "@/components/ui/select";
 import type { TeamDetail, TeamMember, TeamRole } from "@/types";
 
@@ -249,9 +250,14 @@ export default function TeamDetailPage() {
                 <tr key={member.id} className="hover:bg-slate-900/60">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-medium text-slate-400">
-                        {member.user.first_name?.[0]}{member.user.last_name?.[0]}
-                      </div>
+                      <UserAvatar
+                        userId={member.user.id}
+                        firstName={member.user.first_name}
+                        lastName={member.user.last_name}
+                        email={member.user.email}
+                        avatarStyle={member.user.avatar_style}
+                        size={32}
+                      />
                       <div className="ml-3">
                         <p className="text-sm font-medium text-slate-200">
                           {member.user.first_name} {member.user.last_name}

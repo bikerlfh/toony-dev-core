@@ -12,6 +12,7 @@ import { listImportJobs } from "@/lib/api/imports";
 import { listToonyAgentsByOrganization, listToonyAgents, updateToonyAgent, getToonyAgent } from "@/lib/api/toony-agents";
 import { Select } from "@/components/ui/select";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type {
   OrganizationDetail,
   Member,
@@ -457,9 +458,14 @@ function MembersTab({ orgId }: { orgId: string }) {
             className="flex items-center justify-between rounded-lg border border-slate-800/60 bg-slate-900 px-4 py-3"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-slate-300">
-                {member.user.first_name?.[0]?.toUpperCase() || member.user.email[0].toUpperCase()}
-              </div>
+              <UserAvatar
+                userId={member.user.id}
+                firstName={member.user.first_name}
+                lastName={member.user.last_name}
+                email={member.user.email}
+                avatarStyle={member.user.avatar_style}
+                size={32}
+              />
               <div>
                 <p className="text-sm font-medium text-slate-200">
                   {member.user.first_name} {member.user.last_name}

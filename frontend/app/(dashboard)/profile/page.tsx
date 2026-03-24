@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import { useAuth } from "@/contexts/auth-context";
 import { updateProfile, changePassword, listAPIKeys, generateAPIKey, revokeAPIKey } from "@/lib/api/auth";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { AvatarStyleModal } from "@/components/ui/avatar-style-picker";
 import type { UserAPIKey } from "@/types";
 
 export default function ProfilePage() {
@@ -12,9 +13,14 @@ export default function ProfilePage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [avatarStyle, setAvatarStyle] = useState("");
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Avatar modal
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -38,6 +44,7 @@ export default function ProfilePage() {
       setFirstName(user.first_name);
       setLastName(user.last_name);
       setEmail(user.email);
+      setAvatarStyle(user.avatar_style || "");
     }
   }, [user]);
 
@@ -54,6 +61,20 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchKeys();
   }, [fetchKeys]);
+
+  async function handleAvatarSave(style: string) {
+    setIsSavingAvatar(true);
+    try {
+      await updateProfile({ avatar_style: style });
+      await refreshUser();
+      setAvatarStyle(style);
+      setAvatarModalOpen(false);
+    } catch {
+      // silently fail — avatar is non-critical
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  }
 
   async function handleProfileSubmit(e: FormEvent) {
     e.preventDefault();
@@ -168,48 +189,64 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const inputClassName =
-    "mt-1.5 block w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
+  const inputClass =
+    "mt-1.5 block w-full rounded-lg border border-slate-700/80 bg-slate-950/80 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors";
 
   const alertSuccess =
-    "mb-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-400";
+    "rounded-lg border border-emerald-500/20 bg-emerald-500/8 px-3 py-2.5 text-sm text-emerald-400";
   const alertError =
-    "mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-sm text-red-400";
+    "rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2.5 text-sm text-red-400";
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      {/* User Identity */}
-      <div className="flex items-center gap-5 pb-2">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xl font-medium text-slate-300">
-          {user.avatar ? (
-            <Image src={user.avatar} alt="" width={64} height={64} unoptimized className="h-full w-full rounded-full object-cover" />
-          ) : (
-            (user.first_name?.[0] || user.email[0]).toUpperCase()
-          )}
-        </div>
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight text-white">
-            {user.first_name} {user.last_name}
-          </h1>
-          <div className="mt-0.5 flex items-center gap-3">
-            <span className="font-mono text-sm text-slate-500">@{user.username}</span>
-            <span className="text-slate-800">&middot;</span>
-            <span className="text-xs text-slate-600">
+    <div className="mx-auto max-w-2xl space-y-6 pb-12">
+
+      {/* ── Profile ──────────────────────────────────── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
+        {/* Identity header */}
+        <div className="flex items-center gap-5">
+          <button
+            type="button"
+            onClick={() => setAvatarModalOpen(true)}
+            className="group relative shrink-0"
+          >
+            <UserAvatar
+              userId={user.id}
+              firstName={user.first_name}
+              lastName={user.last_name}
+              email={user.email}
+              avatarStyle={avatarStyle}
+              size={80}
+            />
+            {/* Hover overlay */}
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 transition-colors group-hover:bg-black/40">
+              <svg
+                className="h-5 w-5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+              </svg>
+            </div>
+          </button>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight text-white">
+              {user.first_name} {user.last_name}
+            </h1>
+            <p className="mt-0.5 font-mono text-sm text-slate-500">@{user.username}</p>
+            <p className="mt-1 text-xs text-slate-600">
               Member since {formatDate(user.created_at)}
-            </span>
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Personal Information */}
-      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
-        <h2 className="text-[15px] font-semibold leading-tight text-white">Personal Information</h2>
-        <p className="mt-1 text-sm text-slate-500">Update your name and email address.</p>
+        {/* Alerts */}
+        {profileSuccess && <div className={`mt-5 ${alertSuccess}`}>{profileSuccess}</div>}
+        {profileError && <div className={`mt-5 ${alertError}`}>{profileError}</div>}
 
-        {profileSuccess && <div className={`mt-4 ${alertSuccess}`}>{profileSuccess}</div>}
-        {profileError && <div className={`mt-4 ${alertError}`}>{profileError}</div>}
-
-        <form onSubmit={handleProfileSubmit} className="mt-5 space-y-4">
+        {/* Fields */}
+        <form onSubmit={handleProfileSubmit} className="mt-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-slate-400">
@@ -221,7 +258,7 @@ export default function ProfilePage() {
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className={inputClassName}
+                className={inputClass}
               />
             </div>
             <div>
@@ -234,7 +271,7 @@ export default function ProfilePage() {
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className={inputClassName}
+                className={inputClass}
               />
             </div>
           </div>
@@ -248,11 +285,11 @@ export default function ProfilePage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={inputClassName}
+              className={inputClass}
             />
           </div>
 
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-end">
             <button
               type="submit"
               disabled={isSavingProfile}
@@ -264,8 +301,8 @@ export default function ProfilePage() {
         </form>
       </div>
 
-      {/* Security */}
-      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+      {/* ── Security ─────────────────────────────────── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
         <h2 className="text-[15px] font-semibold leading-tight text-white">Security</h2>
         <p className="mt-1 text-sm text-slate-500">Change your account password.</p>
 
@@ -283,7 +320,7 @@ export default function ProfilePage() {
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className={inputClassName}
+              className={inputClass}
             />
           </div>
 
@@ -298,7 +335,7 @@ export default function ProfilePage() {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className={inputClassName}
+                className={inputClass}
               />
             </div>
             <div>
@@ -311,12 +348,12 @@ export default function ProfilePage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={inputClassName}
+                className={inputClass}
               />
             </div>
           </div>
 
-          <div className="flex justify-end pt-1">
+          <div className="flex justify-end">
             <button
               type="submit"
               disabled={isSavingPassword}
@@ -328,8 +365,8 @@ export default function ProfilePage() {
         </form>
       </div>
 
-      {/* API Keys */}
-      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-5">
+      {/* ── API Keys ─────────────────────────────────── */}
+      <div className="rounded-xl border border-slate-800/60 bg-slate-900 p-6">
         <h2 className="text-[15px] font-semibold leading-tight text-white">API Keys</h2>
         <p className="mt-1 text-sm text-slate-500">
           Generate keys to authenticate with the Toony MCP server or external integrations.
@@ -338,12 +375,12 @@ export default function ProfilePage() {
         {keyError && <div className={`mt-4 ${alertError}`}>{keyError}</div>}
 
         {newRawKey && (
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/8 p-3">
             <p className="mb-2 text-xs font-medium text-amber-400">
               Copy this key now. You will not be able to see it again.
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 overflow-x-auto rounded bg-slate-950 px-2 py-1.5 font-mono text-xs text-slate-200">
+              <code className="flex-1 overflow-x-auto rounded-md bg-slate-950 px-2 py-1.5 font-mono text-xs text-slate-200">
                 {newRawKey}
               </code>
               <button
@@ -367,7 +404,7 @@ export default function ProfilePage() {
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
               placeholder="mcp-server"
-              className={inputClassName}
+              className={inputClass}
             />
           </div>
           <button
@@ -380,24 +417,24 @@ export default function ProfilePage() {
         </form>
 
         {isLoadingKeys ? (
-          <div className="mt-5 flex gap-1">
+          <div className="mt-6 flex gap-1">
             {[0, 1, 2].map((i) => (
               <div key={i} className="h-1 w-6 animate-pulse rounded-full bg-slate-700" style={{ animationDelay: `${i * 150}ms` }} />
             ))}
           </div>
         ) : apiKeys.length === 0 ? (
-          <p className="mt-5 text-sm text-slate-500">No API keys generated yet.</p>
+          <p className="mt-6 text-sm text-slate-500">No API keys generated yet.</p>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-xl border border-slate-800/60">
+          <div className="mt-6 overflow-hidden rounded-lg border border-slate-800/60">
             <table className="min-w-full divide-y divide-slate-800/60">
               <thead>
-                <tr className="bg-slate-950/50">
-                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Name</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Prefix</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Status</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Last used</th>
-                  <th className="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Created</th>
-                  <th className="px-3 py-2 text-right text-[10px] font-medium uppercase tracking-wider text-slate-600" />
+                <tr className="bg-slate-950/40">
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Name</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Prefix</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Status</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Last used</th>
+                  <th className="px-3 py-2.5 text-left text-[10px] font-medium uppercase tracking-wider text-slate-600">Created</th>
+                  <th className="px-3 py-2.5" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40">
@@ -445,6 +482,19 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Avatar style modal */}
+      {avatarModalOpen && (
+        <AvatarStyleModal
+          userId={user.id}
+          firstName={user.first_name}
+          email={user.email}
+          currentStyle={avatarStyle}
+          isSaving={isSavingAvatar}
+          onSave={handleAvatarSave}
+          onClose={() => setAvatarModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

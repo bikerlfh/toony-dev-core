@@ -11,6 +11,7 @@ class UpdateProfileSerializer(serializers.Serializer):
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
     email = serializers.EmailField(required=False)
+    avatar_style = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
 
 class ChangePasswordSerializer(serializers.Serializer):

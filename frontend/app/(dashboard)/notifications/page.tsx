@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useNotifications } from "@/contexts/notification-context";
 import * as notificationsApi from "@/lib/api/notifications";
 import { timeAgo } from "@/lib/time";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { NotificationItem } from "@/types";
 
 function getNotificationUrl(notification: NotificationItem): string {
@@ -278,11 +279,20 @@ export default function NotificationsPage() {
                   </label>
 
                   {/* Event icon */}
-                  <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-medium ${visual.color}`}>
-                    {n.actor
-                      ? n.actor.first_name?.[0]?.toUpperCase() || visual.icon
-                      : visual.icon}
-                  </div>
+                  {n.actor ? (
+                    <UserAvatar
+                      userId={n.actor.id}
+                      firstName={n.actor.first_name}
+                      lastName={n.actor.last_name}
+                      email={n.actor.email}
+                      avatarStyle={n.actor.avatar_style}
+                      size={28}
+                    />
+                  ) : (
+                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-medium ${visual.color}`}>
+                      {visual.icon}
+                    </div>
+                  )}
 
                   {/* Content — clickable */}
                   <button

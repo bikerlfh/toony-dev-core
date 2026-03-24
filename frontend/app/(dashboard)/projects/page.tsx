@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { listProjects } from "@/lib/api/projects";
 import { listOrganizations } from "@/lib/api/organizations";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type {
   ProjectList,
   ProjectStatus,
@@ -479,10 +480,14 @@ export default function ProjectsPage() {
                   <div className="flex items-center gap-3 text-xs">
                     {project.lead ? (
                       <div className="flex items-center gap-1.5">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400">
-                          {project.lead.first_name?.[0]?.toUpperCase() ||
-                            project.lead.email[0].toUpperCase()}
-                        </div>
+                        <UserAvatar
+                          userId={project.lead.id}
+                          firstName={project.lead.first_name}
+                          lastName={project.lead.last_name}
+                          email={project.lead.email}
+                          avatarStyle={project.lead.avatar_style}
+                          size={20}
+                        />
                         <span className="hidden text-slate-500 sm:inline">
                           {project.lead.first_name}
                         </span>

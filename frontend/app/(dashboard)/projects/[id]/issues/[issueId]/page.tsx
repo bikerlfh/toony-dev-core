@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   getIssue,
   updateIssue,
@@ -1169,10 +1170,14 @@ function CommentsSection({
             <div key={c.id} className="rounded-xl border border-slate-800/60 bg-slate-900 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400">
-                    {c.author.first_name?.[0]}
-                    {c.author.last_name?.[0]}
-                  </div>
+                  <UserAvatar
+                    userId={c.author.id}
+                    firstName={c.author.first_name}
+                    lastName={c.author.last_name}
+                    email={c.author.email}
+                    avatarStyle={c.author.avatar_style}
+                    size={24}
+                  />
                   <span className="text-sm font-medium text-slate-200">
                     {c.author.first_name} {c.author.last_name}
                   </span>
@@ -1300,10 +1305,14 @@ function ActivitySection({
     <div className="space-y-3">
       {activities.map((a) => (
         <div key={a.id} className="flex gap-3">
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-800 text-[10px] font-medium text-slate-400">
-            {a.user.first_name?.[0]}
-            {a.user.last_name?.[0]}
-          </div>
+          <UserAvatar
+            userId={a.user.id}
+            firstName={a.user.first_name}
+            lastName={a.user.last_name}
+            email={a.user.email}
+            avatarStyle={a.user.avatar_style}
+            size={24}
+          />
           <div className="text-sm">
             <span className="font-medium text-slate-200">
               {a.user.first_name} {a.user.last_name}

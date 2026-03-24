@@ -4,7 +4,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
-  avatar: string;
+  avatar_style: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +29,7 @@ export interface UpdateProfilePayload {
   first_name?: string;
   last_name?: string;
   email?: string;
+  avatar_style?: string;
 }
 
 export interface ChangePasswordPayload {

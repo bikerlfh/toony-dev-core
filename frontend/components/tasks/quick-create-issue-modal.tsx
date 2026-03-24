@@ -14,6 +14,7 @@ import { listProjectMembers } from "@/lib/api/projects";
 import { listMilestones } from "@/lib/api/milestones";
 import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
+import { useAuth } from "@/contexts/auth-context";
 import { PillDropdown } from "./pill-dropdown";
 
 interface QuickCreateIssueModalProps {
@@ -35,6 +36,8 @@ export function QuickCreateIssueModal({
   onClose,
   onCreated,
 }: QuickCreateIssueModalProps) {
+  const { user } = useAuth();
+
   // --- Form state ---
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -123,7 +126,7 @@ export function QuickCreateIssueModal({
         description: description.trim() || undefined,
         status: "BACKLOG",
         priority: (priority as IssuePriority) || undefined,
-        assignee_id: assigneeId || null,
+        assignee_id: assigneeId || user?.id || null,
         milestone_id: milestoneId || null,
         cycle_id: cycleId || null,
         label_ids: labelIds.length > 0 ? labelIds : undefined,
