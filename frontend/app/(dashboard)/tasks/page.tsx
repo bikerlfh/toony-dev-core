@@ -14,7 +14,18 @@ interface Filters {
   project_id?: string;
   priority?: IssuePriority;
   assignee_id?: string;
+  updated_after?: string;
 }
+
+const TIME_RANGE_OPTIONS = [
+  { value: "", label: "All Time" },
+  { value: "1", label: "Últimas 24h" },
+  { value: "3", label: "Últimos 3 días" },
+  { value: "7", label: "Última semana" },
+  { value: "14", label: "Últimas 2 semanas" },
+  { value: "30", label: "Último mes" },
+  { value: "90", label: "Últimos 3 meses" },
+];
 
 export default function TasksPage() {
   const [issues, setIssues] = useState<CrossProjectIssueList[]>([]);
@@ -120,6 +131,29 @@ export default function TasksPage() {
             }))
           }
           placeholder="All Priorities"
+        />
+
+        {/* Time range filter */}
+        <Select
+          options={TIME_RANGE_OPTIONS}
+          value={
+            TIME_RANGE_OPTIONS.find((o) => {
+              if (!filters.updated_after) return o.value === "";
+              const days = Math.round(
+                (Date.now() - new Date(filters.updated_after).getTime()) / 86400000
+              );
+              return o.value === String(days);
+            })?.value || ""
+          }
+          onChange={(v) =>
+            setFilters((f) => ({
+              ...f,
+              updated_after: v
+                ? new Date(Date.now() - Number(v) * 86400000).toISOString()
+                : undefined,
+            }))
+          }
+          placeholder="All Time"
         />
 
         <button

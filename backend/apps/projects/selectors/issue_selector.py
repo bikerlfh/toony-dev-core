@@ -157,6 +157,8 @@ def list_user_issues(user, *, filters=None, search=None):
             qs = qs.filter(assignee_id=filters["assignee_id"])
         if "project_id" in filters:
             qs = qs.filter(project_id=filters["project_id"])
+        if "updated_after" in filters:
+            qs = qs.filter(updated_at__gte=filters["updated_after"])
 
     return qs.order_by("sort_order", "-created_at")
 

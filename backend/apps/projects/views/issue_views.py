@@ -300,7 +300,7 @@ class UserIssueListView(PaginatedViewMixin, APIView):
     def get(self, request):
         search = request.query_params.get("q")
         filters = {}
-        for key in ("status", "priority", "assignee_id", "project_id"):
+        for key in ("status", "priority", "assignee_id", "project_id", "updated_after"):
             val = request.query_params.get(key)
             if val:
                 filters[key] = val

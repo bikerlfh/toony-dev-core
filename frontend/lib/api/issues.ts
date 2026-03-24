@@ -148,6 +148,7 @@ export async function listAllIssues(
     priority?: IssuePriority;
     assignee_id?: string;
     project_id?: string;
+    updated_after?: string;
   },
   cursor?: string
 ): Promise<PaginatedResponse<CrossProjectIssueList>> {
@@ -157,6 +158,7 @@ export async function listAllIssues(
   if (filters?.priority) params.append("priority", filters.priority);
   if (filters?.assignee_id) params.append("assignee_id", filters.assignee_id);
   if (filters?.project_id) params.append("project_id", filters.project_id);
+  if (filters?.updated_after) params.append("updated_after", filters.updated_after);
   const qs = params.toString();
   const { data } = await api.get<PaginatedResponse<CrossProjectIssueList>>(
     `/issues/${qs ? `?${qs}` : ""}`
