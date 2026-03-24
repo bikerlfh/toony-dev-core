@@ -33,6 +33,18 @@ toony logs          # Tail all logs (or: toony logs backend)
 toony status        # Show service status
 ```
 
+### Agent Runner
+
+Configure and run a [Toony Agent Runner](toony_agent_runner/) to connect Claude Code agents to your Toony instance:
+
+```bash
+toony runner config     # Interactive wizard: name, API key, workspace root, permission mode
+toony runner start      # Start a runner (lists available configs if multiple)
+toony runner start bot  # Start a specific runner by name
+```
+
+Runner configs are stored in `~/.toony/runners/` and survive `toony update`.
+
 ### Backup & Restore
 
 ```bash
