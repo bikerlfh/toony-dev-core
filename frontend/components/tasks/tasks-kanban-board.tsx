@@ -22,7 +22,6 @@ const COLUMNS: { status: IssueStatus; label: string }[] = [
   { status: "BACKLOG", label: "Backlog" },
   { status: "TODO", label: "Todo" },
   { status: "IN_PROGRESS", label: "In Progress" },
-  { status: "IN_REVIEW", label: "In Review" },
   { status: "DONE", label: "Done" },
   { status: "CANCELED", label: "Canceled" },
 ];
@@ -78,7 +77,7 @@ export function TasksKanbanBoard({ issues, onIssueClick, onStatusChange }: Tasks
 
   const isDragging = draggingIssueId !== null;
 
-  const ALWAYS_VISIBLE: Set<IssueStatus> = new Set(["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]);
+  const ALWAYS_VISIBLE: Set<IssueStatus> = new Set(["BACKLOG", "TODO", "IN_PROGRESS", "DONE"]);
   const visibleColumns = COLUMNS.filter((col) => ALWAYS_VISIBLE.has(col.status) || issues.some((i) => i.status === col.status));
 
   return (
