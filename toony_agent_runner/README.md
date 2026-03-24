@@ -1,6 +1,6 @@
 # toony_agent_runner
 
-Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them via the Claude Agent SDK, streams events in real-time, handles interactive approval gates, and supports concurrent task execution.
+Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them by spawning the Claude CLI as a subprocess, streams events in real-time, handles interactive question/answer flows, and supports concurrent task execution.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ This installs the `toony-agent-runner` CLI command.
 
 ## Claude Authentication
 
-The runner uses the Claude Agent SDK, which needs valid credentials to communicate with the Claude API. There are two options:
+The runner spawns the Claude CLI (`claude -p --output-format stream-json`) as a subprocess, which needs valid credentials. There are two options:
 
 ### Option A: MAX Plan (OAuth token) — recommended for personal use
 
@@ -50,7 +50,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 toony-agent-runner --config config.yml
 ```
 
-The SDK will pick it up automatically — no config file changes needed.
+The CLI will pick it up automatically — no config file changes needed.
 
 ### Verifying authentication
 
@@ -128,8 +128,9 @@ If this works, the runner will be able to authenticate.
 | `claude.approval_timeout` | `600` | Max seconds to wait for user approval response |
 | `claude.max_concurrent_tasks` | `1` | Max Claude tasks running simultaneously. Set higher for parallel execution |
 | `claude.oauth_token` | `""` | OAuth token for MAX plan auth (or set `CLAUDE_CODE_OAUTH_TOKEN` env var) |
-| `claude.permission_mode` | `acceptEdits` | SDK permission mode |
+| `claude.permission_mode` | `acceptEdits` | CLI permission mode (`acceptEdits`, `bypassPermissions`) |
 | `claude.allowed_tools` | (all) | List of tools Claude can use |
+| `claude.disallowed_tools` | `[]` | List of tools Claude cannot use (e.g., `Bash(git:*)`) |
 | `reconnect.max_retries` | `-1` | Max reconnection attempts. `-1` = unlimited |
 | `reconnect.backoff_base` | `1` | Initial backoff delay in seconds |
 | `reconnect.backoff_max` | `30` | Maximum backoff delay in seconds |
@@ -150,11 +151,14 @@ The runner is a single-threaded asyncio daemon with these components:
 
 ```
 toony_agent_runner/
-├── main.py            # Entry point, lifecycle, task execution via Claude Agent SDK
+├── main.py            # Entry point, lifecycle, message dispatch, task orchestration
+├── cli_executor.py    # Build CLI commands, spawn subprocess, parse JSON stream events
+├── task_executor.py   # Task execution, question detection, event streaming to backend
 ├── connection.py      # WebSocket client with reconnection + message buffering
-├── stream_parser.py   # Classify SDK StreamEvent objects, extract event data
+├── config.py          # Configuration loading/saving with dataclasses
 ├── protocol.py        # Message type definitions + serialization
-└── workspace.py       # Workspace provisioning from config.sync payloads
+├── workspace.py       # Workspace provisioning from config.sync payloads
+└── commands/          # Command registry: filesystem, download, git, script handlers
 ```
 
 ### Lifecycle
@@ -172,17 +176,17 @@ START
   │    │
   │    ├─ On "task.assign" (if capacity available):
   │    │    ├─ Send "task.accepted"
-  │    │    ├─ Create ClaudeSDKClient with PreToolUse hook
+  │    │    ├─ Spawn `claude -p --output-format stream-json` subprocess
   │    │    │
-  │    │    ├─ STREAM LOOP (receive SDK events):
-  │    │    │    ├─ StreamEvent → classify, extract data, send "task.event"
-  │    │    │    └─ ResultMessage → send "task.completed" or "task.failed"
+  │    │    ├─ STREAM LOOP (parse JSON lines from stdout):
+  │    │    │    ├─ Event → classify, extract data, send "task.event"
+  │    │    │    └─ Result → send "task.completed" or "task.failed"
   │    │    │
-  │    │    └─ If AskUserQuestion tool called (via PreToolUse hook):
-  │    │         ├─ Send "approval.needed" to backend
-  │    │         ├─ Wait for "approval.response" from user (routed by task_id)
-  │    │         └─ Return deny with user's answer as permissionDecisionReason
+  │    │    └─ If AskUserQuestion tool detected in assistant event:
+  │    │         ├─ Send "question.asked" to backend
+  │    │         └─ CLI finishes (task stays WAITING_FOR_ANSWER)
   │    │
+  │    ├─ On "question.answered": resume via `claude -p --resume <session_id>`
   │    ├─ On "task.cancel": set cancel event for specific task
   │    ├─ On "command.execute":
   │    │    ├─ Look up command_key in COMMAND_REGISTRY
@@ -197,9 +201,9 @@ START
 
 | Scenario | Behavior |
 |----------|----------|
-| WebSocket disconnects during task | SDK keeps executing, runner buffers events, reconnects, flushes buffer |
-| SDK error | Runner sends `task.failed` with error message, returns to idle |
-| Runner process killed | SDK subprocesses die. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
+| WebSocket disconnects during task | CLI subprocess keeps executing, runner buffers events, reconnects, flushes buffer |
+| CLI error | Runner sends `task.failed` with error message, returns to idle |
+| Runner process killed | CLI subprocesses die. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
 | Backend unreachable at start | Retries connection with exponential backoff until successful |
 | Task exceeds timeout | Runner cancels Claude and sends `task.failed` |
 
@@ -249,24 +253,24 @@ Response (runner → backend):
 
 When the WebSocket connection drops mid-task, the runner:
 
-1. SDK continues executing (process stays alive)
+1. CLI subprocess continues executing (process stays alive)
 2. Buffers all outgoing messages (task events, status updates) in a deque
 3. Attempts reconnection with exponential backoff
 4. On reconnect: re-registers, then flushes all buffered messages in order
 
 This ensures no events are lost during transient network issues.
 
-## Approval Gates
+## Question / Answer Flow
 
-A `PreToolUse` hook with `matcher="AskUserQuestion"` intercepts every `AskUserQuestion` call — regardless of permission mode (unlike `can_use_tool`, which is skipped for auto-approved tools under `acceptEdits`):
+When Claude calls `AskUserQuestion` during a task, the runner detects it in the streamed assistant events and relays the question to the user via the backend:
 
-1. Runner sends `approval.needed` to the backend with the question and options
-2. Backend forwards this to the frontend WebSocket
-3. The web UI displays an approval card with Approve/Reject buttons (and a text input)
-4. User responds → backend forwards `approval.response` to the runner
-5. Hook always returns `permissionDecision: "deny"` with the user's answer as `permissionDecisionReason`
-
-The hook always denies because there is no terminal for the CLI to render the question. Claude receives the user's answer as the denial reason and uses it to continue normally.
+1. CLI streams an assistant event containing an `AskUserQuestion` tool_use block
+2. Runner extracts the question text, options, and metadata
+3. Runner sends `question.asked` to the backend (with question type: `free_text` or `options`)
+4. CLI finishes — the task stays in `WAITING_FOR_ANSWER` state on the backend
+5. User answers via the web UI → backend sends `question.answered` to the runner
+6. Runner resumes the conversation via `claude -p --resume <session_id>` with the user's answer
+7. If Claude asks another question, the cycle repeats from step 1
 
 ## Concurrent Task Execution
 
@@ -280,7 +284,7 @@ claude:
 How it works:
 
 - Each task gets its own `asyncio.Task` and cancellation event, keyed by `task_id`
-- Approval gates are routed per-task — an approval on one task doesn't affect others
+- Questions are routed per-task — a question on one task doesn't affect others
 - When at capacity, new `task.assign` / `task.reply` messages are ignored (task stays QUEUED on the backend)
 - `task.cancel` targets only the specific task; other tasks continue unaffected
 - On shutdown (SIGINT/SIGTERM), all active tasks receive cancel signals and are given 10s to finish gracefully before being force-cancelled
@@ -364,6 +368,5 @@ workspace_root: "~/work/runner-b"
 |---------|---------|---------|
 | `websockets` | >= 12.0 | Async WebSocket client |
 | `pyyaml` | >= 6.0 | YAML config parsing |
-| `claude-agent-sdk` | >= 0.1.40 | Claude Agent SDK for task execution |
 
-All other functionality uses Python stdlib (`asyncio`, `json`, `logging`, `dataclasses`, `signal`).
+Claude task execution uses the `claude` CLI directly (subprocess), not a Python SDK. All other functionality uses Python stdlib (`asyncio`, `json`, `logging`, `dataclasses`, `signal`).

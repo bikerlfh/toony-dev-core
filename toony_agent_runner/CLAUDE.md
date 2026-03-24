@@ -42,9 +42,17 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, message di
   |
   |-- connection.py --- BackendConnection: WebSocket client, reconnection w/ exponential backoff, message buffering
   |
+  +-- config.py --- Configuration loading/saving with dataclasses (RunnerConfig, ClaudeConfig, ReconnectConfig)
+  |
   +-- protocol.py --- Dataclass message types with to_json() serialization
-  |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, QuestionAsked, TaskCompleted, TaskFailed
-  |                    Incoming: TaskAssign, QuestionAnswered, TaskCancel, TaskReply, HeartbeatAck
+  |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, QuestionAsked,
+  |                              TaskCompleted, TaskFailed, CommandResult, ConfigSyncAck,
+  |                              RepoCloneResult, ConfigUpdateAck
+  |                    Incoming: TaskAssign, QuestionAnswered, TaskCancel, TaskReply, HeartbeatAck,
+  |                              CommandExecute, ConfigSync, ConfigUpdate
+  |
+  +-- workspace.py --- Workspace provisioning: directory creation, repo cloning,
+  |                     workspace-registry.yaml generation from config.sync payloads
   |
   +-- commands/         --- Command execution: registry of filesystem/download/git/script handlers,
                              sandboxed to working_directory, dispatched independently of Claude tasks
@@ -80,10 +88,15 @@ All messages are JSON with a `type` field. Authentication is via `?key=tok_ta_..
 | Out | `task.event` | Stream Claude event (with sequence number) |
 | Out | `question.asked` | Relay AskUserQuestion to user |
 | Out | `task.completed` / `task.failed` | Final status |
+| Out | `command.result` | Runner reports command execution result |
+| Out | `config.sync.ack` | Acknowledge config.sync with org/project counts |
+| Out | `repo.clone.result` | Report repo clone status (success/error, duration) |
+| Out | `config.update.ack` | Acknowledge config update |
 | In | `task.assign` | Backend assigns task (task_id, title, prompt) |
 | In | `task.cancel` | Request task cancellation |
 | In | `task.reply` | Resume conversation with session_id |
 | In | `question.answered` | User's answer to a question |
 | In | `command.execute` | Backend sends a direct command (key + args) |
-| Out | `command.result` | Runner reports command execution result |
+| In | `config.sync` | Workspace configuration (organizations + projects) |
+| In | `config.update` | Update runner config (max_concurrent_tasks, max_task_timeout) |
 | In | `heartbeat.ack` | Backend acknowledges heartbeat |
