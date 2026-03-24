@@ -43,14 +43,15 @@ Run these two MCP calls:
 
 ### Step 3: Classify the task
 
-Analyze the issue `description` to determine the task type:
+Analyze the issue `description` to determine the task type. **Check in this order — first match wins:**
 
-- **Implementation** — the description asks to write code, implement a feature, fix a bug, refactor, add tests, etc. Anything that produces code changes.
-- **Non-implementation** — research, investigation, documentation, review, analysis, planning, or any task that does NOT produce code changes.
+1. **Skill delegation** — the description starts with or contains a skill invocation (e.g., `/brainstorming`, `/writing-plans`, `/interface-design`, or any `/skill-name` pattern). The skill name is the word immediately after the `/`. The rest of the description (after the skill invocation) is the **arguments** to pass to that skill.
+2. **Implementation** — the description asks to write code, implement a feature, fix a bug, refactor, add tests, etc. Anything that produces code changes.
+3. **Non-implementation** — research, investigation, documentation, review, analysis, planning, or any task that does NOT produce code changes.
 
 Store this classification for the remaining steps.
 
-Also, infer the **commit type** from the description for branch naming:
+For **implementation** tasks, also infer the **commit type** from the description for branch naming:
 - `feat` — new feature or functionality
 - `fix` — bug fix
 - `refactor` — code restructuring without behavior change
@@ -65,6 +66,17 @@ Also, infer the **commit type** from the description for branch naming:
 Default to `feat` if unclear.
 
 ### Step 4: Execute the instructions
+
+#### Step 4C: Skill delegation path
+
+If the task is **skill delegation**, follow these sub-steps:
+
+1. **Extract the skill name and arguments** from the description. For example, if the description is `/brainstorming add a time filter to the tasks page`, the skill is `brainstorming` and the arguments are `add a time filter to the tasks page`.
+2. **Invoke the skill** using the Skill tool with the extracted skill name and arguments. This delegates execution to the referenced skill, which will run its own interactive flow (e.g., `/brainstorming` will ask the user questions, propose approaches, etc.).
+3. **Wait for the skill to complete.** The delegated skill handles all user interaction. Do NOT intervene or short-circuit the skill's flow.
+4. **Collect any outputs** produced by the skill (designs, plans, recommendations, etc.) for use in Step 5 (artifact upload).
+
+**IMPORTANT:** The delegated skill owns the user interaction. Toony-simple is the orchestrator — it handles Steps 1-2 (fetch + status), delegates Step 4 to the skill, then resumes control for Steps 5-7 (artifacts, status, summary).
 
 #### Step 4A: Implementation path
 
@@ -156,6 +168,8 @@ Use `gh pr create` from the worktree directory:
 #### Step 4B: Non-implementation path
 
 If the task is **non-implementation**, execute the instructions directly in the current working directory using all tools available. No worktree, no commits, no PR.
+
+**IMPORTANT:** Before proceeding to Step 5, you MUST **present the results to the user**. Show them what you found, what you produced, or what your conclusions are. Wait for the user to acknowledge or provide feedback before moving on. Do NOT silently upload artifacts and close the issue.
 
 ### Step 5: Upload artifacts
 
