@@ -49,14 +49,15 @@ Before executing, scan the issue `description` for **skill commands** — tokens
 - The remaining text after the `/command` token is the **task context** — this becomes the skill's arguments.
 
 **Skill resolution:**
-1. List the available skills shown in the system (the same list you see for the `Skill` tool).
-2. Match the normalized command against the available skill names. Use fuzzy matching (e.g. Levenshtein distance ≤ 2) to handle typos.
+1. You already know the available skills — they are listed in the `system-reminder` messages under "The following skills are available for use with the Skill tool". **Do NOT scan directories or run ls/glob commands.** Use the skill names from that system list directly.
+2. Match the normalized command against those skill names. Use fuzzy matching (e.g. Levenshtein distance ≤ 2) to handle typos (e.g. `brianstorming` → `brainstorming`).
 3. If no matching skill is found, log a warning to the user and proceed to Step 3b (direct execution).
 
 **When a skill is found:**
 - **Invoke it using the `Skill` tool**: `Skill(skill: "<matched-skill-name>", args: "<task context>")`.
 - The skill's own process flow takes over execution. It replaces the default execution in Step 3b.
 - Once the skill finishes, continue to Step 4 to handle any artifacts produced.
+- **Do NOT re-invoke the same skill** if it has already been loaded in this conversation turn (check for `<command-name>` tags).
 
 ### Step 3b: Direct execution (no skill command)
 
