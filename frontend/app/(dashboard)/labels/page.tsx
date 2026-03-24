@@ -210,7 +210,12 @@ function LabelFormModal({
       const data = (err as { response?: { data?: Record<string, string[]> } })
         ?.response?.data;
       if (data) {
-        setError(Object.values(data).flat().join(" "));
+        const messages = Object.entries(data)
+          .map(([field, errors]) => {
+            const msgs = Array.isArray(errors) ? errors.join(" ") : errors;
+            return `${field}: ${msgs}`;
+          });
+        setError(messages.join(" | "));
       } else {
         setError(isEdit ? "Failed to update label." : "Failed to create label.");
       }

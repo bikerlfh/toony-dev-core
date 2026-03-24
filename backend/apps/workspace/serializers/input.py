@@ -8,13 +8,13 @@ from workspace.models import TeamRole
 class CreateLabelSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     color = serializers.CharField(max_length=7, default="#6b7280")
-    description = serializers.CharField(required=False, default="")
+    description = serializers.CharField(required=False, default="", allow_blank=True)
 
 
 class UpdateLabelSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     color = serializers.CharField(max_length=7, required=False)
-    description = serializers.CharField(required=False)
+    description = serializers.CharField(required=False, allow_blank=True)
 
 
 # --- Team ---
@@ -24,7 +24,7 @@ class CreateTeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=255)
     identifier = serializers.CharField(max_length=10)
-    description = serializers.CharField(required=False, default="")
+    description = serializers.CharField(required=False, default="", allow_blank=True)
 
 
 class UpdateTeamSerializer(serializers.Serializer):

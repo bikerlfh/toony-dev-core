@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.mixins import PaginatedViewMixin
-from workspace.permissions import IsWorkspaceAdmin, IsWorkspaceMember
 from workspace.selectors import get_label_by_id, list_labels
 from workspace.serializers.input import (
     CreateLabelSerializer,
@@ -16,10 +15,7 @@ from workspace.services import create_label, delete_label, update_label
 
 
 class LabelListCreateView(PaginatedViewMixin, APIView):
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsAuthenticated(), IsWorkspaceAdmin()]
-        return [IsAuthenticated(), IsWorkspaceMember()]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.query_params.get("q")
@@ -36,10 +32,7 @@ class LabelListCreateView(PaginatedViewMixin, APIView):
 
 
 class LabelDetailView(APIView):
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [IsAuthenticated(), IsWorkspaceMember()]
-        return [IsAuthenticated(), IsWorkspaceAdmin()]
+    permission_classes = [IsAuthenticated]
 
     def _get_label(self, label_id):
         label = get_label_by_id(label_id)
