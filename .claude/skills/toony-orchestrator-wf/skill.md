@@ -1,6 +1,7 @@
 ---
 name: toony-orchestrator-wf
 description: "Toony issue orchestrator with workflow support — works on a Toony issue by identifier, resolves its workflow DAG, and executes it. Falls back to description-based execution if no workflow exists."
+disable-model-invocation: true
 ---
 
 # Toony Orchestrator (v2 — With Workflow)

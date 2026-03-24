@@ -39,7 +39,28 @@ Run these two MCP calls:
    - project_id: the project UUID
    - status: `IN_PROGRESS`
 
-### Step 3: Execute the instructions
+### Step 3: Detect and invoke skill commands
+
+Before executing, scan the issue `description` for **skill commands** — tokens that match the pattern `/skill-name` (a `/` followed by a word, optionally with hyphens, e.g. `/brainstorming`, `/writing-plans`, `/test-driven-development`).
+
+**Detection rules:**
+- Extract the first `/command` token found in the description (case-insensitive).
+- Normalize the command: strip the leading `/`, lowercase, and treat minor typos by fuzzy-matching against available skill names (e.g. `/brianstorming` → `brainstorming`).
+- The remaining text after the `/command` token is the **task context** — this becomes the skill's arguments.
+
+**Skill resolution:**
+1. List the available skills shown in the system (the same list you see for the `Skill` tool).
+2. Match the normalized command against the available skill names. Use fuzzy matching (e.g. Levenshtein distance ≤ 2) to handle typos.
+3. If no matching skill is found, log a warning to the user and proceed to Step 3b (direct execution).
+
+**When a skill is found:**
+- **Invoke it using the `Skill` tool**: `Skill(skill: "<matched-skill-name>", args: "<task context>")`.
+- The skill's own process flow takes over execution. It replaces the default execution in Step 3b.
+- Once the skill finishes, continue to Step 4 to handle any artifacts produced.
+
+### Step 3b: Direct execution (no skill command)
+
+If no `/command` was detected in the description, execute the instructions directly:
 
 Read the issue `description` carefully. It contains the task instructions — these can be:
 
