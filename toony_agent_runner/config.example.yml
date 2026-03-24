@@ -11,12 +11,13 @@ workspace_root: "~/work"
 clone_protocol: "ssh"
 
 claude:
+  binary: "claude"
+  output_format: "stream-json"
   working_directory: "."
-  max_task_timeout: 3600
-  approval_timeout: 600
-  max_concurrent_tasks: 1    # max Claude tasks running simultaneously (default: 1)
-  # oauth_token: ""  # or set CLAUDE_CODE_OAUTH_TOKEN env var
-  permission_mode: "acceptEdits" # bypassPermissions
+  max_task_timeout: 7200
+  max_concurrent_tasks: 15 # max Claude tasks running simultaneously (default: 1)
+  permission_mode: "bypassPermissions" 
+  approval_timeout: 600 
   # allowed_tools:
   #   - Read
   #   - Edit

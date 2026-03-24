@@ -271,6 +271,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:$USER_PORT
 
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:$USER_PORT/api
+NEXT_PUBLIC_WS_URL=ws://localhost:$USER_PORT
 
 # Encryption
 FIELD_ENCRYPTION_KEY="$field_encryption_key"

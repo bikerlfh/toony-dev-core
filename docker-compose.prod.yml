@@ -51,6 +51,7 @@ services:
       dockerfile: ../docker/Dockerfile.frontend.prod
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost}
     restart: unless-stopped
     depends_on:
       - backend
