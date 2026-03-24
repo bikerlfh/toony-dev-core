@@ -37,7 +37,7 @@ export default function TeamsPage() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await deleteTeam(deleteTarget.slug);
+      await deleteTeam(deleteTarget.id);
       setDeleteTarget(null);
       fetchTeams();
     } finally {

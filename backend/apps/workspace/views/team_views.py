@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 
 from accounts.selectors import get_user_by_email
 from common.mixins import PaginatedViewMixin
-from workspace.permissions import IsWorkspaceAdmin, IsWorkspaceMember
 from workspace.selectors import (
     get_team_by_id,
     get_team_membership,
@@ -35,10 +34,7 @@ from workspace.services import (
 
 
 class TeamListCreateView(PaginatedViewMixin, APIView):
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsAuthenticated(), IsWorkspaceAdmin()]
-        return [IsAuthenticated(), IsWorkspaceMember()]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         search = request.query_params.get("q")
@@ -55,10 +51,7 @@ class TeamListCreateView(PaginatedViewMixin, APIView):
 
 
 class TeamDetailView(APIView):
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [IsAuthenticated(), IsWorkspaceMember()]
-        return [IsAuthenticated(), IsWorkspaceAdmin()]
+    permission_classes = [IsAuthenticated]
 
     def _get_team(self, team_id):
         team = get_team_by_id(team_id)
@@ -87,10 +80,7 @@ class TeamDetailView(APIView):
 
 
 class TeamMemberListCreateView(PaginatedViewMixin, APIView):
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsAuthenticated(), IsWorkspaceAdmin()]
-        return [IsAuthenticated(), IsWorkspaceMember()]
+    permission_classes = [IsAuthenticated]
 
     def _get_team(self, team_id):
         team = get_team_by_id(team_id)
@@ -122,7 +112,7 @@ class TeamMemberListCreateView(PaginatedViewMixin, APIView):
 
 
 class TeamMemberDetailView(APIView):
-    permission_classes = [IsAuthenticated, IsWorkspaceAdmin]
+    permission_classes = [IsAuthenticated]
 
     def _get_team_and_membership(self, team_id, user_id):
         from accounts.models import User
