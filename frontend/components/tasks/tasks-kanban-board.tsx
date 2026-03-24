@@ -23,6 +23,7 @@ const COLUMNS: { status: IssueStatus; label: string }[] = [
   { status: "BACKLOG", label: "Backlog" },
   { status: "TODO", label: "Todo" },
   { status: "IN_PROGRESS", label: "In Progress" },
+  { status: "IN_REVIEW", label: "In Review" },
   { status: "DONE", label: "Done" },
   { status: "CANCELED", label: "Canceled" },
 ];
