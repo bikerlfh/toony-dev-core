@@ -1,7 +1,6 @@
 ---
 name: toony-orchestrator
 description: "Toony issue orchestrator — works on a Toony issue by identifier. Fetches the issue, executes its instructions, manages artifacts and status transitions."
-disable-model-invocation: true
 ---
 
 # Toony Orchestrator (v1 — Simple)
