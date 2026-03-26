@@ -1,6 +1,6 @@
 # toony_agent_runner
 
-Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them by spawning the Claude CLI as a subprocess, streams events in real-time, handles interactive question/answer flows, and supports concurrent task execution.
+Python asyncio daemon that connects a ToonyAgent bot to the Toony Dev Core backend. It receives tasks via WebSocket, executes them using persistent Claude CLI sessions with bidirectional stream-json I/O, streams events in real-time, and supports concurrent task execution. Task replies reuse the same CLI process via stdin instead of spawning new processes, improving response time and prompt cache utilization.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ This installs the `toony-agent-runner` CLI command.
 
 ## Claude Authentication
 
-The runner spawns the Claude CLI (`claude -p --output-format stream-json`) as a subprocess, which needs valid credentials. There are two options:
+The runner spawns the Claude CLI (`claude -p --input-format stream-json --output-format stream-json`) as a persistent subprocess, which needs valid credentials. There are two options:
 
 ### Option A: MAX Plan (OAuth token) — recommended for personal use
 
@@ -135,6 +135,14 @@ If this works, the runner will be able to authenticate.
 | `reconnect.backoff_base` | `1` | Initial backoff delay in seconds |
 | `reconnect.backoff_max` | `30` | Maximum backoff delay in seconds |
 
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CLAUDE_CODE_OAUTH_TOKEN` | — | OAuth token for MAX plan auth (alternative to config file) |
+| `ANTHROPIC_API_KEY` | — | API key for direct Anthropic auth |
+| `TOONY_SESSION_IDLE_TIMEOUT` | `300` | Seconds before an idle persistent session is closed. After timeout, replies fall back to `--resume` |
+
 ## CLI Usage
 
 ```
@@ -151,9 +159,9 @@ The runner is a single-threaded asyncio daemon with these components:
 
 ```
 toony_agent_runner/
-├── main.py            # Entry point, lifecycle, message dispatch, task orchestration
-├── cli_executor.py    # Build CLI commands, spawn subprocess, parse JSON stream events
-├── task_executor.py   # Task execution, question detection, event streaming to backend
+├── main.py            # Entry point, lifecycle, message dispatch, session pool, idle cleanup
+├── cli_executor.py    # PersistentClaude (stream-json bidirectional I/O), legacy run_claude, event helpers
+├── task_executor.py   # Task execution via persistent sessions, --resume fallback, event streaming
 ├── connection.py      # WebSocket client with reconnection + message buffering
 ├── config.py          # Configuration loading/saving with dataclasses
 ├── protocol.py        # Message type definitions + serialization
@@ -172,21 +180,22 @@ START
   │
   ├─ IDLE LOOP
   │    ├─ Send heartbeat every 30s
+  │    ├─ Clean up idle persistent sessions every 60s
   │    ├─ Wait for messages from backend
   │    │
   │    ├─ On "task.assign" (if capacity available):
   │    │    ├─ Send "task.accepted"
-  │    │    ├─ Spawn `claude -p --output-format stream-json` subprocess
-  │    │    │
-  │    │    ├─ STREAM LOOP (parse JSON lines from stdout):
+  │    │    ├─ Create PersistentClaude (--input-format stream-json --output-format stream-json)
+  │    │    ├─ Send prompt via stdin → stream events from stdout
   │    │    │    ├─ Event → classify, extract data, send "task.event"
   │    │    │    └─ Result → send "task.completed" or "task.failed"
-  │    │    │
-  │    │    └─ If AskUserQuestion tool detected in assistant event:
-  │    │         ├─ Send "question.asked" to backend
-  │    │         └─ CLI finishes (task stays WAITING_FOR_ANSWER)
+  │    │    └─ Store session in session_pool (keyed by session_id)
   │    │
-  │    ├─ On "question.answered": resume via `claude -p --resume <session_id>`
+  │    ├─ On "task.reply" or "question.answered":
+  │    │    ├─ Look up session in session_pool
+  │    │    ├─ If found + alive → send message via stdin (same process, no restart)
+  │    │    └─ If not found or dead → fall back to `claude -p --resume <session_id>`
+  │    │
   │    ├─ On "task.cancel": set cancel event for specific task
   │    ├─ On "command.execute":
   │    │    ├─ Look up command_key in COMMAND_REGISTRY
@@ -194,7 +203,7 @@ START
   │    │    └─ Send "command.result" with success/error
   │    └─ On disconnect: reconnect with exponential backoff
   │
-  └─ On SIGINT/SIGTERM: set all cancel events, wait for tasks, close connection, exit
+  └─ On SIGINT/SIGTERM: close persistent sessions, cancel tasks, close connection, exit
 ```
 
 ### Resiliency
@@ -203,6 +212,8 @@ START
 |----------|----------|
 | WebSocket disconnects during task | CLI subprocess keeps executing, runner buffers events, reconnects, flushes buffer |
 | CLI error | Runner sends `task.failed` with error message, returns to idle |
+| Persistent session crashes | Removed from pool, next reply falls back to `--resume` automatically |
+| Session idle > timeout | Cleanup loop closes it, next reply falls back to `--resume` |
 | Runner process killed | CLI subprocesses die. Backend detects missing heartbeats (90s / 3 missed) and marks agent OFFLINE |
 | Backend unreachable at start | Retries connection with exponential backoff until successful |
 | Task exceeds timeout | Runner cancels Claude and sends `task.failed` |
@@ -260,17 +271,32 @@ When the WebSocket connection drops mid-task, the runner:
 
 This ensures no events are lost during transient network issues.
 
+## Persistent Sessions
+
+The runner keeps Claude CLI processes alive between turns using bidirectional stream-json I/O. Instead of spawning a new process with `--resume` for each reply, messages are sent via stdin to the same process.
+
+**Benefits:**
+- No process startup overhead per reply (skills, MCP servers, config loading — typically 5-20s saved)
+- Better prompt cache hit rates (no delay between turns, cache TTL is 5 min)
+- CLI-managed context compaction as conversations grow
+
+**Idle timeout:** Sessions auto-close after inactivity (default: 5 min). Configure via `TOONY_SESSION_IDLE_TIMEOUT` env var (seconds). After timeout, replies fall back to the legacy `--resume` approach (new process).
+
+**Fallback:** When no persistent session is available (expired, process crashed, first reply to an old task), the runner automatically falls back to `--resume` — no user intervention needed.
+
 ## Question / Answer Flow
 
-When Claude calls `AskUserQuestion` during a task, the runner detects it in the streamed assistant events and relays the question to the user via the backend:
+With persistent sessions, Claude asks questions as regular text responses (not via `AskUserQuestion` tool). The user replies via the web UI, and the reply is sent to the same process via stdin.
+
+The legacy `AskUserQuestion` flow is still supported as a fallback when using `--resume`:
 
 1. CLI streams an assistant event containing an `AskUserQuestion` tool_use block
 2. Runner extracts the question text, options, and metadata
 3. Runner sends `question.asked` to the backend (with question type: `free_text` or `options`)
-4. CLI finishes — the task stays in `WAITING_FOR_ANSWER` state on the backend
+4. Runner drains remaining events until result (tool denial + fallback text)
 5. User answers via the web UI → backend sends `question.answered` to the runner
-6. Runner resumes the conversation via `claude -p --resume <session_id>` with the user's answer
-7. If Claude asks another question, the cycle repeats from step 1
+6. Runner sends the answer to the persistent session (or falls back to `--resume`)
+7. If Claude asks another question, the cycle repeats
 
 ## Concurrent Task Execution
 

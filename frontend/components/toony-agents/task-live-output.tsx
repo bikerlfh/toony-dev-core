@@ -60,23 +60,44 @@ export function TaskLiveOutput({
             Waiting for events...
           </p>
         ) : (
-          events.map((event) => (
-            <TaskEventItem
-              key={event.id}
-              event={event}
-              onAnswer={
-                event.event_type === "QUESTION_ASKED"
-                  ? onAnswer
-                  : undefined
+          (() => {
+            const toolResultMap = new Map<string, Record<string, unknown>>();
+            const toolResultEventIds = new Set<string>();
+            for (const ev of events) {
+              if (ev.event_type === "TOOL_RESULT" && ev.data.tool_use_id) {
+                toolResultMap.set(String(ev.data.tool_use_id), ev.data);
+                toolResultEventIds.add(ev.id);
               }
-              isAnswered={
-                event.event_type === "QUESTION_ASKED"
-                  ? answeredSequences.has(event.sequence)
-                  : undefined
-              }
-              disabled={!agentConnected}
-            />
-          ))
+            }
+
+            return events
+              .filter((ev) => !toolResultEventIds.has(ev.id))
+              .map((event) => {
+                const toolResult =
+                  event.event_type === "TOOL_USE" && event.data.tool_use_id
+                    ? toolResultMap.get(String(event.data.tool_use_id))
+                    : undefined;
+
+                return (
+                  <TaskEventItem
+                    key={event.id}
+                    event={event}
+                    toolResult={toolResult}
+                    onAnswer={
+                      event.event_type === "QUESTION_ASKED"
+                        ? onAnswer
+                        : undefined
+                    }
+                    isAnswered={
+                      event.event_type === "QUESTION_ASKED"
+                        ? answeredSequences.has(event.sequence)
+                        : undefined
+                    }
+                    disabled={!agentConnected}
+                  />
+                );
+              });
+          })()
         )}
         <div ref={bottomRef} />
       </div>

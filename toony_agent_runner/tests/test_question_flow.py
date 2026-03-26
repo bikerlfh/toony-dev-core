@@ -16,6 +16,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from toony_agent_runner.task_executor import execute_task, execute_task_reply
+from toony_agent_runner.cli_executor import PersistentClaude
 from toony_agent_runner.config import ClaudeConfig, RunnerConfig
 
 
@@ -37,6 +38,33 @@ def _make_conn() -> AsyncMock:
     conn = AsyncMock()
     conn.send = AsyncMock()
     return conn
+
+
+class _MockPersistentClaude:
+    """Test double for PersistentClaude that yields predetermined events."""
+
+    def __init__(self, events: list[dict], session_id: str = "sess-123"):
+        self._events = events
+        self._session_id = session_id
+        self._alive = True
+
+    @property
+    def session_id(self) -> str | None:
+        return self._session_id
+
+    @property
+    def is_alive(self) -> bool:
+        return self._alive
+
+    async def start(self) -> None:
+        pass
+
+    async def close(self) -> None:
+        self._alive = False
+
+    async def send_message(self, content: str):
+        for event in self._events:
+            yield event
 
 
 def _sent_messages(conn: AsyncMock) -> list[dict]:
@@ -163,17 +191,14 @@ class TestExecuteTaskStopsAfterQuestion:
             RESULT_SUCCESS,      # should NOT trigger task.completed
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -194,17 +219,14 @@ class TestExecuteTaskStopsAfterQuestion:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -221,19 +243,17 @@ class TestExecuteTaskStopsAfterQuestion:
         events = [
             SYSTEM_INIT,
             ASK_USER_QUESTION_STRUCTURED,
+            RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -255,19 +275,17 @@ class TestExecuteTaskStopsAfterQuestion:
         events = [
             SYSTEM_INIT,
             ASK_USER_QUESTION_FREE_TEXT,
+            RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -289,17 +307,14 @@ class TestExecuteTaskStopsAfterQuestion:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -348,17 +363,14 @@ class TestExecuteTaskReplyStopsAfterQuestion:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "React", "sess-original",
@@ -384,17 +396,14 @@ class TestExecuteTaskReplyStopsAfterQuestion:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "React", "sess-original",
@@ -416,19 +425,17 @@ class TestExecuteTaskReplyStopsAfterQuestion:
         events = [
             SYSTEM_INIT,  # has session_id "sess-123"
             ASK_USER_QUESTION_STRUCTURED,
+            RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "React", "sess-original",
@@ -458,19 +465,17 @@ class TestExecuteTaskReplyStopsAfterQuestion:
                     }],
                 },
             },
+            RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events_no_session:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events_no_session, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "answer", "sess-original",
@@ -493,17 +498,14 @@ class TestExecuteTaskReplyStopsAfterQuestion:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "React", "sess-original",
@@ -536,17 +538,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -566,17 +565,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -601,17 +597,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -630,17 +623,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -657,17 +647,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_ERROR,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
@@ -688,17 +675,14 @@ class TestNormalFlowSendsTaskCompleted:
             RESULT_SUCCESS,
         ]
 
-        async def mock_run_claude(*args, **kwargs):
-            for event in events:
-                yield event
-
+        mock_pc = _MockPersistentClaude(events, session_id="sess-original")
         conn = _make_conn()
         cancel_event = asyncio.Event()
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task_reply(
                 "task-1", "Continue", "sess-original",
@@ -715,23 +699,22 @@ class TestNormalFlowSendsTaskCompleted:
     @pytest.mark.asyncio
     async def test_cancel_event_stops_execution(self):
         """Setting the cancel_event should abort processing and send task.failed."""
-        events_seen = []
+        events = [
+            SYSTEM_INIT,
+            TOOL_USE_READ,
+            TEXT_EVENT,
+            RESULT_SUCCESS,
+        ]
 
-        async def mock_run_claude(*args, **kwargs):
-            yield SYSTEM_INIT
-            yield TOOL_USE_READ
-            # Simulate: after first tool event, cancel is set
-            yield TEXT_EVENT
-            yield RESULT_SUCCESS
-
+        mock_pc = _MockPersistentClaude(events)
         conn = _make_conn()
         cancel_event = asyncio.Event()
         cancel_event.set()  # pre-set: cancellation is immediate
         config = _make_config()
 
         with patch(
-            "toony_agent_runner.task_executor.run_claude",
-            side_effect=mock_run_claude,
+            "toony_agent_runner.task_executor.PersistentClaude",
+            return_value=mock_pc,
         ):
             await execute_task("task-1", "test prompt", conn, config, cancel_event)
 
