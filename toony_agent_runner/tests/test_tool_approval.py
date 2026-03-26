@@ -67,3 +67,19 @@ class TestEvaluateToolRule:
     def test_unknown_tool_uses_default(self):
         rules = {"Read": "allow"}
         assert evaluate_tool_rule("mcp__toony__search", {}, rules, "ask") == "ask"
+
+
+import asyncio
+from toony_agent_runner.cli_executor import PersistentClaude
+
+
+class TestPersistentClaudeControlRequest:
+
+    def test_build_command_default_permission_mode(self):
+        """When permission_mode is 'default', control protocol is active."""
+        config = ClaudeConfig(working_directory="/tmp", permission_mode="default")
+        pc = PersistentClaude(config)
+        cmd = pc._build_command()
+        assert "--permission-mode" in cmd
+        idx = cmd.index("--permission-mode") + 1
+        assert cmd[idx] == "default"
