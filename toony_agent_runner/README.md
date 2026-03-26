@@ -127,6 +127,7 @@ If this works, the runner will be able to authenticate.
 | `claude.max_task_timeout` | `3600` | Max seconds per task before timeout |
 | `claude.approval_timeout` | `600` | Max seconds to wait for user approval response |
 | `claude.max_concurrent_tasks` | `1` | Max Claude tasks running simultaneously. Set higher for parallel execution |
+| `claude.session_idle_timeout` | `300` | Seconds before an idle persistent session is closed. After timeout, replies fall back to `--resume` |
 | `claude.oauth_token` | `""` | OAuth token for MAX plan auth (or set `CLAUDE_CODE_OAUTH_TOKEN` env var) |
 | `claude.permission_mode` | `acceptEdits` | CLI permission mode (`acceptEdits`, `bypassPermissions`) |
 | `claude.allowed_tools` | (all) | List of tools Claude can use |
@@ -141,7 +142,6 @@ If this works, the runner will be able to authenticate.
 |----------|---------|-------------|
 | `CLAUDE_CODE_OAUTH_TOKEN` | — | OAuth token for MAX plan auth (alternative to config file) |
 | `ANTHROPIC_API_KEY` | — | API key for direct Anthropic auth |
-| `TOONY_SESSION_IDLE_TIMEOUT` | `300` | Seconds before an idle persistent session is closed. After timeout, replies fall back to `--resume` |
 
 ## CLI Usage
 
@@ -280,7 +280,7 @@ The runner keeps Claude CLI processes alive between turns using bidirectional st
 - Better prompt cache hit rates (no delay between turns, cache TTL is 5 min)
 - CLI-managed context compaction as conversations grow
 
-**Idle timeout:** Sessions auto-close after inactivity (default: 5 min). Configure via `TOONY_SESSION_IDLE_TIMEOUT` env var (seconds). After timeout, replies fall back to the legacy `--resume` approach (new process).
+**Idle timeout:** Sessions auto-close after inactivity (default: 5 min). Configure via `claude.session_idle_timeout` in `config.yml` (seconds). After timeout, replies fall back to the legacy `--resume` approach (new process).
 
 **Fallback:** When no persistent session is available (expired, process crashed, first reply to an old task), the runner automatically falls back to `--resume` — no user intervention needed.
 

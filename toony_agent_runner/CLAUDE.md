@@ -66,7 +66,7 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, message di
 3. On task: create `PersistentClaude` process (`--input-format stream-json --output-format stream-json`) -> send prompt via stdin -> stream events from stdout -> send `task.event` messages
 4. On result event: send `task.completed` or `task.failed`; process stays alive in `session_pool`
 5. On `task.reply` or `question.answered`: look up session in `session_pool` -> send message via stdin to same process (no restart). Falls back to `--resume` if session expired or died
-6. Session idle timeout (default 5 min, override via `TOONY_SESSION_IDLE_TIMEOUT` env var): cleanup loop closes idle sessions
+6. Session idle timeout (default 5 min, configurable via `claude.session_idle_timeout` in config.yml): cleanup loop closes idle sessions
 7. On `command.execute`: look up `command_key` in `COMMAND_REGISTRY`, execute handler with args (sandboxed to `working_dir`), send `command.result` with success/error
 8. On SIGINT/SIGTERM: close all persistent sessions, terminate CLI processes, close connection, exit
 
@@ -74,7 +74,7 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, message di
 
 - **Persistent CLI sessions**: Uses `claude -p --input-format stream-json --output-format stream-json` to keep a single process alive across multiple turns. Messages are sent via stdin as NDJSON, responses read from stdout. This eliminates process startup overhead per reply and improves prompt cache hit rates. Falls back to legacy `--resume` (new process) when no persistent session is available.
 - **Direct CLI invocation**: Uses the CLI subprocess instead of the Claude Agent SDK. The CLI loads skills from `~/.claude/skills/` and `~/.agents/skills/`, which the SDK does not support.
-- **Session idle timeout**: Persistent sessions auto-close after inactivity (default 5 min). Configurable via `TOONY_SESSION_IDLE_TIMEOUT` env var (seconds). A background loop checks every 60s.
+- **Session idle timeout**: Persistent sessions auto-close after inactivity (default 5 min). Configurable via `claude.session_idle_timeout` in config.yml (seconds). A background loop checks every 60s.
 - **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The CLI continues executing during disconnection.
 - **Concurrent task execution**: Runner supports `max_concurrent_tasks` (default 1). Task state (`active_tasks`, `cancel_events`) is keyed by `task_id`. Tasks beyond capacity are ignored (stay QUEUED on backend).
 

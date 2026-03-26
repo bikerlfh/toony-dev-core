@@ -7,6 +7,7 @@ claude:
   working_directory: "."
   max_task_timeout: 7200
   max_concurrent_tasks: 15
+  session_idle_timeout: 300
   permission_mode: "bypassPermissions"
   approval_timeout: 600
 reconnect:

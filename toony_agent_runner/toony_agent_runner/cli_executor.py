@@ -379,10 +379,6 @@ class PersistentClaude:
         await pc.close()
     """
 
-    #: Default idle timeout in seconds.
-    #: Override with ``TOONY_SESSION_IDLE_TIMEOUT`` env var (seconds).
-    DEFAULT_IDLE_TIMEOUT = int(os.environ.get("TOONY_SESSION_IDLE_TIMEOUT", "300"))
-
     def __init__(
         self,
         config: ClaudeConfig,
@@ -400,7 +396,7 @@ class PersistentClaude:
         self._resume_session_id = resume_session_id
         self._alive = False
         self._idle_timeout = (
-            idle_timeout if idle_timeout is not None else self.DEFAULT_IDLE_TIMEOUT
+            idle_timeout if idle_timeout is not None else config.session_idle_timeout
         )
         self._last_activity: float = time.monotonic()
 
