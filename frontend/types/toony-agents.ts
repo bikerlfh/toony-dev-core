@@ -12,6 +12,7 @@ export type TaskEventType =
   | "LOG"
   | "TOOL_USE"
   | "TOOL_RESULT"
+  | "TOOL_APPROVAL"
   | "QUESTION_ASKED"
   | "QUESTION_ANSWERED"
   | "REPLY"
@@ -192,10 +193,21 @@ export interface ConfigUpdateStatusWsEvent {
   error?: string;
 }
 
+export interface ToolApprovalRequestWsEvent {
+  type: "tool.approval.request";
+  task_id: string;
+  request_id: string;
+  tool_name: string;
+  tool_input: Record<string, unknown>;
+  timeout: number;
+  sequence: number;
+}
+
 export type ToonyAgentWsEvent =
   | ToonyAgentStatusWsEvent
   | TaskStatusWsEvent
   | TaskEventWsEvent
   | QuestionAskedWsEvent
   | ConfigSyncStatusWsEvent
-  | ConfigUpdateStatusWsEvent;
+  | ConfigUpdateStatusWsEvent
+  | ToolApprovalRequestWsEvent;

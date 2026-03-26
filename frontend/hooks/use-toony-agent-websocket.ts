@@ -19,6 +19,7 @@ export function useToonyAgentWebSocket({
   readyState: WsReadyState;
   sendAnswer: (taskId: string, questionId: string, answer: string) => void;
   sendReply: (taskId: string, message: string) => void;
+  sendToolApproval: (taskId: string, requestId: string, decision: "allow" | "deny") => void;
   cancelTask: (taskId: string) => void;
   sendConfigSync: () => void;
   sendConfigUpdate: (config: { max_concurrent_tasks?: number; max_task_timeout?: number }) => void;
@@ -64,6 +65,18 @@ export function useToonyAgentWebSocket({
     [send],
   );
 
+  const sendToolApproval = useCallback(
+    (taskId: string, requestId: string, decision: "allow" | "deny") => {
+      send({
+        type: "tool.approval.respond",
+        task_id: taskId,
+        request_id: requestId,
+        decision,
+      });
+    },
+    [send],
+  );
+
   const cancelTask = useCallback(
     (taskId: string) => {
       send({ type: "task.cancel", task_id: taskId });
@@ -82,5 +95,5 @@ export function useToonyAgentWebSocket({
     [send],
   );
 
-  return { readyState, sendAnswer, sendReply, cancelTask, sendConfigSync, sendConfigUpdate };
+  return { readyState, sendAnswer, sendReply, sendToolApproval, cancelTask, sendConfigSync, sendConfigUpdate };
 }
