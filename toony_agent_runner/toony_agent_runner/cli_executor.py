@@ -172,18 +172,6 @@ def extract_text_from_assistant(event: dict[str, Any]) -> str | None:
 
 TOONY_MARKER_RE = re.compile(r"<!--TOONY:(.*?)-->", re.DOTALL)
 
-TOONY_SYSTEM_PROMPT = """\
-When you need to ask the user a question, include a TOONY marker in your response:
-<!--TOONY:{"action":"question","text":"your question","type":"free_text"}-->
-
-For multiple choice questions:
-<!--TOONY:{"action":"question","text":"your question","type":"options","options":[{"label":"Option A"},{"label":"Option B"}]}-->
-
-When you have fully completed the task, include:
-<!--TOONY:{"action":"finish","summary":"brief summary of what was done"}-->
-
-Do NOT include the finish marker if you need more information or the task is incomplete."""
-
 
 def extract_toony_marker(text: str) -> tuple[dict[str, Any] | None, str]:
     """Extract a ``<!--TOONY:{...}-->`` marker from text.
@@ -563,7 +551,5 @@ class PersistentClaude:
             cmd.extend(
                 ["--disallowed-tools", " ".join(self._config.disallowed_tools)],
             )
-
-        cmd.extend(["--append-system-prompt", TOONY_SYSTEM_PROMPT])
 
         return cmd
