@@ -4,10 +4,12 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AgentQuestionCard } from "@/components/toony-agents/agent-question-card";
+import { CodeBlock } from "@/components/toony-agents/code-block";
 import type { TaskEventItem as TaskEventItemType } from "@/types";
 
 interface TaskEventItemProps {
   event: TaskEventItemType;
+  toolResult?: Record<string, unknown>;
   onAnswer?: (questionId: string, answer: string) => void;
   onMessage?: (text: string) => void;
   isAnswered?: boolean;
@@ -16,6 +18,7 @@ interface TaskEventItemProps {
 
 export function TaskEventItem({
   event,
+  toolResult,
   onAnswer,
   isAnswered,
   disabled,
@@ -47,6 +50,11 @@ export function TaskEventItem({
     case "TOOL_USE": {
       const toolName = String(event.data.tool_name ?? "");
       const input = (event.data.input ?? {}) as Record<string, unknown>;
+      const resultContent = toolResult
+        ? String(toolResult.content ?? toolResult.result ?? toolResult.output ?? "")
+        : "";
+      const resultIsError = Boolean(toolResult?.is_error);
+
       const toolDetail =
         input.description ? String(input.description) :
         input.file_path ? String(input.file_path) :
@@ -54,75 +62,149 @@ export function TaskEventItem({
         input.command ? String(input.command) :
         input.query ? String(input.query) :
         input.url ? String(input.url) :
+        input.prompt ? String(input.prompt).slice(0, 80) :
+        input.skill ? String(input.skill) :
         "";
-      const hasExpandableDetail =
+
+      const isExpandable =
         (toolName === "Edit" && input.old_string && input.new_string) ||
         (toolName === "Write" && input.content) ||
-        (toolName === "Bash" && input.command);
+        (toolName === "Bash" && input.command) ||
+        (toolName === "Read" && input.file_path) ||
+        (toolName === "Grep" && input.pattern) ||
+        (toolName === "Glob" && input.pattern) ||
+        toolName === "WebFetch" || toolName === "WebSearch" ||
+        Boolean(resultContent);
+
       return (
         <div className="py-0.5">
           <span
-            className={`text-indigo-400 font-mono text-sm${hasExpandableDetail ? " cursor-pointer hover:text-indigo-300 transition-colors" : ""}`}
-            onClick={hasExpandableDetail ? () => setShowToolDetail((v) => !v) : undefined}
+            className={`text-indigo-400 font-mono text-sm${isExpandable ? " cursor-pointer hover:text-indigo-300 transition-colors" : ""}`}
+            onClick={isExpandable ? () => setShowToolDetail((v) => !v) : undefined}
           >
-            {hasExpandableDetail ? (showToolDetail ? "▾ " : "▸ ") : "▸ "}
+            {isExpandable ? (showToolDetail ? "▾ " : "▸ ") : "▸ "}
             {toolName}
             {toolDetail ? `: ${toolDetail}` : ""}
+            {toolResult && (
+              <span className={`ml-2 text-xs ${resultIsError ? "text-red-400" : "text-emerald-400"}`}>
+                {resultIsError ? "\u2717" : "\u2713"}
+              </span>
+            )}
           </span>
-          {showToolDetail && toolName === "Edit" && Boolean(input.old_string) && Boolean(input.new_string) && (
-            <div className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
-              <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
-                {String(input.file_path ?? "")}
-              </div>
-              {String(input.old_string) && (
-                <div className="border-b border-slate-800/50">
-                  <pre className="px-3 py-2 whitespace-pre-wrap bg-red-500/5 text-red-400/80">
-                    {String(input.old_string).split("\n").map((line, i) => (
-                      <span key={i}>{`- ${line}\n`}</span>
-                    ))}
-                  </pre>
+
+          {showToolDetail && (
+            <div className="mt-1 ml-4">
+              {toolName === "Edit" && Boolean(input.old_string) && Boolean(input.new_string) && (
+                <div className="rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
+                  <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
+                    {String(input.file_path ?? "")}
+                  </div>
+                  <div className="border-b border-slate-800/50">
+                    <pre className="px-3 py-2 whitespace-pre-wrap bg-red-500/5 text-red-400/80">
+                      {String(input.old_string).split("\n").map((line, i) => (
+                        <span key={i}>{`- ${line}\n`}</span>
+                      ))}
+                    </pre>
+                  </div>
+                  <div>
+                    <pre className="px-3 py-2 whitespace-pre-wrap bg-emerald-500/5 text-emerald-400/80">
+                      {String(input.new_string).split("\n").map((line, i) => (
+                        <span key={i}>{`+ ${line}\n`}</span>
+                      ))}
+                    </pre>
+                  </div>
                 </div>
               )}
-              <div>
-                <pre className="px-3 py-2 whitespace-pre-wrap bg-emerald-500/5 text-emerald-400/80">
-                  {String(input.new_string).split("\n").map((line, i) => (
-                    <span key={i}>{`+ ${line}\n`}</span>
-                  ))}
+
+              {toolName === "Write" && Boolean(input.content) && (
+                <div className="rounded border border-slate-800 bg-slate-950 overflow-hidden">
+                  <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500 text-xs font-mono">
+                    {String(input.file_path ?? "")}
+                  </div>
+                  <CodeBlock
+                    code={String(input.content)}
+                    fileName={String(input.file_path ?? "")}
+                  />
+                </div>
+              )}
+
+              {toolName === "Bash" && Boolean(input.command) && (
+                <div className="rounded border border-slate-800 bg-slate-950 overflow-hidden">
+                  <pre className="px-3 py-2 text-xs font-mono text-amber-400/80 whitespace-pre-wrap border-b border-slate-800">
+                    $ {String(input.command)}
+                  </pre>
+                  {resultContent && (
+                    <pre className={`px-3 py-2 overflow-auto max-h-60 text-xs font-mono whitespace-pre-wrap ${resultIsError ? "text-red-400/80" : "text-slate-400"}`}>
+                      {resultContent}
+                    </pre>
+                  )}
+                </div>
+              )}
+
+              {toolName === "Read" && Boolean(input.file_path) && resultContent && (
+                <div className="rounded border border-slate-800 bg-slate-950 overflow-hidden">
+                  <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500 text-xs font-mono">
+                    {String(input.file_path)}
+                  </div>
+                  <CodeBlock
+                    code={resultContent}
+                    fileName={String(input.file_path)}
+                  />
+                </div>
+              )}
+
+              {toolName === "Grep" && resultContent && (
+                <pre className="rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-60 text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                  {resultContent}
                 </pre>
-              </div>
+              )}
+
+              {toolName === "Glob" && resultContent && (
+                <pre className="rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-60 text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                  {resultContent}
+                </pre>
+              )}
+
+              {(toolName === "WebFetch" || toolName === "WebSearch") && resultContent && (
+                <pre className="rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-60 text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                  {resultContent}
+                </pre>
+              )}
+
+              {!["Edit", "Write", "Bash", "Read", "Grep", "Glob", "WebFetch", "WebSearch"].includes(toolName) && (
+                <>
+                  {Object.keys(input).length > 0 && (
+                    <pre className="rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-40 text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                      {JSON.stringify(input, null, 2)}
+                    </pre>
+                  )}
+                  {resultContent && (
+                    <pre className="mt-1 rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-60 text-xs font-mono text-slate-400 whitespace-pre-wrap">
+                      {resultContent}
+                    </pre>
+                  )}
+                </>
+              )}
             </div>
-          )}
-          {showToolDetail && toolName === "Write" && Boolean(input.content) && (
-            <div className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 overflow-auto max-h-80 text-xs font-mono">
-              <div className="border-b border-slate-800 px-3 py-1.5 text-slate-500">
-                {String(input.file_path ?? "")}
-              </div>
-              <pre className="px-3 py-2 whitespace-pre-wrap text-slate-400">
-                {String(input.content)}
-              </pre>
-            </div>
-          )}
-          {showToolDetail && toolName === "Bash" && Boolean(input.command) && (
-            <pre className="mt-1 ml-4 rounded border border-slate-800 bg-slate-950 px-3 py-2 overflow-auto max-h-40 text-xs font-mono text-amber-400/80 whitespace-pre-wrap">
-              $ {String(input.command)}
-            </pre>
           )}
         </div>
       );
     }
 
     case "TOOL_RESULT": {
-      const resultText = String(event.data.result ?? event.data.output ?? "");
+      const resultText = String(event.data.content ?? event.data.result ?? event.data.output ?? "");
+      const isError = Boolean(event.data.is_error);
       return (
         <div className="py-0.5">
           <button
             onClick={() => setShowToolResult((v) => !v)}
-            className="text-slate-500 font-mono text-sm hover:text-slate-300 transition-colors"
+            className={`font-mono text-sm hover:text-slate-300 transition-colors ${isError ? "text-red-400" : "text-slate-500"}`}
           >
-            {showToolResult ? "▾ Hide result" : "▸ Show result"}
+            {showToolResult ? "\u25be Hide result" : "\u25b8 Show result"}
+            {isError && " (error)"}
           </button>
           {showToolResult && (
-            <pre className="mt-1 ml-4 max-h-60 overflow-auto rounded border border-slate-800 bg-slate-950 p-2 text-xs text-slate-400 font-mono whitespace-pre-wrap">
+            <pre className={`mt-1 ml-4 max-h-60 overflow-auto rounded border border-slate-800 bg-slate-950 p-2 text-xs font-mono whitespace-pre-wrap ${isError ? "text-red-400/80" : "text-slate-400"}`}>
               {resultText}
             </pre>
           )}
