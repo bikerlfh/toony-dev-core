@@ -88,6 +88,11 @@ export function TaskLiveOutput({
                         ? onAnswer
                         : undefined
                     }
+                    onMessage={
+                      event.event_type === "TOOL_APPROVAL"
+                        ? onMessage
+                        : undefined
+                    }
                     isAnswered={
                       event.event_type === "QUESTION_ASKED"
                         ? answeredSequences.has(event.sequence)

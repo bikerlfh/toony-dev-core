@@ -391,6 +391,7 @@ class PersistentClaude:
         self._cwd = cwd or config.working_directory
         self._proc: asyncio.subprocess.Process | None = None
         self._event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+        self._approval_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._reader_task: asyncio.Task[None] | None = None
         self._session_id: str | None = None
         self._resume_session_id = resume_session_id
@@ -423,6 +424,10 @@ class PersistentClaude:
     def is_idle(self) -> bool:
         """True if the session has been idle longer than the timeout."""
         return self.idle_seconds >= self._idle_timeout
+
+    @property
+    def approval_queue(self) -> asyncio.Queue[dict[str, Any]]:
+        return self._approval_queue
 
     # -- Lifecycle -----------------------------------------------------------
 
@@ -519,6 +524,22 @@ class PersistentClaude:
                 self._last_activity = time.monotonic()
                 break
 
+    async def respond_approval(self, request_id: str, decision: str) -> None:
+        """Send a control_response to the CLI process."""
+        if not self.is_alive:
+            return
+        msg = {
+            "type": "control_response",
+            "request_id": request_id,
+            "decision": decision,
+        }
+        line = json.dumps(msg) + "\n"
+        self._proc.stdin.write(line.encode("utf-8"))  # type: ignore[union-attr]
+        await self._proc.stdin.drain()  # type: ignore[union-attr]
+        logger.info(
+            "Sent control_response: request_id=%s decision=%s", request_id, decision,
+        )
+
     # -- Internal ------------------------------------------------------------
 
     async def _read_stdout(self) -> None:
@@ -530,7 +551,10 @@ class PersistentClaude:
                     continue
                 try:
                     event = json.loads(line)
-                    await self._event_queue.put(event)
+                    if event.get("type") == "control_request":
+                        await self._approval_queue.put(event)
+                    else:
+                        await self._event_queue.put(event)
                 except json.JSONDecodeError:
                     logger.debug(
                         "Non-JSON line from persistent CLI: %s", line[:200],

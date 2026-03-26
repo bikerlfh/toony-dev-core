@@ -3,13 +3,13 @@ Protocol definitions for runner <-> backend WebSocket communication.
 
 Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
-    TaskEventMessage, QuestionAskedMessage, TaskCompletedMessage,
-    TaskFailedMessage, CommandResultMessage, ConfigSyncAckMessage,
-    RepoCloneResultMessage
+    TaskEventMessage, QuestionAskedMessage, ToolApprovalRequestMessage,
+    TaskCompletedMessage, TaskFailedMessage, CommandResultMessage,
+    ConfigSyncAckMessage, RepoCloneResultMessage
 
 Incoming messages (backend -> runner):
-    TaskAssign, QuestionAnswered, TaskCancel, HeartbeatAck, CommandExecute,
-    ConfigSync, ConfigUpdate
+    TaskAssign, QuestionAnswered, ToolApprovalResponse, TaskCancel,
+    HeartbeatAck, CommandExecute, ConfigSync, ConfigUpdate
 """
 
 from __future__ import annotations
@@ -91,6 +91,31 @@ class QuestionAskedMessage:
 
 
 @dataclass
+class ToolApprovalRequestMessage:
+    """Runner asks backend to get user approval for a tool call."""
+
+    task_id: str
+    request_id: str
+    tool_name: str
+    tool_input: dict[str, Any]
+    session_id: str = ""
+    timeout: int = 120
+    sequence: int = 0
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "type": "tool.approval.request",
+            "task_id": self.task_id,
+            "request_id": self.request_id,
+            "tool_name": self.tool_name,
+            "tool_input": self.tool_input,
+            "session_id": self.session_id,
+            "timeout": self.timeout,
+            "sequence": self.sequence,
+        }
+
+
+@dataclass
 class TaskCompletedMessage:
     """Signals successful task completion."""
 
@@ -147,6 +172,16 @@ class QuestionAnswered:
     answer: str
     session_id: str = ""
     sequence_offset: int = 0
+    project_id: str | None = None
+
+
+@dataclass
+class ToolApprovalResponse:
+    """User's approval/denial decision from the frontend."""
+
+    task_id: str
+    request_id: str
+    decision: str  # "allow" or "deny"
     project_id: str | None = None
 
 
@@ -285,7 +320,7 @@ class ConfigUpdateAckMessage:
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | QuestionAnswered | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync | ConfigUpdate
+IncomingMessage = TaskAssign | QuestionAnswered | ToolApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync | ConfigUpdate
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -310,6 +345,14 @@ def parse_server_message(data: dict) -> IncomingMessage:
             answer=data.get("answer", ""),
             session_id=data.get("session_id", ""),
             sequence_offset=data.get("sequence_offset", 0),
+            project_id=data.get("project_id"),
+        )
+
+    if msg_type == "tool.approval.response":
+        return ToolApprovalResponse(
+            task_id=data.get("task_id", ""),
+            request_id=data.get("request_id", ""),
+            decision=data.get("decision", "deny"),
             project_id=data.get("project_id"),
         )
 

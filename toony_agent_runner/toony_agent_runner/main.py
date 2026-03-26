@@ -41,6 +41,7 @@ from .protocol import (
     TaskAssign,
     TaskCancel,
     TaskReply,
+    ToolApprovalResponse,
     parse_server_message,
 )
 from .cli_executor import PersistentClaude
@@ -129,6 +130,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
     active_tasks: dict[str, asyncio.Task[None]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
     session_pool: dict[str, PersistentClaude] = {}
+    pending_approvals: dict[str, asyncio.Future[str]] = {}
     max_tasks = config.claude.max_concurrent_tasks
     project_map: dict[str, Path] = {}
     workspace_root = Path(config.workspace_root).expanduser().resolve() if config.workspace_root else None
@@ -239,6 +241,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                     execute_task(
                         msg.task_id, msg.prompt, conn, task_config, ce,
                         session_pool=session_pool,
+                        pending_approvals=pending_approvals,
                     )
                 )
 
@@ -286,6 +289,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         ce,
                         session_pool=session_pool,
                         sequence_offset=msg.sequence_offset,
+                        pending_approvals=pending_approvals,
                     )
                 )
 
@@ -332,8 +336,21 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         ce,
                         session_pool=session_pool,
                         sequence_offset=msg.sequence_offset,
+                        pending_approvals=pending_approvals,
                     )
                 )
+
+            elif isinstance(msg, ToolApprovalResponse):
+                future = pending_approvals.get(msg.request_id)
+                if future and not future.done():
+                    future.set_result(msg.decision)
+                    logger.info(
+                        "Resolved approval %s: %s", msg.request_id, msg.decision,
+                    )
+                else:
+                    logger.warning(
+                        "No pending approval for request %s", msg.request_id,
+                    )
 
             elif isinstance(msg, HeartbeatAck):
                 logger.debug("Heartbeat acknowledged")

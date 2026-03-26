@@ -9,6 +9,7 @@ class TaskEventType(models.TextChoices):
     TOOL_RESULT = "TOOL_RESULT", "Tool Result"
     QUESTION_ASKED = "QUESTION_ASKED", "Question Asked"
     QUESTION_ANSWERED = "QUESTION_ANSWERED", "Question Answered"
+    TOOL_APPROVAL = "TOOL_APPROVAL", "Tool Approval"
     REPLY = "REPLY", "Reply"
     STATUS_CHANGE = "STATUS_CHANGE", "Status Change"
     ERROR = "ERROR", "Error"

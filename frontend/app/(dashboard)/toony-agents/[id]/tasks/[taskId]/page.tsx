@@ -137,6 +137,24 @@ export default function TaskViewPage() {
           if (prev.some((e) => e.id === newEvent.id)) return prev;
           return [...prev, newEvent];
         });
+      } else if (event.type === "tool.approval.request" && event.task_id === taskId) {
+        const newEvent: TaskEventItem = {
+          id: `ws-approval-${event.request_id}`,
+          event_type: "TOOL_APPROVAL",
+          data: {
+            request_id: event.request_id,
+            tool_name: event.tool_name,
+            tool_input: event.tool_input,
+            timeout: event.timeout,
+            status: "pending",
+          },
+          sequence: event.sequence,
+          created_at: new Date().toISOString(),
+        };
+        setEvents((prev) => {
+          if (prev.some((e) => e.id === newEvent.id)) return prev;
+          return [...prev, newEvent];
+        });
       } else if (
         event.type === "question.asked" &&
         event.task_id === taskId
@@ -158,7 +176,7 @@ export default function TaskViewPage() {
     [taskId]
   );
 
-  const { sendAnswer, sendReply, cancelTask: wsCancelTask } =
+  const { sendAnswer, sendReply, sendToolApproval, cancelTask: wsCancelTask } =
     useToonyAgentWebSocket({
       agentId: agent?.id ?? null,
       onEvent: handleWsEvent,
@@ -181,11 +199,28 @@ export default function TaskViewPage() {
 
   const handleMessage = useCallback(
     (text: string) => {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.type === "tool_approval") {
+          sendToolApproval(taskId, parsed.request_id, parsed.decision);
+          // Update event status locally
+          setEvents((prev) =>
+            prev.map((ev) =>
+              ev.data.request_id === parsed.request_id
+                ? { ...ev, data: { ...ev.data, status: parsed.decision === "allow" ? "allowed" : "denied" } }
+                : ev
+            )
+          );
+          return;
+        }
+      } catch {
+        // Not JSON — treat as regular message
+      }
       if (taskStatus === "COMPLETED" && sessionId) {
         sendReply(taskId, text);
       }
     },
-    [taskId, taskStatus, sessionId, sendReply]
+    [taskId, taskStatus, sessionId, sendReply, sendToolApproval]
   );
 
   // Cancel task via REST API

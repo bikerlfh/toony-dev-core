@@ -20,6 +20,7 @@ export function TaskEventItem({
   event,
   toolResult,
   onAnswer,
+  onMessage,
   isAnswered,
   disabled,
 }: TaskEventItemProps) {
@@ -230,6 +231,79 @@ export function TaskEventItem({
           </span>
         </div>
       );
+
+    case "TOOL_APPROVAL": {
+      const data = event.data as {
+        request_id?: string;
+        tool_name?: string;
+        tool_input?: Record<string, unknown>;
+        status?: string;
+        timeout?: number;
+      };
+      const toolName = String(data.tool_name ?? "");
+      const input = (data.tool_input ?? {}) as Record<string, unknown>;
+      const requestId = String(data.request_id ?? "");
+      const status = String(data.status ?? "pending");
+      const isPending = status === "pending";
+
+      const toolDetail =
+        input.description ? String(input.description) :
+        input.file_path ? String(input.file_path) :
+        input.command ? String(input.command) :
+        input.pattern ? String(input.pattern) :
+        "";
+
+      return (
+        <div className="py-2">
+          <div className={`rounded-lg border px-4 py-3 ${
+            isPending
+              ? "border-amber-500/50 bg-amber-500/5"
+              : status === "allowed"
+                ? "border-emerald-500/30 bg-emerald-500/5 opacity-60"
+                : "border-red-500/30 bg-red-500/5 opacity-60"
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-amber-400 font-mono text-sm font-medium">
+                  {toolName}
+                </span>
+                {toolDetail && (
+                  <span className="text-slate-400 font-mono text-sm ml-2">
+                    {toolDetail}
+                  </span>
+                )}
+              </div>
+              {isPending && !disabled && onMessage && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onMessage(JSON.stringify({ type: "tool_approval", request_id: requestId, decision: "allow" }))}
+                    className="px-3 py-1 text-xs font-medium rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                  >
+                    Allow
+                  </button>
+                  <button
+                    onClick={() => onMessage(JSON.stringify({ type: "tool_approval", request_id: requestId, decision: "deny" }))}
+                    className="px-3 py-1 text-xs font-medium rounded bg-red-600 hover:bg-red-500 text-white transition-colors"
+                  >
+                    Deny
+                  </button>
+                </div>
+              )}
+              {!isPending && (
+                <span className={`text-xs font-medium ${status === "allowed" ? "text-emerald-400" : "text-red-400"}`}>
+                  {status === "allowed" ? "Allowed" : "Denied"}
+                </span>
+              )}
+            </div>
+            {Object.keys(input).length > 0 && (
+              <pre className="mt-2 text-xs font-mono text-slate-500 whitespace-pre-wrap max-h-40 overflow-auto">
+                {JSON.stringify(input, null, 2)}
+              </pre>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     case "QUESTION_ASKED": {
       const data = event.data as {

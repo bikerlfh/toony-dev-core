@@ -37,6 +37,13 @@ _DEFAULT_ALLOWED_TOOLS = [
 
 
 @dataclass
+class ToolApprovalConfig:
+    default_action: str = "ask"  # ask | allow | deny
+    timeout: int = 120  # seconds, auto-deny if no response
+    rules: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
 class ClaudeConfig:
     working_directory: str = "."
     max_task_timeout: int = 3600
@@ -47,6 +54,7 @@ class ClaudeConfig:
     permission_mode: str = "acceptEdits"
     allowed_tools: list[str] = field(default_factory=lambda: list(_DEFAULT_ALLOWED_TOOLS))
     disallowed_tools: list[str] = field(default_factory=list)
+    tool_approval: ToolApprovalConfig = field(default_factory=ToolApprovalConfig)
 
 
 @dataclass
@@ -78,6 +86,13 @@ def load_config(path: str) -> RunnerConfig:
 
     claude_raw = raw.get("claude", {})
     reconnect_raw = raw.get("reconnect", {})
+
+    tool_approval_raw = claude_raw.get("tool_approval", {})
+    tool_approval = ToolApprovalConfig(
+        default_action=tool_approval_raw.get("default_action", "ask"),
+        timeout=tool_approval_raw.get("timeout", 120),
+        rules=tool_approval_raw.get("rules", {}),
+    )
 
     return RunnerConfig(
         backend_url=raw.get("backend_url", RunnerConfig.backend_url),
@@ -112,6 +127,7 @@ def load_config(path: str) -> RunnerConfig:
             disallowed_tools=claude_raw.get(
                 "disallowed_tools", []
             ),
+            tool_approval=tool_approval,
         ),
         reconnect=ReconnectConfig(
             max_retries=reconnect_raw.get(
@@ -166,6 +182,12 @@ def save_config(path: str, config: RunnerConfig) -> None:
         claude_data["allowed_tools"] = config.claude.allowed_tools
     if config.claude.disallowed_tools:
         claude_data["disallowed_tools"] = config.claude.disallowed_tools
+    if config.claude.tool_approval.rules or config.claude.tool_approval.default_action != "ask":
+        claude_data["tool_approval"] = {
+            "default_action": config.claude.tool_approval.default_action,
+            "timeout": config.claude.tool_approval.timeout,
+            "rules": config.claude.tool_approval.rules,
+        }
     data["claude"] = claude_data
 
     # Merge reconnect section (preserve unknown keys).
