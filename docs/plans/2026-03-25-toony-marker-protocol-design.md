@@ -89,7 +89,7 @@ When Claude's response contains no `<!--TOONY:...-->` marker:
 1. Send `task.completed` to backend (current behavior)
 2. Persistent session stays alive in the session pool
 3. User can send a reply via `TaskInputBox`
-4. Session auto-closes after idle timeout (`TOONY_SESSION_IDLE_TIMEOUT`, default 300s)
+4. Session auto-closes after idle timeout (`claude.session_idle_timeout`, default 300s)
 
 ## Flow Diagram
 

@@ -42,6 +42,7 @@ class ClaudeConfig:
     max_task_timeout: int = 3600
     approval_timeout: int = 600  # 10 minutes
     max_concurrent_tasks: int = 1
+    session_idle_timeout: int = 300  # 5 minutes
     oauth_token: str = ""
     permission_mode: str = "acceptEdits"
     allowed_tools: list[str] = field(default_factory=lambda: list(_DEFAULT_ALLOWED_TOOLS))
@@ -95,6 +96,9 @@ def load_config(path: str) -> RunnerConfig:
             ),
             max_concurrent_tasks=claude_raw.get(
                 "max_concurrent_tasks", ClaudeConfig.max_concurrent_tasks
+            ),
+            session_idle_timeout=claude_raw.get(
+                "session_idle_timeout", ClaudeConfig.session_idle_timeout
             ),
             oauth_token=claude_raw.get(
                 "oauth_token", ClaudeConfig.oauth_token
@@ -152,6 +156,7 @@ def save_config(path: str, config: RunnerConfig) -> None:
         claude_data = {}
     claude_data["max_task_timeout"] = config.claude.max_task_timeout
     claude_data["max_concurrent_tasks"] = config.claude.max_concurrent_tasks
+    claude_data["session_idle_timeout"] = config.claude.session_idle_timeout
     claude_data["working_directory"] = config.claude.working_directory
     claude_data["approval_timeout"] = config.claude.approval_timeout
     claude_data["permission_mode"] = config.claude.permission_mode

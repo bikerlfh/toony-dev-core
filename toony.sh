@@ -136,11 +136,15 @@ cmd_update() {
         error "Docker daemon is not running. Start Docker and retry."
     fi
 
-    # Backup database
+    # Backup database (only if db container is running)
     if [ "$no_backup" = false ]; then
-        info "Backing up database before update..."
-        cmd_backup
-        printf "\n"
+        if compose ps db --format '{{.State}}' 2>/dev/null | grep -q "running"; then
+            info "Backing up database before update..."
+            cmd_backup
+            printf "\n"
+        else
+            warn "Database is not running — skipping backup."
+        fi
     else
         warn "Skipping database backup (--no-backup)."
     fi
