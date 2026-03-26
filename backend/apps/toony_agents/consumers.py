@@ -510,6 +510,54 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+        elif msg_type == "tool.approval.request":
+            task_id = content.get("task_id")
+            if not task_id:
+                await self.send_json({"type": "error", "message": "task_id is required"})
+                return
+            if not await _validate_task_ownership(task_id, self.agent_id):
+                await self.send_json({"type": "error", "message": "Task not found for this agent"})
+                return
+
+            request_id = content.get("request_id", "")
+            tool_name = content.get("tool_name", "")
+            tool_input = content.get("tool_input", {})
+            timeout = content.get("timeout", 120)
+            sequence = content.get("sequence", 0)
+
+            # Create task event for the approval request.
+            max_seq = await _get_max_event_sequence(task_id)
+            event_seq = max(max_seq + 1, sequence)
+
+            await _create_task_event(
+                task_id,
+                TaskEventType.TOOL_APPROVAL,
+                {
+                    "request_id": request_id,
+                    "tool_name": tool_name,
+                    "tool_input": tool_input,
+                    "status": "pending",
+                    "timeout": timeout,
+                },
+                event_seq,
+            )
+
+            # Broadcast to frontend.
+            await self.channel_layer.group_send(
+                self.frontend_group,
+                {
+                    "type": "tool_approval_request",
+                    "data": {
+                        "task_id": str(task_id),
+                        "request_id": request_id,
+                        "tool_name": tool_name,
+                        "tool_input": tool_input,
+                        "timeout": timeout,
+                        "sequence": event_seq,
+                    },
+                },
+            )
+
         elif msg_type == "task.completed":
             task_id = content.get("task_id")
             if not task_id:
@@ -652,6 +700,13 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             msg["project_id"] = event["data"]["project_id"]
         await self.send_json(msg)
 
+    async def tool_approval_response(self, event):
+        """Forward user's approval decision to the runner."""
+        await self.send_json({
+            "type": "tool.approval.response",
+            **event["data"],
+        })
+
     async def task_cancel(self, event):
         await self.send_json(
             {
@@ -787,6 +842,27 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
                 },
             )
 
+        elif msg_type == "tool.approval.respond":
+            task_id = content.get("task_id")
+            request_id = content.get("request_id")
+            decision = content.get("decision", "deny")
+
+            if not task_id or not request_id:
+                return
+
+            # Broadcast to runner.
+            await self.channel_layer.group_send(
+                runner_group,
+                {
+                    "type": "tool_approval_response",
+                    "data": {
+                        "task_id": task_id,
+                        "request_id": request_id,
+                        "decision": decision,
+                    },
+                },
+            )
+
         elif msg_type == "task.cancel":
             task_id = content.get("task_id")
             if not task_id:
@@ -899,6 +975,10 @@ class ToonyAgentConsumer(AsyncJsonWebsocketConsumer):
 
     async def question_asked(self, event):
         await self.send_json({"type": "question.asked", **event["data"]})
+
+    async def tool_approval_request(self, event):
+        """Forward tool approval request to frontend."""
+        await self.send_json({"type": "tool.approval.request", **event["data"]})
 
     async def config_sync_status(self, event):
         await self.send_json({"type": "config.sync.status", **event["data"]})
