@@ -43,6 +43,7 @@ from .protocol import (
     TaskReply,
     parse_server_message,
 )
+from .cli_executor import PersistentClaude
 from .workspace import process_config_sync, resolve_project_path, clone_pending_repos
 from .commands import execute_command
 from .task_executor import execute_task, execute_task_reply
@@ -127,6 +128,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
     shutdown_event = asyncio.Event()
     active_tasks: dict[str, asyncio.Task[None]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
+    session_pool: dict[str, PersistentClaude] = {}
     max_tasks = config.claude.max_concurrent_tasks
     project_map: dict[str, Path] = {}
     workspace_root = Path(config.workspace_root).expanduser().resolve() if config.workspace_root else None
@@ -167,6 +169,9 @@ async def run(config: RunnerConfig, config_path: str) -> None:
 
     # Main message loop.
     heartbeat_task = asyncio.create_task(_heartbeat_loop(conn, shutdown_event))
+    cleanup_task = asyncio.create_task(
+        _session_cleanup_loop(session_pool, shutdown_event),
+    )
 
     try:
         while not shutdown_event.is_set():
@@ -232,7 +237,8 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                 cancel_events[msg.task_id] = ce
                 active_tasks[msg.task_id] = asyncio.create_task(
                     execute_task(
-                        msg.task_id, msg.prompt, conn, task_config, ce
+                        msg.task_id, msg.prompt, conn, task_config, ce,
+                        session_pool=session_pool,
                     )
                 )
 
@@ -278,6 +284,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         conn,
                         task_config,
                         ce,
+                        session_pool=session_pool,
                         sequence_offset=msg.sequence_offset,
                     )
                 )
@@ -323,6 +330,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         conn,
                         task_config,
                         ce,
+                        session_pool=session_pool,
                         sequence_offset=msg.sequence_offset,
                     )
                 )
@@ -422,6 +430,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
         # Shutdown: cancel all running tasks.
         logger.info("Shutting down...")
         heartbeat_task.cancel()
+        cleanup_task.cancel()
 
         for ce in cancel_events.values():
             ce.set()
@@ -433,8 +442,23 @@ async def run(config: RunnerConfig, config_path: str) -> None:
             for t in pending:
                 t.cancel()
 
+        # Close all persistent Claude sessions.
+        if session_pool:
+            logger.info(
+                "Closing %d persistent session(s)...", len(session_pool),
+            )
+            for pc in session_pool.values():
+                try:
+                    await pc.close()
+                except Exception as exc:
+                    logger.warning("Error closing persistent session: %s", exc)
+            session_pool.clear()
+
         await conn.close()
         logger.info("Shutdown complete")
+
+
+SESSION_CLEANUP_INTERVAL = 60  # seconds
 
 
 async def _heartbeat_loop(
@@ -453,6 +477,47 @@ async def _heartbeat_loop(
 
         await conn.send(HeartbeatMessage().to_json())
         logger.debug("Heartbeat sent")
+
+
+async def _session_cleanup_loop(
+    session_pool: dict[str, PersistentClaude],
+    shutdown: asyncio.Event,
+) -> None:
+    """Close idle persistent sessions periodically."""
+    while not shutdown.is_set():
+        try:
+            await asyncio.wait_for(
+                shutdown.wait(), timeout=SESSION_CLEANUP_INTERVAL,
+            )
+            return
+        except asyncio.TimeoutError:
+            pass
+
+        logger.info(
+            "Session cleanup check: %d session(s) in pool", len(session_pool),
+        )
+        for sid, pc in session_pool.items():
+            logger.info(
+                "  session %s: alive=%s, idle=%.0fs, timeout=%ss",
+                sid, pc.is_alive, pc.idle_seconds, pc._idle_timeout,
+            )
+
+        idle_ids = [
+            sid for sid, pc in session_pool.items()
+            if pc.is_idle or not pc.is_alive
+        ]
+        for sid in idle_ids:
+            pc = session_pool.pop(sid, None)
+            if pc is None:
+                continue
+            reason = "dead" if not pc.is_alive else f"idle {pc.idle_seconds:.0f}s"
+            logger.info(
+                "Closing persistent session %s (%s)", sid, reason,
+            )
+            try:
+                await pc.close()
+            except Exception as exc:
+                logger.warning("Error closing session %s: %s", sid, exc)
 
 
 # ---------------------------------------------------------------------------

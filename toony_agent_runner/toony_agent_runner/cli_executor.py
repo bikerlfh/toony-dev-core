@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 import uuid
 from typing import Any, AsyncIterator
 
@@ -294,3 +295,230 @@ async def cancel_claude(proc: asyncio.subprocess.Process) -> None:
         await asyncio.wait_for(proc.wait(), timeout=5.0)
     except (asyncio.TimeoutError, ProcessLookupError):
         proc.kill()
+
+
+# ---------------------------------------------------------------------------
+# Persistent Claude session (stream-json bidirectional I/O)
+# ---------------------------------------------------------------------------
+
+
+class PersistentClaude:
+    """Long-lived Claude CLI process using stream-json bidirectional I/O.
+
+    Instead of spawning a new process for each reply (``--resume``), this
+    keeps a single ``claude -p --input-format stream-json --output-format
+    stream-json`` process alive and sends messages via stdin.
+
+    Benefits over ``--resume``:
+    - No process startup overhead per reply (skills, MCP, config loading)
+    - Reliable prompt-cache hits (no delay between turns)
+    - CLI-managed context compaction as conversation grows
+    - No session-file I/O between turns
+
+    Usage::
+
+        pc = PersistentClaude(config, cwd="/project")
+        await pc.start()
+
+        async for event in pc.send_message("do something"):
+            print(event)
+
+        # Later — same process, no restart:
+        async for event in pc.send_message("now fix this"):
+            print(event)
+
+        await pc.close()
+    """
+
+    #: Default idle timeout in seconds.
+    #: Override with ``TOONY_SESSION_IDLE_TIMEOUT`` env var (seconds).
+    DEFAULT_IDLE_TIMEOUT = int(os.environ.get("TOONY_SESSION_IDLE_TIMEOUT", "300"))
+
+    def __init__(
+        self,
+        config: ClaudeConfig,
+        *,
+        cwd: str | None = None,
+        idle_timeout: float | None = None,
+        resume_session_id: str | None = None,
+    ) -> None:
+        self._config = config
+        self._cwd = cwd or config.working_directory
+        self._proc: asyncio.subprocess.Process | None = None
+        self._event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+        self._reader_task: asyncio.Task[None] | None = None
+        self._session_id: str | None = None
+        self._resume_session_id = resume_session_id
+        self._alive = False
+        self._idle_timeout = (
+            idle_timeout if idle_timeout is not None else self.DEFAULT_IDLE_TIMEOUT
+        )
+        self._last_activity: float = time.monotonic()
+
+    # -- Properties ----------------------------------------------------------
+
+    @property
+    def session_id(self) -> str | None:
+        return self._session_id
+
+    @property
+    def is_alive(self) -> bool:
+        return (
+            self._alive
+            and self._proc is not None
+            and self._proc.returncode is None
+        )
+
+    @property
+    def idle_seconds(self) -> float:
+        """Seconds since last activity (message sent or received)."""
+        return time.monotonic() - self._last_activity
+
+    @property
+    def is_idle(self) -> bool:
+        """True if the session has been idle longer than the timeout."""
+        return self.idle_seconds >= self._idle_timeout
+
+    # -- Lifecycle -----------------------------------------------------------
+
+    async def start(self) -> None:
+        """Spawn the Claude CLI process in persistent stream-json mode."""
+        cmd = self._build_command()
+        env = _build_env(self._config)
+
+        logger.info("Starting persistent Claude session (cwd=%s)", self._cwd)
+
+        self._proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self._cwd,
+            env=env,
+            limit=10 * 1024 * 1024,
+        )
+
+        self._alive = True
+        self._last_activity = time.monotonic()
+        self._reader_task = asyncio.create_task(self._read_stdout())
+
+    async def close(self) -> None:
+        """Gracefully terminate the persistent process."""
+        self._alive = False
+
+        if self._reader_task and not self._reader_task.done():
+            self._reader_task.cancel()
+            try:
+                await self._reader_task
+            except asyncio.CancelledError:
+                pass
+
+        if self._proc and self._proc.returncode is None:
+            try:
+                self._proc.stdin.close()  # type: ignore[union-attr]
+            except Exception:
+                pass
+            try:
+                self._proc.terminate()
+                await asyncio.wait_for(self._proc.wait(), timeout=5.0)
+            except (asyncio.TimeoutError, ProcessLookupError):
+                self._proc.kill()
+
+        logger.info(
+            "Persistent Claude session closed (session=%s)", self._session_id,
+        )
+
+    # -- Messaging -----------------------------------------------------------
+
+    async def send_message(self, content: str) -> AsyncIterator[dict[str, Any]]:
+        """Send a user message and yield events until the turn completes.
+
+        Writes a JSON message to stdin and yields parsed events from stdout
+        until a ``result`` event is received, signaling end-of-turn.
+        """
+        if not self.is_alive:
+            raise RuntimeError("Persistent Claude process is not alive")
+
+        msg = {
+            "type": "user",
+            "message": {"role": "user", "content": content},
+            "parent_tool_use_id": None,
+            "session_id": self._session_id,
+        }
+
+        line = json.dumps(msg, ensure_ascii=False) + "\n"
+        self._proc.stdin.write(line.encode("utf-8"))  # type: ignore[union-attr]
+        await self._proc.stdin.drain()  # type: ignore[union-attr]
+        self._last_activity = time.monotonic()
+
+        logger.info(
+            "Sent message to persistent session (len=%d, session=%s)",
+            len(content), self._session_id,
+        )
+
+        while True:
+            event = await self._event_queue.get()
+
+            if event is None:
+                self._alive = False
+                raise RuntimeError("Claude process exited unexpectedly")
+
+            # Capture session_id from any event that carries it.
+            if event.get("session_id"):
+                self._session_id = str(event["session_id"])
+
+            _log_event_summary(event)
+            yield event
+
+            if event.get("type") == "result":
+                self._last_activity = time.monotonic()
+                break
+
+    # -- Internal ------------------------------------------------------------
+
+    async def _read_stdout(self) -> None:
+        """Background: continuously read stdout lines into the event queue."""
+        try:
+            async for raw_line in self._proc.stdout:  # type: ignore[union-attr]
+                line = raw_line.decode("utf-8", errors="replace").strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                    await self._event_queue.put(event)
+                except json.JSONDecodeError:
+                    logger.debug(
+                        "Non-JSON line from persistent CLI: %s", line[:200],
+                    )
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            logger.warning("Persistent stdout reader error: %s", exc)
+        finally:
+            await self._event_queue.put(None)
+            self._alive = False
+
+    def _build_command(self) -> list[str]:
+        """Build CLI command for persistent stream-json mode."""
+        cmd = [
+            "claude", "-p",
+            "--input-format", "stream-json",
+            "--output-format", "stream-json",
+            "--verbose",
+        ]
+
+        if self._resume_session_id:
+            cmd.extend(["--resume", self._resume_session_id])
+
+        if self._config.permission_mode:
+            cmd.extend(["--permission-mode", self._config.permission_mode])
+
+        if self._config.allowed_tools:
+            cmd.extend(["--tools", ",".join(self._config.allowed_tools)])
+
+        if self._config.disallowed_tools:
+            cmd.extend(
+                ["--disallowed-tools", " ".join(self._config.disallowed_tools)],
+            )
+
+        return cmd

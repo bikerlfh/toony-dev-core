@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`toony_agent_runner` is a Python asyncio daemon that bridges Claude Code with the Toony Dev Core backend. It connects via WebSocket, receives task assignments, executes them by spawning the Claude CLI (`claude -p --output-format stream-json`), streams events in real-time, handles question/answer flows, and reports task completion/failure.
+`toony_agent_runner` is a Python asyncio daemon that bridges Claude Code with the Toony Dev Core backend. It connects via WebSocket, receives task assignments, and executes them using persistent Claude CLI sessions (`claude -p --input-format stream-json --output-format stream-json`). Events are streamed in real-time, and task replies reuse the same process via stdin instead of spawning new processes with `--resume`.
 
 ## Commands
 
@@ -32,13 +32,14 @@ Python 3.11+ required. Dependencies: `websockets>=12.0`, `pyyaml>=6.0`. Requires
 Modules with clear separation of concerns:
 
 ```
-main.py --- Orchestrator: CLI entry, config loading, main event loop, message dispatch
+main.py --- Orchestrator: CLI entry, config loading, main event loop, message dispatch,
+  |          session pool management, idle session cleanup
   |
-  |-- task_executor.py --- Spawns Claude CLI via cli_executor, streams events back to backend,
-  |                         handles question detection and task completion/failure
+  |-- task_executor.py --- Executes tasks via PersistentClaude, streams events back to backend,
+  |                         falls back to --resume when persistent session is unavailable
   |
-  |-- cli_executor.py --- Builds CLI commands, spawns `claude -p --output-format stream-json` subprocess,
-  |                        yields parsed JSON events, extracts questions/tools/text from assistant events
+  |-- cli_executor.py --- PersistentClaude class (stream-json bidirectional I/O), legacy run_claude
+  |                        (one-shot subprocess), event extraction helpers
   |
   |-- connection.py --- BackendConnection: WebSocket client, reconnection w/ exponential backoff, message buffering
   |
@@ -61,18 +62,19 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, message di
 ### Lifecycle Flow
 
 1. Load YAML config -> connect WebSocket (API key via `?key=` query param) -> send `register` with host metadata
-2. Idle loop: send heartbeats every 30s, wait for `task.assign`
-3. On task: spawn `claude -p --output-format stream-json` subprocess -> parse JSON lines from stdout -> send `task.event` messages
-4. If `AskUserQuestion` tool detected in assistant event: send `question.asked` to backend, CLI finishes (task stays WAITING_FOR_ANSWER)
-5. On `question.answered`: resume conversation via `claude -p --resume <session_id>` with the user's answer
-6. CLI exits with result event -> send `task.completed` or `task.failed`
+2. Idle loop: send heartbeats every 30s, wait for `task.assign`; cleanup idle sessions every 60s
+3. On task: create `PersistentClaude` process (`--input-format stream-json --output-format stream-json`) -> send prompt via stdin -> stream events from stdout -> send `task.event` messages
+4. On result event: send `task.completed` or `task.failed`; process stays alive in `session_pool`
+5. On `task.reply` or `question.answered`: look up session in `session_pool` -> send message via stdin to same process (no restart). Falls back to `--resume` if session expired or died
+6. Session idle timeout (default 5 min, override via `TOONY_SESSION_IDLE_TIMEOUT` env var): cleanup loop closes idle sessions
 7. On `command.execute`: look up `command_key` in `COMMAND_REGISTRY`, execute handler with args (sandboxed to `working_dir`), send `command.result` with success/error
-8. On SIGINT/SIGTERM: terminate CLI processes, close connection, exit
+8. On SIGINT/SIGTERM: close all persistent sessions, terminate CLI processes, close connection, exit
 
 ### Key Design Decisions
 
-- **Direct CLI invocation**: Uses `claude -p --output-format stream-json` subprocess instead of the Claude Agent SDK. The CLI loads skills from `~/.claude/skills/` and `~/.agents/skills/`, which the SDK does not support.
-- **Question/answer via AskUserQuestion detection**: The runner detects `AskUserQuestion` tool_use blocks in assistant stream events. When found, it sends `question.asked` to the backend and lets the CLI finish. The user's answer arrives as `question.answered`, which resumes the session via `--resume`.
+- **Persistent CLI sessions**: Uses `claude -p --input-format stream-json --output-format stream-json` to keep a single process alive across multiple turns. Messages are sent via stdin as NDJSON, responses read from stdout. This eliminates process startup overhead per reply and improves prompt cache hit rates. Falls back to legacy `--resume` (new process) when no persistent session is available.
+- **Direct CLI invocation**: Uses the CLI subprocess instead of the Claude Agent SDK. The CLI loads skills from `~/.claude/skills/` and `~/.agents/skills/`, which the SDK does not support.
+- **Session idle timeout**: Persistent sessions auto-close after inactivity (default 5 min). Configurable via `TOONY_SESSION_IDLE_TIMEOUT` env var (seconds). A background loop checks every 60s.
 - **Message buffering**: When WebSocket disconnects mid-task, `BackendConnection` buffers messages in a `deque` and flushes on reconnect. The CLI continues executing during disconnection.
 - **Concurrent task execution**: Runner supports `max_concurrent_tasks` (default 1). Task state (`active_tasks`, `cancel_events`) is keyed by `task_id`. Tasks beyond capacity are ignored (stay QUEUED on backend).
 
