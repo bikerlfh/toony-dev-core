@@ -129,7 +129,10 @@ def extract_question_from_assistant(event: dict[str, Any]) -> dict[str, Any] | N
 
 
 def extract_tool_events(event: dict[str, Any]) -> list[dict[str, Any]]:
-    """Extract tool_use blocks from an assistant event (excluding AskUserQuestion)."""
+    """Extract tool_use blocks from an assistant event (excluding AskUserQuestion).
+
+    Returns the full raw input for each tool — no filtering.
+    """
     if event.get("type") != "assistant":
         return []
 
@@ -142,14 +145,29 @@ def extract_tool_events(event: dict[str, Any]) -> list[dict[str, Any]]:
         if tool_name == "AskUserQuestion":
             continue
 
-        raw_input = block.get("input", {})
-        keys = _TOOL_INPUT_KEYS.get(tool_name)
-        if keys:
-            filtered = {k: raw_input[k] for k in keys if k in raw_input}
-        else:
-            filtered = raw_input
+        results.append({
+            "tool_name": tool_name,
+            "tool_use_id": block.get("id", ""),
+            "input": block.get("input", {}),
+        })
+    return results
 
-        results.append({"tool_name": tool_name, "input": filtered})
+
+def extract_tool_results(event: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract tool_result blocks from an assistant event."""
+    if event.get("type") != "assistant":
+        return []
+
+    message = event.get("message", {})
+    results = []
+    for block in message.get("content", []):
+        if block.get("type") != "tool_result":
+            continue
+        results.append({
+            "tool_use_id": block.get("tool_use_id", ""),
+            "content": block.get("content", ""),
+            "is_error": block.get("is_error", False),
+        })
     return results
 
 

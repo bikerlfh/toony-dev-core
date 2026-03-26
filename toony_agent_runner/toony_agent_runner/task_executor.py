@@ -12,6 +12,7 @@ from .cli_executor import (
     extract_question_from_assistant,
     extract_text_from_assistant,
     extract_tool_events,
+    extract_tool_results,
     extract_toony_marker,
 )
 from .config import RunnerConfig
@@ -28,6 +29,7 @@ logger = logging.getLogger("toony_agent_runner")
 
 EVENT_TYPE_LOG = "LOG"
 EVENT_TYPE_TOOL_USE = "TOOL_USE"
+EVENT_TYPE_TOOL_RESULT = "TOOL_RESULT"
 EVENT_TYPE_ERROR = "ERROR"
 
 
@@ -115,6 +117,15 @@ async def _process_events(
                 await conn.send(
                     TaskEventMessage(
                         task_id, EVENT_TYPE_TOOL_USE, tool_event, sequence,
+                    ).to_json()
+                )
+
+            # Forward tool_result events.
+            for tool_result in extract_tool_results(event):
+                sequence += 1
+                await conn.send(
+                    TaskEventMessage(
+                        task_id, EVENT_TYPE_TOOL_RESULT, tool_result, sequence,
                     ).to_json()
                 )
 
