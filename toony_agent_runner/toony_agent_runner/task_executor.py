@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import uuid
 from typing import Any
 
 from .cli_executor import (
@@ -11,6 +12,7 @@ from .cli_executor import (
     extract_question_from_assistant,
     extract_text_from_assistant,
     extract_tool_events,
+    extract_toony_marker,
 )
 from .config import RunnerConfig
 from .connection import BackendConnection
@@ -130,8 +132,7 @@ async def _process_events(
             if event.get("session_id"):
                 session_id = str(event["session_id"])
 
-            # If a question was asked, don't send completed/failed.
-            # The task is now WAITING_FOR_ANSWER.
+            # If a question was asked via AskUserQuestion tool, don't send completed.
             if question_asked:
                 return session_id, sequence, "question"
 
@@ -147,6 +148,47 @@ async def _process_events(
                 return session_id, sequence, "failed"
 
             result_text = event.get("result", "Task completed")
+
+            # Check for TOONY marker in result text.
+            marker, cleaned_text = extract_toony_marker(result_text)
+
+            if marker and marker.get("action") == "question":
+                q_data: dict[str, Any] = {"text": marker["text"]}
+                q_type = marker.get("type", "free_text")
+                q_data["type"] = q_type
+                if marker.get("options"):
+                    q_data["options"] = marker["options"]
+                if marker.get("multi_select"):
+                    q_data["multi_select"] = marker["multi_select"]
+                if marker.get("header"):
+                    q_data["header"] = marker["header"]
+
+                sequence += 1
+                await conn.send(
+                    QuestionAskedMessage(
+                        task_id=task_id,
+                        session_id=session_id or "",
+                        question_id=str(uuid.uuid4()),
+                        question_data=q_data,
+                        sequence=sequence,
+                    ).to_json()
+                )
+                logger.info(
+                    "TOONY marker question for task %s: %s",
+                    task_id, marker["text"][:100],
+                )
+                return session_id, sequence, "question"
+
+            if marker and marker.get("action") == "finish":
+                await conn.send(
+                    TaskCompletedMessage(
+                        task_id, result=cleaned_text.strip() or "Task completed",
+                        session_id=session_id,
+                    ).to_json()
+                )
+                return session_id, sequence, "finished"
+
+            # No marker — default completion.
             await conn.send(
                 TaskCompletedMessage(
                     task_id, result=result_text, session_id=session_id,
@@ -204,8 +246,13 @@ async def execute_task(
             task_id, conn, cancel_event,
         )
 
-        # Store session for future replies/answers.
-        if session_pool is not None and session_id and pc.is_alive:
+        # Store session for future replies/answers — unless task is finished.
+        if outcome == "finished":
+            await pc.close()
+            if session_pool is not None and session_id:
+                session_pool.pop(session_id, None)
+            logger.info("Closed persistent session %s (task finished)", session_id)
+        elif session_pool is not None and session_id and pc.is_alive:
             session_pool[session_id] = pc
             logger.info(
                 "Stored persistent session %s (outcome=%s)", session_id, outcome,
@@ -264,7 +311,13 @@ async def execute_task_reply(
                 session_pool.pop(session_id, None)
                 session_pool[new_sid] = pc
 
-            if outcome in ("failed", "cancelled") and not pc.is_alive:
+            if outcome == "finished":
+                await pc.close()
+                if session_pool is not None:
+                    session_pool.pop(session_id, None)
+                    session_pool.pop(new_sid or "", None)
+                logger.info("Closed persistent session %s (task finished)", session_id)
+            elif outcome in ("failed", "cancelled") and not pc.is_alive:
                 session_pool.pop(session_id, None)
                 session_pool.pop(new_sid or "", None)
                 await pc.close()
@@ -318,9 +371,14 @@ async def execute_task_reply(
             session_id=session_id,
         )
 
-        # Store for future replies.
+        # Store for future replies — unless task is finished.
         final_sid = new_sid or session_id
-        if session_pool is not None and final_sid and pc.is_alive:
+        if outcome == "finished":
+            await pc.close()
+            if session_pool is not None:
+                session_pool.pop(final_sid, None)
+            logger.info("Closed persistent session %s (task finished)", final_sid)
+        elif session_pool is not None and final_sid and pc.is_alive:
             session_pool[final_sid] = pc
             logger.info(
                 "Stored persistent session %s via --resume (outcome=%s)",
