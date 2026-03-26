@@ -376,6 +376,18 @@ class TestPersistentClaudeBuildCommand:
         assert cmd[1] == "-p"
         assert cmd[2] == "--input-format"  # not a prompt string
 
+    def test_command_includes_system_prompt(self):
+        """Persistent mode appends the TOONY marker system prompt."""
+        config = ClaudeConfig(working_directory="/tmp")
+        pc = PersistentClaude(config)
+        cmd = pc._build_command()
+        assert "--append-system-prompt" in cmd
+        prompt_idx = cmd.index("--append-system-prompt") + 1
+        prompt_text = cmd[prompt_idx]
+        assert "<!--TOONY:" in prompt_text
+        assert '"action":"question"' in prompt_text
+        assert '"action":"finish"' in prompt_text
+
 
 # ---------------------------------------------------------------------------
 # Test: Idle timeout
