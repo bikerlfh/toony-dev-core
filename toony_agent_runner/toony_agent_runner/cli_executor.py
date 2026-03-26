@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Any, AsyncIterator
@@ -163,6 +164,36 @@ def extract_text_from_assistant(event: dict[str, Any]) -> str | None:
         if block.get("type") == "text" and block.get("text"):
             parts.append(block["text"])
     return "".join(parts) if parts else None
+
+
+# ---------------------------------------------------------------------------
+# TOONY marker protocol
+# ---------------------------------------------------------------------------
+
+TOONY_MARKER_RE = re.compile(r"<!--TOONY:(.*?)-->", re.DOTALL)
+
+
+def extract_toony_marker(text: str) -> tuple[dict[str, Any] | None, str]:
+    """Extract a ``<!--TOONY:{...}-->`` marker from text.
+
+    Returns ``(marker_dict, cleaned_text)`` where *marker_dict* is the
+    parsed JSON payload (or ``None`` if no valid marker found) and
+    *cleaned_text* is the original text with the marker stripped out.
+    """
+    match = TOONY_MARKER_RE.search(text)
+    if not match:
+        return None, text
+
+    try:
+        payload = json.loads(match.group(1))
+    except (json.JSONDecodeError, ValueError):
+        return None, text
+
+    if not isinstance(payload, dict) or "action" not in payload:
+        return None, text
+
+    cleaned = text[: match.start()] + text[match.end() :]
+    return payload, cleaned
 
 
 def _log_event_summary(event: dict[str, Any]) -> None:
