@@ -15,6 +15,7 @@ from projects.models import (
     IssueDocument,
     Milestone,
     Project,
+    ProjectFileTree,
     ProjectMembership,
     ProjectSettings,
 )
@@ -115,6 +116,16 @@ class ProjectMembershipFactory(factory.django.DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
     user = factory.SubFactory(UserFactory)
     role = "CONTRIBUTOR"
+
+
+class ProjectFileTreeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ProjectFileTree
+
+    project = factory.SubFactory(ProjectFactory)
+    tree = ["src/app.tsx", "src/lib/api.ts", "README.md"]
+    branch = "main"
+    synced_at = factory.LazyFunction(timezone.now)
 
 
 class MilestoneFactory(factory.django.DjangoModelFactory):

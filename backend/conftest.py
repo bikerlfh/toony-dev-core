@@ -40,6 +40,7 @@ def _override_settings(request):
                 "BACKEND": "channels.layers.InMemoryChannelLayer",
             }
         },
+        CACHEOPS_ENABLED=False,
     )
     ctx.enable()
     request.addfinalizer(ctx.disable)

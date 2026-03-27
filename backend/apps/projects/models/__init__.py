@@ -17,6 +17,7 @@ from projects.models.project import (
     ProjectSettings,
     ProjectStatus,
 )
+from projects.models.file_tree import ProjectFileTree
 from projects.models.resource import ProjectResource, ResourceType
 
 __all__ = [
@@ -39,6 +40,7 @@ __all__ = [
     "ArtifactType",
     "ArtifactStatus",
     "IssueDocument",
+    "ProjectFileTree",
     "ProjectResource",
     "ResourceType",
 ]
