@@ -247,7 +247,7 @@ export default function FileAutoComplete({
       {mention.active && filtered.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 max-h-48 w-80 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
+          className="absolute z-50 max-h-48 w-max max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
           style={{ top: mention.position.top, left: mention.position.left }}
         >
           {filtered.map((file, i) => (
@@ -279,7 +279,7 @@ export default function FileAutoComplete({
                   d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
                 />
               </svg>
-              <span className="truncate">{file}</span>
+              <span>{file}</span>
             </button>
           ))}
         </div>
