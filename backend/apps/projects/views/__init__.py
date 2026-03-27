@@ -1,3 +1,4 @@
+from projects.views.file_tree_views import ProjectFileTreeView
 from projects.views.artifact_views import (
     GlobalArtifactDetailView,
     GlobalArtifactListView,
@@ -59,4 +60,5 @@ __all__ = [
     "GlobalArtifactDetailView",
     "IssueDocumentListCreateView",
     "IssueDocumentDetailView",
+    "ProjectFileTreeView",
 ]

@@ -63,3 +63,30 @@ class TestFileTreeService:
 
         assert ft.tree == ["new.py"]
         assert ft.branch == "develop"
+
+
+class TestFileTreeAPI:
+    def test_get_file_tree(self, authenticated_client, project):
+        ProjectFileTreeFactory(project=project)
+        url = file_tree_url(project.id)
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["tree"] == ["src/app.tsx", "src/lib/api.ts", "README.md"]
+        assert response.data["branch"] == "main"
+        assert response.data["synced_at"] is not None
+
+    def test_get_file_tree_empty(self, authenticated_client, project):
+        url = file_tree_url(project.id)
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["tree"] == []
+        assert response.data["branch"] == ""
+        assert response.data["synced_at"] is None
+
+    def test_get_file_tree_unauthenticated(self, api_client, project):
+        url = file_tree_url(project.id)
+        response = api_client.get(url)
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
