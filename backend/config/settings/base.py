@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "channels",
     "jsoneditor",
+    "cacheops",
     # Local apps
     "common",
     "accounts",
@@ -94,6 +95,13 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     }
+}
+
+# Cacheops — automatic ORM caching via Redis
+CACHEOPS_REDIS = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+CACHEOPS = {
+    "projects.ProjectFileTree": {"ops": "get", "timeout": 60 * 30},
 }
 
 # Channel Layers
