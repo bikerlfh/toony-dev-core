@@ -8,6 +8,7 @@ import { PriorityBadge } from "@/components/priority-badge";
 import { IssueStatusBadge } from "@/components/issue-status-badge";
 import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
 import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
+import FileAutoComplete from "@/components/ui/file-autocomplete";
 
 interface IssueSidePanelProps {
   projectId: string;
@@ -206,14 +207,13 @@ export function IssueSidePanel({ projectId, issueId, onClose, onUpdated }: Issue
             {/* Description — click to edit */}
             {editingDescription ? (
               <div>
-                <textarea
+                <FileAutoComplete
+                  projectId={projectId}
                   value={descriptionDraft}
-                  onChange={(e) => setDescriptionDraft(e.target.value)}
+                  onChange={setDescriptionDraft}
                   onKeyDown={(e) => {
                     if (e.key === "Escape") setEditingDescription(false);
                   }}
-                  disabled={isSavingDescription}
-                  autoFocus
                   rows={4}
                   className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-colors"
                 />
