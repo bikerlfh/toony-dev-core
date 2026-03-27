@@ -442,3 +442,40 @@ class TestIdleTimeout:
 
         assert "sess-old" not in session_pool
         assert mock_pc.close_called
+
+
+class TestIdleTimerResetOnReply:
+    """Verify that receiving task.reply / question.answered resets _last_activity."""
+
+    def test_task_reply_resets_last_activity(self):
+        """TaskReply handler resets _last_activity on the session in pool."""
+        import time as _time
+        from toony_agent_runner.main import _reset_session_activity
+
+        mock_pc = _MockPersistentClaude([SYSTEM_INIT, RESULT_SUCCESS])
+        mock_pc._last_activity = _time.monotonic() - 600  # 10 min ago
+        session_pool = {"sess-abc": mock_pc}
+
+        _reset_session_activity(session_pool, "sess-abc")
+
+        assert mock_pc.idle_seconds < 2  # just reset
+
+    def test_question_answered_resets_last_activity(self):
+        """QuestionAnswered handler resets _last_activity on the session in pool."""
+        import time as _time
+        from toony_agent_runner.main import _reset_session_activity
+
+        mock_pc = _MockPersistentClaude([SYSTEM_INIT, RESULT_SUCCESS])
+        mock_pc._last_activity = _time.monotonic() - 600
+        session_pool = {"sess-xyz": mock_pc}
+
+        _reset_session_activity(session_pool, "sess-xyz")
+
+        assert mock_pc.idle_seconds < 2
+
+    def test_reset_noop_when_session_missing(self):
+        """No error when session_id is not in the pool."""
+        from toony_agent_runner.main import _reset_session_activity
+
+        session_pool: dict = {}
+        _reset_session_activity(session_pool, "nonexistent")  # should not raise

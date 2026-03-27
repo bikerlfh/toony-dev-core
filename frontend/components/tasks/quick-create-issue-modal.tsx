@@ -158,7 +158,7 @@ export function QuickCreateIssueModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className={`flex w-full flex-col rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl transition-all duration-200 ${expanded ? "max-w-5xl max-h-[90vh]" : "max-w-3xl"}`}>
+      <div className={`flex w-full flex-col rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl transition-all duration-200 ${expanded ? "max-w-5xl h-[85vh]" : "max-w-3xl h-[60vh]"}`}>
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-slate-800/60 px-5 py-3">
           {selectedProject ? (
@@ -203,7 +203,7 @@ export function QuickCreateIssueModal({
         </div>
 
         {/* Body */}
-        <div className={`px-5 py-4 ${expanded ? "flex-1 overflow-y-auto" : ""}`}>
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           {/* Title */}
           <input
             type="text"
@@ -223,7 +223,7 @@ export function QuickCreateIssueModal({
               autoResize();
             }}
             placeholder="Add description..."
-            rows={expanded ? 12 : 3}
+            rows={expanded ? 16 : 6}
             className={`mt-3 w-full resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none ${expanded ? "flex-1" : ""}`}
           />
         </div>

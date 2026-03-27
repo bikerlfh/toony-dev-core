@@ -518,10 +518,10 @@ class PersistentClaude:
                 self._session_id = str(event["session_id"])
 
             _log_event_summary(event)
+            self._last_activity = time.monotonic()
             yield event
 
             if event.get("type") == "result":
-                self._last_activity = time.monotonic()
                 break
 
     async def respond_approval(self, request_id: str, decision: str) -> None:
@@ -536,6 +536,7 @@ class PersistentClaude:
         line = json.dumps(msg) + "\n"
         self._proc.stdin.write(line.encode("utf-8"))  # type: ignore[union-attr]
         await self._proc.stdin.drain()  # type: ignore[union-attr]
+        self._last_activity = time.monotonic()
         logger.info(
             "Sent control_response: request_id=%s decision=%s", request_id, decision,
         )

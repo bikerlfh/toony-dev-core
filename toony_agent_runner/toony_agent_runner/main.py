@@ -19,6 +19,7 @@ import logging
 import os
 import platform
 import signal
+import time
 import subprocess
 import sys
 from pathlib import Path
@@ -257,6 +258,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
 
             elif isinstance(msg, TaskReply):
                 _cleanup_finished_tasks()
+                _reset_session_activity(session_pool, msg.session_id)
 
                 if msg.task_id in active_tasks:
                     logger.warning(
@@ -295,6 +297,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
 
             elif isinstance(msg, QuestionAnswered):
                 _cleanup_finished_tasks()
+                _reset_session_activity(session_pool, msg.session_id)
                 logger.info(
                     "Received question.answered for %s (q=%s, session=%s)",
                     msg.task_id,
@@ -494,6 +497,17 @@ async def _heartbeat_loop(
 
         await conn.send(HeartbeatMessage().to_json())
         logger.debug("Heartbeat sent")
+
+
+def _reset_session_activity(
+    session_pool: dict[str, PersistentClaude],
+    session_id: str | None,
+) -> None:
+    """Reset idle timer on a session so the cleanup loop won't close it."""
+    if session_id:
+        pc = session_pool.get(session_id)
+        if pc:
+            pc._last_activity = time.monotonic()
 
 
 async def _session_cleanup_loop(

@@ -352,19 +352,17 @@ EOF
 }
 
 ensure_runner_venv() {
-    if [ -d "$RUNNERS_VENV" ] && [ -x "$RUNNERS_VENV/bin/python" ]; then
-        return
-    fi
-
     if ! command -v python3 >/dev/null 2>&1; then
         error "python3 is required but not found. Install Python 3.11+ and retry."
     fi
 
-    info "Creating runner virtual environment..."
-    python3 -m venv "$RUNNERS_VENV"
-    info "Installing runner dependencies..."
-    "$RUNNERS_VENV/bin/pip" install --quiet websockets pyyaml
-    success "Runner environment ready."
+    if [ ! -d "$RUNNERS_VENV" ] || [ ! -x "$RUNNERS_VENV/bin/python" ]; then
+        info "Creating runner virtual environment..."
+        python3 -m venv "$RUNNERS_VENV"
+    fi
+
+    # Always ensure dependencies are up to date.
+    "$RUNNERS_VENV/bin/pip" install --quiet websockets pyyaml rich
 }
 
 runner_start() {

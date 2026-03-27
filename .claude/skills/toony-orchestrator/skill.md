@@ -1,6 +1,7 @@
 ---
 name: toony-orchestrator
 description: "Toony issue orchestrator — works on a Toony issue by identifier. Fetches the issue, executes its instructions, manages artifacts and status transitions."
+disable-model-invocation: true
 ---
 
 # Toony Orchestrator (v1 — Simple)
@@ -26,17 +27,12 @@ Use `mcp__toony__get_issue` with the provided identifier from `$ARGUMENTS`.
 
 If the issue cannot be found, inform the user and return `{"toony_result": "finish"}`.
 
-### Step 2: Post start comment and update status
+### Step 2: Update status
 
-Run these two MCP calls:
-
-1. `mcp__toony__create_comment` on the issue:
-   - body: `"Agent started working on this issue.\n\n*Created with claude*"`
-
-2. `mcp__toony__update_issue` to set status to `IN_PROGRESS`:
-   - issue_id: the issue UUID
-   - project_id: the project UUID
-   - status: `IN_PROGRESS`
+Use `mcp__toony__update_issue` to set status to `IN_PROGRESS`:
+- issue_id: the issue UUID
+- project_id: the project UUID
+- status: `IN_PROGRESS`
 
 ### Step 3: Detect and invoke skill commands
 
@@ -55,7 +51,8 @@ Before executing, scan the issue `description` for **skill commands** — tokens
 **When a skill is found:**
 - **Invoke it using the `Skill` tool**: `Skill(skill: "<matched-skill-name>", args: "<task context>")`.
 - The skill's own process flow takes over execution. It replaces the default execution in Step 3b.
-- Once the skill finishes, continue to Step 4 to handle any artifacts produced.
+- **CRITICAL: Do NOT proceed to Step 4 or any subsequent step until the invoked skill has fully completed its execution.** The skill may involve multiple tool calls, user interactions, and intermediate steps — you must wait for all of them to finish before moving on.
+- Once the skill has fully completed, continue to Step 4 to handle any artifacts produced.
 - **Do NOT re-invoke the same skill** if it has already been loaded in this conversation turn (check for `<command-name>` tags).
 
 ### Step 3b: Direct execution (no skill command)
@@ -127,10 +124,37 @@ Your final output MUST be exactly:
 {"toony_result": "finish"}
 ```
 
+## TOONY Marker Protocol
+
+When running inside the Toony agent runner, use these markers in your responses to signal questions and task completion.
+
+### Asking a question
+
+When you need to ask the user a question, include this marker in your response:
+
+<!--TOONY:{"action":"question","text":"your question here","type":"free_text"}-->
+
+For multiple choice questions with options:
+
+<!--TOONY:{"action":"question","text":"your question here","type":"options","options":[{"label":"Option A"},{"label":"Option B"}]}-->
+
+Optional fields: `header` (string), `multi_select` (boolean, default false), option `description` (string).
+
+### Completing a task
+
+When you have fully completed the assigned task, include this marker:
+
+<!--TOONY:{"action":"finish","summary":"brief summary of what was done"}-->
+
+**Marker rules:**
+- Do NOT include the finish marker if you need more information or the task is incomplete
+- Do NOT include the finish marker if you just asked a question
+- Only include one marker per response
+
 ## Important Rules
 
 - **Always extract `project_id` from the `get_issue` response.** Never ask the user for it.
-- **Always post start and end comments** on the issue.
+- **Always post a summary comment** on the issue at the end (Step 6).
 - **Always present artifacts to the user before uploading.**
 - **Follow the approval rules strictly** for artifact types.
 - If you encounter an error at any step, inform the user and still return `{"toony_result": "finish"}`.

@@ -50,3 +50,4 @@ docker-data/
 
 # Worktrees
 .worktrees/
+.claude/worktrees/
