@@ -5,11 +5,11 @@ Outgoing messages (runner -> backend):
     RegisterMessage, HeartbeatMessage, TaskAcceptedMessage,
     TaskEventMessage, QuestionAskedMessage, ToolApprovalRequestMessage,
     TaskCompletedMessage, TaskFailedMessage, CommandResultMessage,
-    ConfigSyncAckMessage, RepoCloneResultMessage
+    ConfigSyncAckMessage, RepoCloneResultMessage, FileTreeSyncMessage
 
 Incoming messages (backend -> runner):
     TaskAssign, QuestionAnswered, ToolApprovalResponse, TaskCancel,
-    HeartbeatAck, CommandExecute, ConfigSync, ConfigUpdate
+    HeartbeatAck, CommandExecute, ConfigSync, ConfigUpdate, FileTreeSyncAck
 """
 
 from __future__ import annotations
@@ -234,6 +234,12 @@ class ConfigUpdate:
 
 
 @dataclass
+class FileTreeSyncAck:
+    """Backend acknowledges file tree sync."""
+    project_id: str
+
+
+@dataclass
 class CommandResultMessage:
     """Runner reports the result of a command execution."""
 
@@ -300,6 +306,23 @@ class RepoCloneResultMessage:
 
 
 @dataclass
+class FileTreeSyncMessage:
+    """Sends the project's file tree to the backend for caching."""
+
+    project_id: str
+    branch: str
+    tree: list[str]
+
+    def to_json(self) -> dict:
+        return {
+            "type": "file_tree.sync",
+            "project_id": self.project_id,
+            "branch": self.branch,
+            "tree": self.tree,
+        }
+
+
+@dataclass
 class ConfigUpdateAckMessage:
     """Acknowledges a config update from the frontend."""
     success: bool
@@ -320,7 +343,7 @@ class ConfigUpdateAckMessage:
 # ---------------------------------------------------------------------------
 
 # Type alias for any incoming message
-IncomingMessage = TaskAssign | QuestionAnswered | ToolApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync | ConfigUpdate
+IncomingMessage = TaskAssign | QuestionAnswered | ToolApprovalResponse | TaskCancel | TaskReply | HeartbeatAck | CommandExecute | ConfigSync | ConfigUpdate | FileTreeSyncAck
 
 
 def parse_server_message(data: dict) -> IncomingMessage:
@@ -386,5 +409,8 @@ def parse_server_message(data: dict) -> IncomingMessage:
             max_concurrent_tasks=data.get("max_concurrent_tasks"),
             max_task_timeout=data.get("max_task_timeout"),
         )
+
+    if msg_type == "file_tree.sync.ack":
+        return FileTreeSyncAck(project_id=data.get("project_id", ""))
 
     raise ValueError(f"Unknown server message type: {msg_type!r}")

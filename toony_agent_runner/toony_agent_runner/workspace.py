@@ -22,6 +22,34 @@ from toony_agent_runner.protocol import RepoCloneResultMessage
 logger = logging.getLogger(__name__)
 
 
+# Directories to skip when collecting file tree
+_DENYLIST_DIRS = {
+    ".git", "node_modules", "__pycache__", ".venv", "venv",
+    "dist", "build", ".next", ".cache", "coverage",
+    ".mypy_cache", ".pytest_cache", ".ruff_cache", ".tox",
+    "egg-info", ".eggs", "target",
+}
+
+
+def collect_file_tree(project_dir: Path) -> list[str]:
+    """Walk *project_dir* and return a sorted list of relative file paths.
+
+    Skips directories in the denylist (node_modules, .git, etc.).
+    """
+    if not project_dir.is_dir():
+        return []
+
+    paths: list[str] = []
+    for item in sorted(project_dir.rglob("*")):
+        # Skip denied directories and their contents
+        parts = item.relative_to(project_dir).parts
+        if any(p in _DENYLIST_DIRS for p in parts):
+            continue
+        if item.is_file():
+            paths.append(str(item.relative_to(project_dir)))
+    return paths
+
+
 def build_clone_url(repository_url: str, protocol: str = "ssh") -> str:
     """Convert a browser repository URL to a git clone URL.
 
