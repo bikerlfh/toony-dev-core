@@ -154,47 +154,42 @@ export default function MentionAutoComplete({
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = newValue.substring(0, cursorPos);
 
-    // Try both triggers, pick the one closest to cursor
-    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
-    const lastSlashIndex = textBeforeCursor.lastIndexOf("/");
+    // Find the last valid trigger: must be at start or preceded by whitespace
+    const findValidTrigger = (char: string): number => {
+      let idx = textBeforeCursor.length;
+      while (true) {
+        idx = textBeforeCursor.lastIndexOf(char, idx - 1);
+        if (idx === -1) return -1;
+        if (idx === 0 || /\s/.test(textBeforeCursor[idx - 1])) return idx;
+        if (idx === 0) return -1;
+      }
+    };
 
-    // Determine which trigger to use (the later one wins)
-    let triggerChar: "@" | "/" | null = null;
-    let triggerIndex = -1;
+    const validAt = fileTree.length > 0 ? findValidTrigger("@") : -1;
+    const validSlash = skills.length > 0 ? findValidTrigger("/") : -1;
 
-    if (lastAtIndex > lastSlashIndex && fileTree.length > 0) {
+    // Pick the trigger closest to cursor (later index wins)
+    let triggerChar: "@" | "/";
+    let triggerIndex: number;
+
+    if (validAt === -1 && validSlash === -1) {
+      setMention((prev) => ({ ...prev, active: false }));
+      return;
+    } else if (validAt > validSlash) {
       triggerChar = "@";
-      triggerIndex = lastAtIndex;
-    } else if (lastSlashIndex > lastAtIndex && skills.length > 0) {
+      triggerIndex = validAt;
+    } else if (validSlash > validAt) {
       triggerChar = "/";
-      triggerIndex = lastSlashIndex;
-    } else if (lastAtIndex === lastSlashIndex) {
-      // Both -1, no trigger
-      setMention((prev) => ({ ...prev, active: false }));
-      return;
-    } else if (lastAtIndex >= 0 && fileTree.length > 0) {
+      triggerIndex = validSlash;
+    } else {
+      // Both equal and >= 0 — prefer "@"
       triggerChar = "@";
-      triggerIndex = lastAtIndex;
-    } else if (lastSlashIndex >= 0 && skills.length > 0) {
-      triggerChar = "/";
-      triggerIndex = lastSlashIndex;
-    }
-
-    if (triggerChar === null || triggerIndex === -1) {
-      setMention((prev) => ({ ...prev, active: false }));
-      return;
-    }
-
-    // Trigger char must be at start or preceded by whitespace
-    if (triggerIndex > 0 && !/\s/.test(textBeforeCursor[triggerIndex - 1])) {
-      setMention((prev) => ({ ...prev, active: false }));
-      return;
+      triggerIndex = validAt;
     }
 
     const query = textBeforeCursor.substring(triggerIndex + 1);
 
-    // For "@" file mentions, close if there's a space in the query
-    // For "/" skill mentions, also close on space (skill names don't have spaces)
+    // Close if there's a space in the query (user moved on)
     if (query.includes(" ")) {
       setMention((prev) => ({ ...prev, active: false }));
       return;
