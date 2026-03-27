@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback, KeyboardEvent, ChangeEvent } from "react";
 import api from "@/lib/api";
+import { fuzzyPathMatch } from "@/lib/fuzzy-path-filter";
 
 interface FileAutoCompleteProps {
   projectId: string | null;
@@ -62,26 +63,9 @@ export default function FileAutoComplete({
   }, [projectId]);
 
   // Filter files using fuzzy path-segment matching.
-  // "frontend/artifacts" matches "frontend/app/(dashboard)/artifacts/page.tsx"
-  // because each query segment appears in order within the path segments.
   const filtered = mention.active
     ? fileTree
-        .filter((filePath) => {
-          const query = mention.query.toLowerCase();
-          // Fast path: simple substring match
-          if (filePath.toLowerCase().includes(query)) return true;
-          // Fuzzy: split query by "/" and match segments in order
-          if (!query.includes("/")) return false;
-          const queryParts = query.split("/").filter(Boolean);
-          const pathParts = filePath.toLowerCase().split("/");
-          let pi = 0;
-          for (const qp of queryParts) {
-            while (pi < pathParts.length && !pathParts[pi].includes(qp)) pi++;
-            if (pi >= pathParts.length) return false;
-            pi++;
-          }
-          return true;
-        })
+        .filter((f) => fuzzyPathMatch(f, mention.query))
         .slice(0, 20)
     : [];
 
