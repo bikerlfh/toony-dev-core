@@ -64,6 +64,23 @@ class TestFileTreeService:
         assert ft.tree == ["new.py"]
         assert ft.branch == "develop"
 
+    def test_sync_with_skills(self, project):
+        from projects.services import sync_project_file_tree
+
+        skills = [
+            {"name": "deploy", "description": "Deploy the application"},
+            {"name": "lint", "description": "Run linting checks"},
+        ]
+        ft = sync_project_file_tree(
+            project=project,
+            tree=["src/index.ts"],
+            branch="main",
+            skills=skills,
+        )
+        assert ft.skills == skills
+        assert len(ft.skills) == 2
+        assert ft.skills[0]["name"] == "deploy"
+
 
 class TestFileTreeAPI:
     def test_get_file_tree(self, authenticated_client, project):
@@ -75,6 +92,7 @@ class TestFileTreeAPI:
         assert response.data["tree"] == ["src/app.tsx", "src/lib/api.ts", "README.md"]
         assert response.data["branch"] == "main"
         assert response.data["synced_at"] is not None
+        assert "skills" in response.data
 
     def test_get_file_tree_empty(self, authenticated_client, project):
         url = file_tree_url(project.id)
@@ -82,6 +100,7 @@ class TestFileTreeAPI:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["tree"] == []
+        assert response.data["skills"] == []
         assert response.data["branch"] == ""
         assert response.data["synced_at"] is None
 

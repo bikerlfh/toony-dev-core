@@ -10,6 +10,7 @@ class ProjectFileTree(BaseModel):
         related_name="file_tree",
     )
     tree = models.JSONField(default=list)
+    skills = models.JSONField(default=list)
     branch = models.CharField(max_length=255, blank=True, default="")
     synced_at = models.DateTimeField()
 

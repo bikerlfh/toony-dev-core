@@ -295,7 +295,7 @@ _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
 @database_sync_to_async
-def _sync_file_tree(project_id, tree, branch):
+def _sync_file_tree(project_id, tree, branch, skills=None):
     from django.utils import timezone as tz
 
     from projects.models import Project, ProjectFileTree
@@ -303,9 +303,12 @@ def _sync_file_tree(project_id, tree, branch):
     project = Project.objects.filter(id=project_id).first()
     if project is None:
         return None
+    defaults = {"tree": tree, "branch": branch, "synced_at": tz.now()}
+    if skills is not None:
+        defaults["skills"] = skills
     ProjectFileTree.objects.update_or_create(
         project=project,
-        defaults={"tree": tree, "branch": branch, "synced_at": tz.now()},
+        defaults=defaults,
     )
     return project_id
 
@@ -702,10 +705,11 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
             project_id = content.get("project_id")
             tree = content.get("tree", [])
             branch = content.get("branch", "")
+            skills = content.get("skills")
             if not project_id:
                 await self.send_json({"type": "error", "message": "project_id is required"})
                 return
-            result = await _sync_file_tree(project_id, tree, branch)
+            result = await _sync_file_tree(project_id, tree, branch, skills=skills)
             if result is None:
                 await self.send_json({"type": "error", "message": "Project not found"})
                 return

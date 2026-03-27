@@ -15,7 +15,7 @@ class ProjectFileTreeView(APIView):
         file_tree = get_project_file_tree(request.project)
         if file_tree is None:
             return Response(
-                {"tree": [], "branch": "", "synced_at": None},
+                {"tree": [], "skills": [], "branch": "", "synced_at": None},
                 status=status.HTTP_200_OK,
             )
         output = ProjectFileTreeSerializer(file_tree).data

@@ -503,5 +503,5 @@ class IssueFullDetailSerializer(serializers.ModelSerializer):
 class ProjectFileTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProjectFileTree
-        fields = ["tree", "branch", "synced_at"]
+        fields = ["tree", "skills", "branch", "synced_at"]
         read_only_fields = fields
