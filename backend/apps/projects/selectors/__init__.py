@@ -1,3 +1,4 @@
+from projects.selectors.file_tree_selector import get_project_file_tree
 from projects.selectors.artifact_selector import (
     get_artifact_by_id,
     list_all_artifacts,
@@ -68,4 +69,5 @@ __all__ = [
     "get_artifact_by_id",
     "list_issue_documents",
     "get_document_by_id",
+    "get_project_file_tree",
 ]

@@ -1,3 +1,4 @@
+from projects.services.file_tree_service import sync_project_file_tree
 from projects.services.artifact_service import (
     create_artifact,
     delete_artifact,
@@ -68,4 +69,5 @@ __all__ = [
     "delete_artifact",
     "create_issue_document",
     "delete_issue_document",
+    "sync_project_file_tree",
 ]
