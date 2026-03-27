@@ -68,6 +68,7 @@ async def _process_events(
     ``"completed"``, ``"failed"``, ``"question"``, ``"cancelled"``.
     """
     question_asked = False
+    finish_marker_text: str | None = None
 
     async for event in events:
         if cancel_event.is_set():
@@ -131,9 +132,59 @@ async def _process_events(
                     ).to_json()
                 )
 
-            # Forward text as LOG.
+            # Forward text as LOG (strip TOONY markers first).
             text = extract_text_from_assistant(event)
             if text:
+                marker, cleaned_text = extract_toony_marker(text)
+
+                if marker and marker.get("action") == "question" and not question_asked:
+                    question_asked = True
+                    q_data: dict[str, Any] = {"text": marker["text"]}
+                    q_type = marker.get("type", "free_text")
+                    q_data["type"] = q_type
+                    if marker.get("options"):
+                        q_data["options"] = marker["options"]
+                    if marker.get("multi_select"):
+                        q_data["multi_select"] = marker["multi_select"]
+                    if marker.get("header"):
+                        q_data["header"] = marker["header"]
+
+                    sequence += 1
+                    await conn.send(
+                        QuestionAskedMessage(
+                            task_id=task_id,
+                            session_id=session_id or "",
+                            question_id=str(uuid.uuid4()),
+                            question_data=q_data,
+                            sequence=sequence,
+                        ).to_json()
+                    )
+                    logger.info(
+                        "TOONY marker question (assistant) for task %s: %s",
+                        task_id, marker["text"][:100],
+                    )
+                    cleaned_text = cleaned_text.strip()
+                    if cleaned_text:
+                        sequence += 1
+                        await conn.send(
+                            TaskEventMessage(
+                                task_id, EVENT_TYPE_LOG, {"text": cleaned_text}, sequence,
+                            ).to_json()
+                        )
+                    continue
+
+                if marker and marker.get("action") == "finish":
+                    finish_marker_text = cleaned_text.strip()
+                    if finish_marker_text:
+                        sequence += 1
+                        await conn.send(
+                            TaskEventMessage(
+                                task_id, EVENT_TYPE_LOG, {"text": finish_marker_text}, sequence,
+                            ).to_json()
+                        )
+                    continue
+
+                # No marker — forward as LOG.
                 sequence += 1
                 await conn.send(
                     TaskEventMessage(
@@ -196,6 +247,16 @@ async def _process_events(
                 await conn.send(
                     TaskCompletedMessage(
                         task_id, result=cleaned_text.strip() or "Task completed",
+                        session_id=session_id,
+                    ).to_json()
+                )
+                return session_id, sequence, "finished"
+
+            # Fallback: finish marker was found in assistant event but not in result.
+            if not marker and finish_marker_text is not None:
+                await conn.send(
+                    TaskCompletedMessage(
+                        task_id, result=finish_marker_text or "Task completed",
                         session_id=session_id,
                     ).to_json()
                 )
