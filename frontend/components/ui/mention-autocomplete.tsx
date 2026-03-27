@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, KeyboardEvent, ChangeEvent } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo, KeyboardEvent, ChangeEvent } from "react";
 import api from "@/lib/api";
 import { fuzzyPathMatch } from "@/lib/fuzzy-path-filter";
 
-interface FileAutoCompleteProps {
+interface MentionAutoCompleteProps {
   projectId: string | null;
   value: string;
   onChange: (value: string) => void;
@@ -14,14 +14,20 @@ interface FileAutoCompleteProps {
   onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 
+interface SkillEntry {
+  name: string;
+  description: string;
+}
+
 interface MentionState {
   active: boolean;
+  type: "@" | "/";
   startIndex: number;
   query: string;
   position: { top: number; left: number };
 }
 
-export default function FileAutoComplete({
+export default function MentionAutoComplete({
   projectId,
   value,
   onChange,
@@ -29,45 +35,64 @@ export default function FileAutoComplete({
   rows = 3,
   className = "",
   onKeyDown: externalOnKeyDown,
-}: FileAutoCompleteProps) {
+}: MentionAutoCompleteProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [fileTree, setFileTree] = useState<string[]>([]);
+  const [skills, setSkills] = useState<SkillEntry[]>([]);
   const [mention, setMention] = useState<MentionState>({
     active: false,
+    type: "@",
     startIndex: 0,
     query: "",
     position: { top: 0, left: 0 },
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Fetch file tree when projectId changes
+  // Fetch file tree and skills when projectId changes
   useEffect(() => {
     if (!projectId) {
       setFileTree([]);
+      setSkills([]);
       return;
     }
     let cancelled = false;
     api
       .get(`/projects/${projectId}/file-tree/`)
       .then((res) => {
-        if (!cancelled) setFileTree(res.data.tree || []);
+        if (!cancelled) {
+          setFileTree(res.data.tree || []);
+          setSkills(res.data.skills || []);
+        }
       })
       .catch(() => {
-        if (!cancelled) setFileTree([]);
+        if (!cancelled) {
+          setFileTree([]);
+          setSkills([]);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [projectId]);
 
-  // Filter files using fuzzy path-segment matching.
-  const filtered = mention.active
-    ? fileTree
+  // Filter items based on mention type
+  const filtered = useMemo(() => {
+    if (!mention.active) return [];
+
+    if (mention.type === "@") {
+      return fileTree
         .filter((f) => fuzzyPathMatch(f, mention.query))
-        .slice(0, 20)
-    : [];
+        .slice(0, 20);
+    }
+
+    // "/" trigger: filter skills by name substring match
+    const q = mention.query.toLowerCase();
+    return skills
+      .filter((s) => s.name.toLowerCase().includes(q))
+      .slice(0, 20);
+  }, [mention.active, mention.type, mention.query, fileTree, skills]);
 
   // Calculate cursor position using mirror div
   const getCursorPosition = useCallback(() => {
@@ -121,7 +146,7 @@ export default function FileAutoComplete({
     };
   }, []);
 
-  // Detect "@" trigger on input change
+  // Detect "@" or "/" trigger on input change
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
@@ -129,50 +154,76 @@ export default function FileAutoComplete({
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = newValue.substring(0, cursorPos);
 
-    // Find the last "@" before cursor that isn't preceded by a non-space char
+    // Try both triggers, pick the one closest to cursor
     const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+    const lastSlashIndex = textBeforeCursor.lastIndexOf("/");
 
-    if (lastAtIndex === -1 || fileTree.length === 0) {
+    // Determine which trigger to use (the later one wins)
+    let triggerChar: "@" | "/" | null = null;
+    let triggerIndex = -1;
+
+    if (lastAtIndex > lastSlashIndex && fileTree.length > 0) {
+      triggerChar = "@";
+      triggerIndex = lastAtIndex;
+    } else if (lastSlashIndex > lastAtIndex && skills.length > 0) {
+      triggerChar = "/";
+      triggerIndex = lastSlashIndex;
+    } else if (lastAtIndex === lastSlashIndex) {
+      // Both -1, no trigger
+      setMention((prev) => ({ ...prev, active: false }));
+      return;
+    } else if (lastAtIndex >= 0 && fileTree.length > 0) {
+      triggerChar = "@";
+      triggerIndex = lastAtIndex;
+    } else if (lastSlashIndex >= 0 && skills.length > 0) {
+      triggerChar = "/";
+      triggerIndex = lastSlashIndex;
+    }
+
+    if (triggerChar === null || triggerIndex === -1) {
       setMention((prev) => ({ ...prev, active: false }));
       return;
     }
 
-    // "@" must be at start or preceded by whitespace
-    if (lastAtIndex > 0 && !/\s/.test(textBeforeCursor[lastAtIndex - 1])) {
+    // Trigger char must be at start or preceded by whitespace
+    if (triggerIndex > 0 && !/\s/.test(textBeforeCursor[triggerIndex - 1])) {
       setMention((prev) => ({ ...prev, active: false }));
       return;
     }
 
-    const query = textBeforeCursor.substring(lastAtIndex + 1);
+    const query = textBeforeCursor.substring(triggerIndex + 1);
 
-    // Close if there's a space in the query (user moved on)
+    // For "@" file mentions, close if there's a space in the query
+    // For "/" skill mentions, also close on space (skill names don't have spaces)
     if (query.includes(" ")) {
       setMention((prev) => ({ ...prev, active: false }));
       return;
     }
 
     const position = getCursorPosition();
-    setMention({ active: true, startIndex: lastAtIndex, query, position });
+    setMention({ active: true, type: triggerChar, startIndex: triggerIndex, query, position });
     setSelectedIndex(0);
   };
 
-  // Select a file from the dropdown
-  const selectFile = useCallback(
-    (filePath: string) => {
+  // Select an item from the dropdown
+  const selectItem = useCallback(
+    (item: string | SkillEntry) => {
+      const prefix = mention.type;
+      const insertText = typeof item === "string" ? item : item.name;
       const before = value.substring(0, mention.startIndex);
       const after = value.substring(mention.startIndex + 1 + mention.query.length);
-      const newValue = `${before}@${filePath}${after}`;
+      const newValue = `${before}${prefix}${insertText}${after}`;
       onChange(newValue);
       setMention((prev) => ({ ...prev, active: false }));
 
-      // Restore cursor position after the inserted path
-      const newCursorPos = mention.startIndex + 1 + filePath.length;
+      // Restore cursor position after the inserted text
+      const newCursorPos = mention.startIndex + 1 + insertText.length;
       requestAnimationFrame(() => {
         textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
         textareaRef.current?.focus();
       });
     },
-    [value, mention.startIndex, mention.query, onChange]
+    [value, mention.startIndex, mention.query, mention.type, onChange]
   );
 
   // Keyboard navigation
@@ -190,7 +241,7 @@ export default function FileAutoComplete({
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        selectFile(filtered[selectedIndex]);
+        selectItem(filtered[selectedIndex]);
         return;
       }
       if (e.key === "Escape") {
@@ -250,38 +301,76 @@ export default function FileAutoComplete({
           className="absolute z-50 max-h-48 w-max max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
           style={{ top: mention.position.top, left: mention.position.left }}
         >
-          {filtered.map((file, i) => (
-            <button
-              key={file}
-              data-file-item
-              type="button"
-              className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${
-                i === selectedIndex
-                  ? "bg-indigo-600/30 text-indigo-300"
-                  : "text-slate-300 hover:bg-slate-800"
-              }`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                selectFile(file);
-              }}
-              onMouseEnter={() => setSelectedIndex(i)}
-            >
-              <svg
-                className="h-4 w-4 shrink-0 text-slate-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-                />
-              </svg>
-              <span>{file}</span>
-            </button>
-          ))}
+          {mention.type === "@"
+            ? (filtered as string[]).map((file, i) => (
+                <button
+                  key={file}
+                  data-file-item
+                  type="button"
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${
+                    i === selectedIndex
+                      ? "bg-indigo-600/30 text-indigo-300"
+                      : "text-slate-300 hover:bg-slate-800"
+                  }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    selectItem(file);
+                  }}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                >
+                  <svg
+                    className="h-4 w-4 shrink-0 text-slate-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                    />
+                  </svg>
+                  <span>{file}</span>
+                </button>
+              ))
+            : (filtered as SkillEntry[]).map((skill, i) => (
+                <button
+                  key={skill.name}
+                  data-file-item
+                  type="button"
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${
+                    i === selectedIndex
+                      ? "bg-indigo-600/30 text-indigo-300"
+                      : "text-slate-300 hover:bg-slate-800"
+                  }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    selectItem(skill);
+                  }}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                >
+                  <svg
+                    className="h-4 w-4 shrink-0 text-amber-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+                    />
+                  </svg>
+                  <span>
+                    <strong>{skill.name}</strong>
+                    {skill.description && (
+                      <span className="ml-1.5 text-slate-500">{skill.description}</span>
+                    )}
+                  </span>
+                </button>
+              ))}
         </div>
       )}
     </div>

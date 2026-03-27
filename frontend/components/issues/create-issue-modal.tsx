@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { createIssue } from "@/lib/api/issues";
 import { Select } from "@/components/ui/select";
-import FileAutoComplete from "@/components/ui/file-autocomplete";
+import MentionAutoComplete from "@/components/ui/mention-autocomplete";
 import type {
   IssueStatus,
   IssuePriority,
@@ -105,7 +105,7 @@ export function CreateIssueModal({
 
           <div>
             <label className="block text-sm font-medium text-slate-400">Description</label>
-            <FileAutoComplete
+            <MentionAutoComplete
               projectId={projectId}
               value={description}
               onChange={setDescription}

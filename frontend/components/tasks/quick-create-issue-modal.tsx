@@ -15,7 +15,7 @@ import { listMilestones } from "@/lib/api/milestones";
 import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
 import { useAuth } from "@/contexts/auth-context";
-import FileAutoComplete from "@/components/ui/file-autocomplete";
+import MentionAutoComplete from "@/components/ui/mention-autocomplete";
 import { PillDropdown } from "./pill-dropdown";
 
 interface QuickCreateIssueModalProps {
@@ -206,7 +206,7 @@ export function QuickCreateIssueModal({
           />
 
           {/* Description */}
-          <FileAutoComplete
+          <MentionAutoComplete
             projectId={projectId}
             value={description}
             onChange={setDescription}

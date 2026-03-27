@@ -34,7 +34,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
 import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
 import { Select } from "@/components/ui/select";
-import FileAutoComplete from "@/components/ui/file-autocomplete";
+import MentionAutoComplete from "@/components/ui/mention-autocomplete";
 import type {
   IssueDetail,
   IssueStatus,
@@ -328,7 +328,7 @@ export default function IssueDetailPage() {
           <div className="mt-3">
             {editingDescription ? (
               <div>
-                <FileAutoComplete
+                <MentionAutoComplete
                   projectId={projectId}
                   value={descriptionDraft}
                   onChange={setDescriptionDraft}
@@ -1209,7 +1209,7 @@ function CommentsSection({
 
               {editingId === c.id ? (
                 <div className="mt-2">
-                  <FileAutoComplete
+                  <MentionAutoComplete
                     projectId={projectId}
                     value={editBody}
                     onChange={setEditBody}
@@ -1241,7 +1241,7 @@ function CommentsSection({
 
       {/* New comment form */}
       <form onSubmit={handleCreate} className="mt-4">
-        <FileAutoComplete
+        <MentionAutoComplete
           projectId={projectId}
           value={newBody}
           onChange={setNewBody}

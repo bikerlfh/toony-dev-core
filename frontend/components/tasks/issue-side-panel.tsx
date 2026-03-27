@@ -8,7 +8,7 @@ import { PriorityBadge } from "@/components/priority-badge";
 import { IssueStatusBadge } from "@/components/issue-status-badge";
 import { IssueAgentTasks } from "@/components/tasks/issue-agent-tasks";
 import { IssueResolvedWorkflow } from "@/components/tasks/issue-resolved-workflow";
-import FileAutoComplete from "@/components/ui/file-autocomplete";
+import MentionAutoComplete from "@/components/ui/mention-autocomplete";
 
 interface IssueSidePanelProps {
   projectId: string;
@@ -207,7 +207,7 @@ export function IssueSidePanel({ projectId, issueId, onClose, onUpdated }: Issue
             {/* Description — click to edit */}
             {editingDescription ? (
               <div>
-                <FileAutoComplete
+                <MentionAutoComplete
                   projectId={projectId}
                   value={descriptionDraft}
                   onChange={setDescriptionDraft}
