@@ -410,7 +410,13 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         # Send file trees for all cloned projects
                         for pid, pdir in project_map.items():
                             if pdir.is_dir() and (pdir / ".git").exists():
-                                tree = collect_file_tree(pdir)
+                                dl = config.file_tree_denylist
+                                tree = collect_file_tree(
+                                    pdir,
+                                    extra_files=set(dl.files) if dl.files else None,
+                                    extra_extensions=set(dl.extensions) if dl.extensions else None,
+                                    extra_paths=set(dl.paths) if dl.paths else None,
+                                )
                                 if tree:
                                     skills = collect_skills(pdir)
                                     await conn.send(

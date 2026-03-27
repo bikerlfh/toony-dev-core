@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 import pytest
 
-from toony_agent_runner.workspace import build_clone_url, process_config_sync, resolve_project_path
+from toony_agent_runner.workspace import build_clone_url, collect_file_tree, _is_denied_file, process_config_sync, resolve_project_path
 
 
 # ---------------------------------------------------------------------------
@@ -567,3 +567,139 @@ class TestClonePendingRepos:
         await clone_pending_repos(project_map, config_data, mock_conn, clone_protocol="https")
 
         assert cloned_urls == ["https://github.com/org/repo.git"]
+
+
+# ---------------------------------------------------------------------------
+# _is_denied_file tests
+# ---------------------------------------------------------------------------
+
+class TestIsDeniedFile:
+    """Verify file denylist matching."""
+
+    def test_denies_ds_store(self):
+        assert _is_denied_file(".DS_Store") is True
+
+    def test_denies_env(self):
+        assert _is_denied_file(".env") is True
+
+    def test_denies_env_local(self):
+        assert _is_denied_file(".env.local") is True
+
+    def test_denies_pyc(self):
+        assert _is_denied_file("module.pyc") is True
+
+    def test_denies_so(self):
+        assert _is_denied_file("libfoo.so") is True
+
+    def test_denies_lock(self):
+        assert _is_denied_file("package-lock.lock") is True
+
+    def test_denies_log(self):
+        assert _is_denied_file("debug.log") is True
+
+    def test_denies_swap(self):
+        assert _is_denied_file("file.swp") is True
+
+    def test_denies_map(self):
+        assert _is_denied_file("bundle.js.map") is True
+
+    def test_allows_regular_py(self):
+        assert _is_denied_file("main.py") is False
+
+    def test_allows_regular_ts(self):
+        assert _is_denied_file("app.tsx") is False
+
+    def test_allows_readme(self):
+        assert _is_denied_file("README.md") is False
+
+    def test_allows_package_json(self):
+        assert _is_denied_file("package.json") is False
+
+    def test_allows_gitignore(self):
+        assert _is_denied_file(".gitignore") is False
+
+    def test_denies_init_py(self):
+        assert _is_denied_file("__init__.py") is True
+
+
+# ---------------------------------------------------------------------------
+# collect_file_tree tests
+# ---------------------------------------------------------------------------
+
+class TestCollectFileTree:
+    """Verify collect_file_tree skips denied dirs and files."""
+
+    def test_collects_regular_files(self, tmp_path: Path):
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "app.py").write_text("pass")
+        (tmp_path / "README.md").write_text("# Hi")
+
+        result = collect_file_tree(tmp_path)
+        assert "src/app.py" in result
+        assert "README.md" in result
+
+    def test_skips_denied_directories(self, tmp_path: Path):
+        (tmp_path / "node_modules" / "pkg").mkdir(parents=True)
+        (tmp_path / "node_modules" / "pkg" / "index.js").write_text("")
+        (tmp_path / "__pycache__").mkdir()
+        (tmp_path / "__pycache__" / "mod.cpython-312.pyc").write_text("")
+        (tmp_path / "src" / "app.py").mkdir(parents=True)
+
+        result = collect_file_tree(tmp_path)
+        assert not any("node_modules" in p for p in result)
+        assert not any("__pycache__" in p for p in result)
+
+    def test_skips_denied_files(self, tmp_path: Path):
+        (tmp_path / ".DS_Store").write_text("")
+        (tmp_path / ".env").write_text("SECRET=123")
+        (tmp_path / "module.pyc").write_text("")
+        (tmp_path / "app.py").write_text("pass")
+
+        result = collect_file_tree(tmp_path)
+        assert ".DS_Store" not in result
+        assert ".env" not in result
+        assert "module.pyc" not in result
+        assert "app.py" in result
+
+    def test_skips_denied_extensions(self, tmp_path: Path):
+        (tmp_path / "lib.so").write_text("")
+        (tmp_path / "bundle.js.map").write_text("")
+        (tmp_path / "debug.log").write_text("")
+        (tmp_path / "main.ts").write_text("")
+
+        result = collect_file_tree(tmp_path)
+        assert "lib.so" not in result
+        assert "bundle.js.map" not in result
+        assert "debug.log" not in result
+        assert "main.ts" in result
+
+    def test_returns_empty_for_nonexistent_dir(self, tmp_path: Path):
+        result = collect_file_tree(tmp_path / "nope")
+        assert result == []
+
+    def test_skips_init_py(self, tmp_path: Path):
+        (tmp_path / "pkg").mkdir()
+        (tmp_path / "pkg" / "__init__.py").write_text("")
+        (tmp_path / "pkg" / "core.py").write_text("pass")
+
+        result = collect_file_tree(tmp_path)
+        assert "pkg/__init__.py" not in result
+        assert "pkg/core.py" in result
+
+    def test_skips_migrations_directory(self, tmp_path: Path):
+        (tmp_path / "apps" / "projects" / "migrations").mkdir(parents=True)
+        (tmp_path / "apps" / "projects" / "migrations" / "0001_initial.py").write_text("")
+        (tmp_path / "apps" / "projects" / "migrations" / "0002_add_field.py").write_text("")
+        (tmp_path / "apps" / "projects" / "models.py").write_text("pass")
+
+        result = collect_file_tree(tmp_path)
+        assert not any("migrations" in p for p in result)
+        assert "apps/projects/models.py" in result
+
+    def test_returns_sorted_paths(self, tmp_path: Path):
+        (tmp_path / "z.txt").write_text("")
+        (tmp_path / "a.txt").write_text("")
+        (tmp_path / "m.txt").write_text("")
+
+        result = collect_file_tree(tmp_path)
+        assert result == ["a.txt", "m.txt", "z.txt"]

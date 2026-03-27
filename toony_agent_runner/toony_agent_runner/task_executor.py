@@ -408,9 +408,15 @@ async def execute_task(
 
     # Snapshot file tree before execution for change detection.
     working_dir = Path(config.claude.working_directory)
+    dl = config.file_tree_denylist
+    _dl_kwargs = {
+        "extra_files": set(dl.files) if dl.files else None,
+        "extra_extensions": set(dl.extensions) if dl.extensions else None,
+        "extra_paths": set(dl.paths) if dl.paths else None,
+    }
     snapshot_before: set[str] | None = None
     if project_id and working_dir.is_dir():
-        snapshot_before = set(collect_file_tree(working_dir))
+        snapshot_before = set(collect_file_tree(working_dir, **_dl_kwargs))
 
     try:
         if config.claude.permission_mode == "default" and pending_approvals is not None:
@@ -451,7 +457,7 @@ async def execute_task(
 
         # Send file tree sync if files changed during task execution.
         if project_id and snapshot_before is not None:
-            snapshot_after = set(collect_file_tree(working_dir))
+            snapshot_after = set(collect_file_tree(working_dir, **_dl_kwargs))
             if snapshot_before != snapshot_after:
                 tree = sorted(snapshot_after)
                 skills = collect_skills(working_dir)

@@ -30,22 +30,61 @@ _DENYLIST_DIRS = {
     "egg-info", ".eggs", "target",
 }
 
+# File patterns to skip (exact names and extensions)
+_DENYLIST_FILES = {
+    ".DS_Store", "Thumbs.db", ".env", ".env.local", ".env.production",
+    ".gitkeep", ".gitattributes", "__init__.py",
+}
 
-def collect_file_tree(project_dir: Path) -> list[str]:
+# Directory paths to skip (relative path segments that indicate migrations)
+_DENYLIST_PATHS = {"migrations"}
+
+_DENYLIST_EXTENSIONS = {
+    ".pyc", ".pyo", ".pyd", ".so", ".dylib", ".dll",
+    ".class", ".o", ".obj", ".a", ".lib",
+    ".lock", ".log",
+    ".swp", ".swo", ".swn",
+    ".map",
+}
+
+
+def _is_denied_file(filename: str, extra_files: set[str] | None = None,
+                    extra_extensions: set[str] | None = None) -> bool:
+    """Check if a filename matches the file denylist."""
+    denied_files = _DENYLIST_FILES | (extra_files or set())
+    if filename in denied_files:
+        return True
+    denied_exts = _DENYLIST_EXTENSIONS | (extra_extensions or set())
+    for ext in denied_exts:
+        if filename.endswith(ext):
+            return True
+    return False
+
+
+def collect_file_tree(project_dir: Path, *, extra_files: set[str] | None = None,
+                      extra_extensions: set[str] | None = None,
+                      extra_paths: set[str] | None = None) -> list[str]:
     """Walk *project_dir* and return a sorted list of relative file paths.
 
-    Skips directories in the denylist (node_modules, .git, etc.).
+    Skips directories in the denylist (node_modules, .git, etc.)
+    and files matching denied names or extensions.
+
+    The ``extra_*`` params are merged with the hardcoded defaults,
+    allowing user config to extend the denylist.
     """
     if not project_dir.is_dir():
         return []
+
+    denied_dirs = _DENYLIST_DIRS
+    denied_paths = _DENYLIST_PATHS | (extra_paths or set())
 
     paths: list[str] = []
     for item in sorted(project_dir.rglob("*")):
         # Skip denied directories and their contents
         parts = item.relative_to(project_dir).parts
-        if any(p in _DENYLIST_DIRS for p in parts):
+        if any(p in denied_dirs or p in denied_paths for p in parts):
             continue
-        if item.is_file():
+        if item.is_file() and not _is_denied_file(item.name, extra_files, extra_extensions):
             paths.append(str(item.relative_to(project_dir)))
     return paths
 

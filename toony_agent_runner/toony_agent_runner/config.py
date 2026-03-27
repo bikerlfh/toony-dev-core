@@ -65,6 +65,13 @@ class ReconnectConfig:
 
 
 @dataclass
+class FileTreeDenylistConfig:
+    files: list[str] = field(default_factory=list)
+    extensions: list[str] = field(default_factory=list)
+    paths: list[str] = field(default_factory=list)
+
+
+@dataclass
 class RunnerConfig:
     backend_url: str = "ws://localhost:8000/ws/toony-agents/runner/"
     api_key: str = ""
@@ -72,6 +79,7 @@ class RunnerConfig:
     clone_protocol: str = "ssh"
     claude: ClaudeConfig = field(default_factory=ClaudeConfig)
     reconnect: ReconnectConfig = field(default_factory=ReconnectConfig)
+    file_tree_denylist: FileTreeDenylistConfig = field(default_factory=FileTreeDenylistConfig)
 
 
 def load_config(path: str) -> RunnerConfig:
@@ -86,6 +94,7 @@ def load_config(path: str) -> RunnerConfig:
 
     claude_raw = raw.get("claude", {})
     reconnect_raw = raw.get("reconnect", {})
+    denylist_raw = raw.get("file_tree_denylist", {})
 
     tool_approval_raw = claude_raw.get("tool_approval", {})
     tool_approval = ToolApprovalConfig(
@@ -139,6 +148,11 @@ def load_config(path: str) -> RunnerConfig:
             backoff_max=reconnect_raw.get(
                 "backoff_max", ReconnectConfig.backoff_max
             ),
+        ),
+        file_tree_denylist=FileTreeDenylistConfig(
+            files=denylist_raw.get("files", []),
+            extensions=denylist_raw.get("extensions", []),
+            paths=denylist_raw.get("paths", []),
         ),
     )
 
