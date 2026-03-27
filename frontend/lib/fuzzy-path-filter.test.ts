@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fuzzyPathMatch, filterFileTree } from "./fuzzy-path-filter";
+import { fuzzyPathMatch, filterFileTree, filterSkills } from "./fuzzy-path-filter";
 
 const SAMPLE_TREE = [
   "frontend/app/(auth)/login/page.tsx",
@@ -117,5 +117,53 @@ describe("filterFileTree", () => {
   it("returns empty for no matches", () => {
     const results = filterFileTree(SAMPLE_TREE, "nonexistent/path");
     expect(results).toEqual([]);
+  });
+});
+
+const SAMPLE_SKILLS = [
+  { name: "brainstorming", description: "Help turn ideas into designs" },
+  { name: "writing-plans", description: "Write implementation plans" },
+  { name: "test-driven-development", description: "Write tests before code" },
+  { name: "requesting-code-review", description: "Request code review" },
+  { name: "toony-mcp", description: "Interact with Toony via MCP tools" },
+];
+
+describe("filterSkills", () => {
+  it("filters by substring match on name", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "brain");
+    expect(results).toEqual([SAMPLE_SKILLS[0]]);
+  });
+
+  it("matches case-insensitively", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "BRAIN");
+    expect(results).toEqual([SAMPLE_SKILLS[0]]);
+  });
+
+  it("returns all skills for empty query", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "");
+    expect(results.length).toBe(5);
+  });
+
+  it("matches partial name", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "plan");
+    expect(results).toEqual([SAMPLE_SKILLS[1]]);
+  });
+
+  it("matches multiple skills", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "ing");
+    expect(results.length).toBe(3);
+    expect(results).toContain(SAMPLE_SKILLS[0]); // brainstorming
+    expect(results).toContain(SAMPLE_SKILLS[1]); // writing-plans
+    expect(results).toContain(SAMPLE_SKILLS[3]); // requesting-code-review
+  });
+
+  it("returns empty for no matches", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "nonexistent");
+    expect(results).toEqual([]);
+  });
+
+  it("respects limit", () => {
+    const results = filterSkills(SAMPLE_SKILLS, "", 2);
+    expect(results.length).toBe(2);
   });
 });

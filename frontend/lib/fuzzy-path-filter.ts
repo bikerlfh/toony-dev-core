@@ -40,3 +40,15 @@ export function filterFileTree(
 ): string[] {
   return fileTree.filter((f) => fuzzyPathMatch(f, query)).slice(0, limit);
 }
+
+/**
+ * Filter a list of skills by substring match on name.
+ */
+export function filterSkills(
+  skills: { name: string; description: string }[],
+  query: string,
+  limit: number = 20,
+): { name: string; description: string }[] {
+  const q = query.toLowerCase();
+  return skills.filter((s) => s.name.toLowerCase().includes(q)).slice(0, limit);
+}
