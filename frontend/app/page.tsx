@@ -227,6 +227,13 @@ const icons = {
       <path d="M6 8l1.5 1.5L10 7" {...cap} />
     </svg>
   ),
+  fileMention: (
+    <svg className="h-4 w-4" viewBox="0 0 16 16" {...s}>
+      <path d="M4.5 2h5l3 3v8.5a1 1 0 01-1 1h-7a1 1 0 01-1-1V3a1 1 0 011-1z" />
+      <path d="M9.5 2v3h3" {...cap} />
+      <path d="M5 10l1.5-1.5L8 10l1.5-1.5L11 10" {...cap} />
+    </svg>
+  ),
 };
 
 /* ── Landing page ───────────────────────────────────────────── */
@@ -610,6 +617,11 @@ function LandingPage() {
             icon={icons.rbac}
             label="Role-based access"
             desc="Granular permissions at organization, project, and team level."
+          />
+          <InlineFeature
+            icon={icons.fileMention}
+            label="File mentions"
+            desc="Type @ in any description or comment to reference project files with fuzzy path matching."
           />
         </div>
       </section>
