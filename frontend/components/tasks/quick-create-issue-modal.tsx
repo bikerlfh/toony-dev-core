@@ -61,15 +61,36 @@ export function QuickCreateIssueModal({
   // --- UI state ---
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+
+  // --- Dirty check ---
+  const hasFormData =
+    title.trim() !== "" ||
+    description.trim() !== "" ||
+    projectId !== null ||
+    priority !== null ||
+    assigneeId !== null ||
+    labelIds.length > 0 ||
+    milestoneId !== null ||
+    cycleId !== null ||
+    dueDate !== "";
+
+  const handleClose = useCallback(() => {
+    if (hasFormData) {
+      setShowCloseConfirm(true);
+    } else {
+      onClose();
+    }
+  }, [hasFormData, onClose]);
 
   // --- Escape to close ---
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     }
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [handleClose]);
 
   // --- Fetch project-dependent data ---
   const fetchProjectData = useCallback(async (pid: string) => {
@@ -143,12 +164,7 @@ export function QuickCreateIssueModal({
   const canSubmit = title.trim().length > 0 && !!projectId && !isSubmitting;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
       <div className={`flex w-full flex-col rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl transition-all duration-200 ${expanded ? "max-w-5xl h-[85vh]" : "max-w-3xl h-[60vh]"}`}>
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-slate-800/60 px-5 py-3">
@@ -183,7 +199,7 @@ export function QuickCreateIssueModal({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-md p-1 text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-300"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -359,6 +375,34 @@ export function QuickCreateIssueModal({
           </button>
         </div>
       </div>
+
+      {/* Close confirmation dialog */}
+      {showCloseConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+            <h3 className="text-sm font-semibold text-white">Discard changes?</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              You have unsaved changes. Are you sure you want to close? All entered data will be lost.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCloseConfirm(false)}
+                className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800"
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
