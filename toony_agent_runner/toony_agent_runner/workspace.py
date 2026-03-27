@@ -50,6 +50,83 @@ def collect_file_tree(project_dir: Path) -> list[str]:
     return paths
 
 
+def collect_skills(project_dir: Path) -> list[dict[str, str]]:
+    """Collect skill names and descriptions from project-level and user-level skill directories."""
+    skills: list[dict[str, str]] = []
+
+    # Project-level: {project_dir}/.claude/skills/*/
+    project_skills_dir = project_dir / ".claude" / "skills"
+    if project_skills_dir.is_dir():
+        for skill_dir in sorted(project_skills_dir.iterdir()):
+            if skill_dir.is_dir():
+                info = _parse_skill_dir(skill_dir)
+                if info:
+                    skills.append(info)
+
+    # User-level: ~/.claude/skills/*/
+    user_skills_dir = Path.home() / ".claude" / "skills"
+    if user_skills_dir.is_dir():
+        for skill_dir in sorted(user_skills_dir.iterdir()):
+            if skill_dir.is_dir():
+                # Skip if already found at project level (project takes precedence)
+                if any(s["name"] == skill_dir.name for s in skills):
+                    continue
+                info = _parse_skill_dir(skill_dir)
+                if info:
+                    skills.append(info)
+
+    return skills
+
+
+def _parse_skill_dir(skill_dir: Path) -> dict[str, str] | None:
+    """Extract name and description from a skill directory.
+
+    Looks for skill.md or the first .md file. Extracts the description
+    from the first non-empty, non-heading, non-frontmatter line.
+    """
+    name = skill_dir.name
+
+    # Find the skill file
+    skill_file = skill_dir / "skill.md"
+    if not skill_file.exists():
+        # Try first .md file
+        md_files = sorted(skill_dir.glob("*.md"))
+        if not md_files:
+            return None
+        skill_file = md_files[0]
+
+    try:
+        content = skill_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return {"name": name, "description": ""}
+
+    description = _extract_description(content)
+    return {"name": name, "description": description}
+
+
+def _extract_description(content: str) -> str:
+    """Extract description from skill markdown content.
+
+    Skips frontmatter (--- blocks), headings (#), and empty lines.
+    Returns the first meaningful line, truncated to 120 chars.
+    """
+    in_frontmatter = False
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped == "---":
+            in_frontmatter = not in_frontmatter
+            continue
+        if in_frontmatter:
+            continue
+        if not stripped or stripped.startswith("#"):
+            continue
+        # Found first content line
+        if len(stripped) > 120:
+            return stripped[:117] + "..."
+        return stripped
+    return ""
+
+
 def build_clone_url(repository_url: str, protocol: str = "ssh") -> str:
     """Convert a browser repository URL to a git clone URL.
 

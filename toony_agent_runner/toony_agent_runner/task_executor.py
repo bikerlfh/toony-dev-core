@@ -27,7 +27,7 @@ from .protocol import (
     TaskFailedMessage,
     ToolApprovalRequestMessage,
 )
-from .workspace import collect_file_tree
+from .workspace import collect_file_tree, collect_skills
 from .tool_approval import evaluate_tool_rule
 
 logger = logging.getLogger("toony_agent_runner")
@@ -454,15 +454,18 @@ async def execute_task(
             snapshot_after = set(collect_file_tree(working_dir))
             if snapshot_before != snapshot_after:
                 tree = sorted(snapshot_after)
+                skills = collect_skills(working_dir)
                 await conn.send(
                     FileTreeSyncMessage(
                         project_id=project_id,
                         branch=project_branch,
                         tree=tree,
+                        skills=skills,
                     ).to_json()
                 )
                 logger.info(
-                    "Sent file_tree.sync after task %s (%d files)", task_id, len(tree),
+                    "Sent file_tree.sync after task %s (%d files, %d skills)",
+                    task_id, len(tree), len(skills),
                 )
 
     except asyncio.CancelledError:

@@ -48,7 +48,7 @@ from .protocol import (
     parse_server_message,
 )
 from .cli_executor import PersistentClaude
-from .workspace import collect_file_tree, process_config_sync, resolve_project_path, clone_pending_repos
+from .workspace import collect_file_tree, collect_skills, process_config_sync, resolve_project_path, clone_pending_repos
 from .commands import execute_command
 from .task_executor import execute_task, execute_task_reply
 
@@ -412,16 +412,18 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                             if pdir.is_dir() and (pdir / ".git").exists():
                                 tree = collect_file_tree(pdir)
                                 if tree:
+                                    skills = collect_skills(pdir)
                                     await conn.send(
                                         FileTreeSyncMessage(
                                             project_id=pid,
                                             branch=project_branches.get(pid, "main"),
                                             tree=tree,
+                                            skills=skills,
                                         ).to_json()
                                     )
                                     logger.info(
-                                        "Sent file_tree.sync for project %s (%d files)",
-                                        pid, len(tree),
+                                        "Sent file_tree.sync for project %s (%d files, %d skills)",
+                                        pid, len(tree), len(skills),
                                     )
                     except Exception as exc:
                         logger.error("Config sync failed: %s", exc)

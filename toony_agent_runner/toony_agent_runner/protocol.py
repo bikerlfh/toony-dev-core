@@ -312,14 +312,18 @@ class FileTreeSyncMessage:
     project_id: str
     branch: str
     tree: list[str]
+    skills: list[dict[str, str]] = field(default_factory=list)
 
     def to_json(self) -> dict:
-        return {
+        msg: dict[str, Any] = {
             "type": "file_tree.sync",
             "project_id": self.project_id,
             "branch": self.branch,
             "tree": self.tree,
         }
+        if self.skills:
+            msg["skills"] = self.skills
+        return msg
 
 
 @dataclass
