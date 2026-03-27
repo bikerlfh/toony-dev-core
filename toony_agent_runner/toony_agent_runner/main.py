@@ -36,6 +36,8 @@ from .protocol import (
     ConfigSyncAckMessage,
     ConfigUpdate,
     ConfigUpdateAckMessage,
+    FileTreeSyncAck,
+    FileTreeSyncMessage,
     HeartbeatAck,
     HeartbeatMessage,
     RegisterMessage,
@@ -46,7 +48,7 @@ from .protocol import (
     parse_server_message,
 )
 from .cli_executor import PersistentClaude
-from .workspace import process_config_sync, resolve_project_path, clone_pending_repos
+from .workspace import collect_file_tree, collect_skills, process_config_sync, resolve_project_path, clone_pending_repos
 from .commands import execute_command
 from .task_executor import execute_task, execute_task_reply
 
@@ -134,6 +136,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
     pending_approvals: dict[str, asyncio.Future[str]] = {}
     max_tasks = config.claude.max_concurrent_tasks
     project_map: dict[str, Path] = {}
+    project_branches: dict[str, str] = {}
     workspace_root = Path(config.workspace_root).expanduser().resolve() if config.workspace_root else None
 
     def _cleanup_finished_tasks() -> None:
@@ -243,6 +246,8 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                         msg.task_id, msg.prompt, conn, task_config, ce,
                         session_pool=session_pool,
                         pending_approvals=pending_approvals,
+                        project_id=msg.project_id,
+                        project_branch=project_branches.get(msg.project_id or "", "main"),
                     )
                 )
 
@@ -358,6 +363,9 @@ async def run(config: RunnerConfig, config_path: str) -> None:
             elif isinstance(msg, HeartbeatAck):
                 logger.debug("Heartbeat acknowledged")
 
+            elif isinstance(msg, FileTreeSyncAck):
+                logger.debug("File tree sync acknowledged for project %s", msg.project_id)
+
             elif isinstance(msg, CommandExecute):
                 logger.info(
                     "Received command.execute: %s (id=%s)",
@@ -374,6 +382,11 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                             config_payload,
                             workspace_root,
                         )
+                        # Build project_id -> branch mapping
+                        project_branches.clear()
+                        for o in msg.organizations:
+                            for p in o.get("projects", []):
+                                project_branches[p["id"]] = p.get("base_branch", "main")
                         await clone_pending_repos(
                             project_map, config_payload, conn,
                             clone_protocol=config.clone_protocol,
@@ -393,6 +406,25 @@ async def run(config: RunnerConfig, config_path: str) -> None:
                             "Config sync complete: %d orgs, %d projects",
                             len(msg.organizations), total_projects,
                         )
+
+                        # Send file trees for all cloned projects
+                        for pid, pdir in project_map.items():
+                            if pdir.is_dir() and (pdir / ".git").exists():
+                                tree = collect_file_tree(pdir)
+                                if tree:
+                                    skills = collect_skills(pdir)
+                                    await conn.send(
+                                        FileTreeSyncMessage(
+                                            project_id=pid,
+                                            branch=project_branches.get(pid, "main"),
+                                            tree=tree,
+                                            skills=skills,
+                                        ).to_json()
+                                    )
+                                    logger.info(
+                                        "Sent file_tree.sync for project %s (%d files, %d skills)",
+                                        pid, len(tree), len(skills),
+                                    )
                     except Exception as exc:
                         logger.error("Config sync failed: %s", exc)
                         await conn.send(

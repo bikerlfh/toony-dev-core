@@ -15,6 +15,7 @@ from projects.views import (
     MilestoneDetailView,
     MilestoneListCreateView,
     ProjectDetailView,
+    ProjectFileTreeView,
     ProjectListCreateView,
     ProjectMemberDetailView,
     ProjectMemberListCreateView,
@@ -33,6 +34,7 @@ urlpatterns = [
     path("<uuid:project_id>/members/", ProjectMemberListCreateView.as_view(), name="project-member-list-create"),
     path("<uuid:project_id>/members/<uuid:user_id>/", ProjectMemberDetailView.as_view(), name="project-member-detail"),
     path("<uuid:project_id>/settings/", ProjectSettingsView.as_view(), name="project-settings"),
+    path("<uuid:project_id>/file-tree/", ProjectFileTreeView.as_view(), name="project-file-tree"),
     # Project Teams
     path("<uuid:project_id>/teams/", ProjectTeamListCreateView.as_view(), name="project-team-list-create"),
     path("<uuid:project_id>/teams/<uuid:team_id>/", ProjectTeamDetailView.as_view(), name="project-team-detail"),

@@ -8,6 +8,7 @@ from projects.models import (
     IssueComment,
     Milestone,
     Project,
+    ProjectFileTree,
     ProjectMembership,
     ProjectSettings,
 )
@@ -81,3 +82,14 @@ class IssueArtifactAdmin(admin.ModelAdmin):
     list_filter = ("artifact_type", "status", "requires_approval")
     search_fields = ("title", "issue__identifier")
     ordering = ("-created_at",)
+
+
+@admin.register(ProjectFileTree)
+class ProjectFileTreeAdmin(admin.ModelAdmin):
+    list_display = ("project", "branch", "file_count", "synced_at")
+    search_fields = ("project__name",)
+    ordering = ("-synced_at",)
+
+    @admin.display(description="Files")
+    def file_count(self, obj):
+        return len(obj.tree)

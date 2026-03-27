@@ -12,6 +12,7 @@ from projects.models import (
     IssueDocument,
     Milestone,
     Project,
+    ProjectFileTree,
     ProjectMembership,
     ProjectResource,
     ProjectSettings,
@@ -494,3 +495,13 @@ class IssueFullDetailSerializer(serializers.ModelSerializer):
 
     def get_sub_issue_count(self, obj):
         return obj.sub_issues.count()
+
+
+# --- ProjectFileTree ---
+
+
+class ProjectFileTreeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProjectFileTree
+        fields = ["tree", "skills", "branch", "synced_at"]
+        read_only_fields = fields

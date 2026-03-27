@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from pathlib import Path
 from typing import Any
 
 from .cli_executor import (
@@ -18,6 +19,7 @@ from .cli_executor import (
 from .config import RunnerConfig
 from .connection import BackendConnection
 from .protocol import (
+    FileTreeSyncMessage,
     QuestionAskedMessage,
     TaskAcceptedMessage,
     TaskCompletedMessage,
@@ -25,6 +27,7 @@ from .protocol import (
     TaskFailedMessage,
     ToolApprovalRequestMessage,
 )
+from .workspace import collect_file_tree, collect_skills
 from .tool_approval import evaluate_tool_rule
 
 logger = logging.getLogger("toony_agent_runner")
@@ -377,6 +380,8 @@ async def execute_task(
     cancel_event: asyncio.Event,
     session_pool: dict[str, PersistentClaude] | None = None,
     pending_approvals: dict[str, asyncio.Future[str]] | None = None,
+    project_id: str | None = None,
+    project_branch: str = "main",
 ) -> None:
     """Execute a task using a persistent Claude session.
 
@@ -400,6 +405,12 @@ async def execute_task(
     approval_task: asyncio.Task[None] | None = None
     sequence_holder = [0]
     session_id_holder: list[str | None] = [None]
+
+    # Snapshot file tree before execution for change detection.
+    working_dir = Path(config.claude.working_directory)
+    snapshot_before: set[str] | None = None
+    if project_id and working_dir.is_dir():
+        snapshot_before = set(collect_file_tree(working_dir))
 
     try:
         if config.claude.permission_mode == "default" and pending_approvals is not None:
@@ -437,6 +448,25 @@ async def execute_task(
             )
         elif not pc.is_alive:
             await pc.close()
+
+        # Send file tree sync if files changed during task execution.
+        if project_id and snapshot_before is not None:
+            snapshot_after = set(collect_file_tree(working_dir))
+            if snapshot_before != snapshot_after:
+                tree = sorted(snapshot_after)
+                skills = collect_skills(working_dir)
+                await conn.send(
+                    FileTreeSyncMessage(
+                        project_id=project_id,
+                        branch=project_branch,
+                        tree=tree,
+                        skills=skills,
+                    ).to_json()
+                )
+                logger.info(
+                    "Sent file_tree.sync after task %s (%d files, %d skills)",
+                    task_id, len(tree), len(skills),
+                )
 
     except asyncio.CancelledError:
         logger.info("Task %s async-cancelled", task_id)

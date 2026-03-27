@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type {
   ProjectList,
   ProjectMember,
@@ -15,6 +15,7 @@ import { listMilestones } from "@/lib/api/milestones";
 import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
 import { useAuth } from "@/contexts/auth-context";
+import MentionAutoComplete from "@/components/ui/mention-autocomplete";
 import { PillDropdown } from "./pill-dropdown";
 
 interface QuickCreateIssueModalProps {
@@ -60,7 +61,6 @@ export function QuickCreateIssueModal({
   // --- UI state ---
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const descRef = useRef<HTMLTextAreaElement>(null);
 
   // --- Escape to close ---
   useEffect(() => {
@@ -70,15 +70,6 @@ export function QuickCreateIssueModal({
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
-
-  // --- Auto-resize description textarea ---
-  const autoResize = useCallback(() => {
-    const el = descRef.current;
-    if (el) {
-      el.style.height = "auto";
-      el.style.height = el.scrollHeight + "px";
-    }
-  }, []);
 
   // --- Fetch project-dependent data ---
   const fetchProjectData = useCallback(async (pid: string) => {
@@ -215,13 +206,10 @@ export function QuickCreateIssueModal({
           />
 
           {/* Description */}
-          <textarea
-            ref={descRef}
+          <MentionAutoComplete
+            projectId={projectId}
             value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              autoResize();
-            }}
+            onChange={setDescription}
             placeholder="Add description..."
             rows={expanded ? 16 : 6}
             className={`mt-3 w-full resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none ${expanded ? "flex-1" : ""}`}

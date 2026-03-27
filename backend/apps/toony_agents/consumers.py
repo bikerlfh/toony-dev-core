@@ -294,6 +294,25 @@ def _get_question_session_id(question_id):
 _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 
+@database_sync_to_async
+def _sync_file_tree(project_id, tree, branch, skills=None):
+    from django.utils import timezone as tz
+
+    from projects.models import Project, ProjectFileTree
+
+    project = Project.objects.filter(id=project_id).first()
+    if project is None:
+        return None
+    defaults = {"tree": tree, "branch": branch, "synced_at": tz.now()}
+    if skills is not None:
+        defaults["skills"] = skills
+    ProjectFileTree.objects.update_or_create(
+        project=project,
+        defaults=defaults,
+    )
+    return project_id
+
+
 # -- Runner-facing consumer ----------------------------------------------------
 
 
@@ -681,6 +700,20 @@ class ToonyAgentRunnerConsumer(AsyncJsonWebsocketConsumer):
                 self.frontend_group,
                 {"type": "repo_clone_result", "data": content},
             )
+
+        elif msg_type == "file_tree.sync":
+            project_id = content.get("project_id")
+            tree = content.get("tree", [])
+            branch = content.get("branch", "")
+            skills = content.get("skills")
+            if not project_id:
+                await self.send_json({"type": "error", "message": "project_id is required"})
+                return
+            result = await _sync_file_tree(project_id, tree, branch, skills=skills)
+            if result is None:
+                await self.send_json({"type": "error", "message": "Project not found"})
+                return
+            await self.send_json({"type": "file_tree.sync.ack", "project_id": str(result)})
 
         else:
             await self.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})

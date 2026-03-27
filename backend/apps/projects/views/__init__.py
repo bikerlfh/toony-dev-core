@@ -9,6 +9,7 @@ from projects.views.document_views import (
     IssueDocumentDetailView,
     IssueDocumentListCreateView,
 )
+from projects.views.file_tree_views import ProjectFileTreeView
 from projects.views.issue_views import (
     IssueActivityListView,
     IssueCommentDetailView,
@@ -59,4 +60,5 @@ __all__ = [
     "GlobalArtifactDetailView",
     "IssueDocumentListCreateView",
     "IssueDocumentDetailView",
+    "ProjectFileTreeView",
 ]
