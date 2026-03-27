@@ -37,3 +37,13 @@ reconnect:
   max_retries: -1
   backoff_base: 1
   backoff_max: 30
+
+# Extra patterns to exclude from the file tree sent to the backend.
+# These are merged with the hardcoded defaults (node_modules, .git, .pyc, etc.)
+# file_tree_denylist:
+#   files:
+#     - "custom_secret.txt"
+#   extensions:
+#     - ".dat"
+#   paths:
+#     - "vendor"

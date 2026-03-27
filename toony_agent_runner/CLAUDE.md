@@ -43,17 +43,17 @@ main.py --- Orchestrator: CLI entry, config loading, main event loop, message di
   |
   |-- connection.py --- BackendConnection: WebSocket client, reconnection w/ exponential backoff, message buffering
   |
-  +-- config.py --- Configuration loading/saving with dataclasses (RunnerConfig, ClaudeConfig, ReconnectConfig)
+  +-- config.py --- Configuration loading/saving with dataclasses (RunnerConfig, ClaudeConfig, ReconnectConfig, FileTreeDenylistConfig)
   |
   +-- protocol.py --- Dataclass message types with to_json() serialization
   |                    Outgoing: Register, Heartbeat, TaskAccepted, TaskEvent, QuestionAsked,
   |                              TaskCompleted, TaskFailed, CommandResult, ConfigSyncAck,
-  |                              RepoCloneResult, ConfigUpdateAck
+  |                              RepoCloneResult, ConfigUpdateAck, FileTreeSyncMessage
   |                    Incoming: TaskAssign, QuestionAnswered, TaskCancel, TaskReply, HeartbeatAck,
-  |                              CommandExecute, ConfigSync, ConfigUpdate
+  |                              CommandExecute, ConfigSync, ConfigUpdate, FileTreeSyncAck
   |
   +-- workspace.py --- Workspace provisioning: directory creation, repo cloning,
-  |                     workspace-registry.yaml generation from config.sync payloads
+  |                     workspace-registry.yaml generation, file tree collection, skill collection
   |
   +-- commands/         --- Command execution: registry of filesystem/download/git/script handlers,
                              sandboxed to working_directory, dispatched independently of Claude tasks
@@ -94,6 +94,7 @@ All messages are JSON with a `type` field. Authentication is via `?key=tok_ta_..
 | Out | `config.sync.ack` | Acknowledge config.sync with org/project counts |
 | Out | `repo.clone.result` | Report repo clone status (success/error, duration) |
 | Out | `config.update.ack` | Acknowledge config update |
+| Out | `file_tree.sync` | Send project file tree and skills to backend for caching |
 | In | `task.assign` | Backend assigns task (task_id, title, prompt) |
 | In | `task.cancel` | Request task cancellation |
 | In | `task.reply` | Resume conversation with session_id |
@@ -102,3 +103,38 @@ All messages are JSON with a `type` field. Authentication is via `?key=tok_ta_..
 | In | `config.sync` | Workspace configuration (organizations + projects) |
 | In | `config.update` | Update runner config (max_concurrent_tasks, max_task_timeout) |
 | In | `heartbeat.ack` | Backend acknowledges heartbeat |
+| In | `file_tree.sync.ack` | Backend acknowledges file tree sync |
+
+### File Tree Sync
+
+After `config.sync` completes (repos cloned), the runner sends `file_tree.sync` for each project with a `.git` directory. The message includes a flat list of relative file paths and a list of available skills. The backend caches this in `ProjectFileTree` for the frontend's `@` file mention and `/` skill autocomplete.
+
+**Triggers:**
+1. On connect — after `config.sync` for all cloned projects
+2. On `task.completed` — only if files were created or deleted during execution (snapshot comparison)
+
+**Skill collection:** Scans `.claude/skills/*/` at project level and `~/.claude/skills/*/` at user level. Extracts name (directory name) and description (first content line from skill.md). Project-level skills take precedence over user-level skills with the same name.
+
+### File Tree Denylist
+
+`collect_file_tree()` in `workspace.py` skips files and directories that are not useful for the autocomplete. There are three layers of filtering:
+
+**Hardcoded defaults:**
+- **Directories:** `.git`, `node_modules`, `__pycache__`, `.venv`, `venv`, `dist`, `build`, `.next`, `.cache`, `coverage`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.tox`, `egg-info`, `.eggs`, `target`
+- **Paths (subtrees):** `migrations`
+- **Files (exact name):** `.DS_Store`, `Thumbs.db`, `.env`, `.env.local`, `.env.production`, `.gitkeep`, `.gitattributes`, `__init__.py`
+- **Extensions:** `.pyc`, `.pyo`, `.pyd`, `.so`, `.dylib`, `.dll`, `.class`, `.o`, `.obj`, `.a`, `.lib`, `.lock`, `.log`, `.swp`, `.swo`, `.swn`, `.map`
+
+**Configurable extensions via `file_tree_denylist` in config YAML:**
+
+```yaml
+file_tree_denylist:
+  files:
+    - "custom_file.txt"
+  extensions:
+    - ".dat"
+  paths:
+    - "vendor"
+```
+
+These lists are **merged** with the hardcoded defaults — they extend, not replace. If the section is omitted, only the defaults apply.
