@@ -61,10 +61,27 @@ export default function FileAutoComplete({
     };
   }, [projectId]);
 
-  // Filter files based on query (case-insensitive substring match)
+  // Filter files using fuzzy path-segment matching.
+  // "frontend/artifacts" matches "frontend/app/(dashboard)/artifacts/page.tsx"
+  // because each query segment appears in order within the path segments.
   const filtered = mention.active
     ? fileTree
-        .filter((f) => f.toLowerCase().includes(mention.query.toLowerCase()))
+        .filter((filePath) => {
+          const query = mention.query.toLowerCase();
+          // Fast path: simple substring match
+          if (filePath.toLowerCase().includes(query)) return true;
+          // Fuzzy: split query by "/" and match segments in order
+          if (!query.includes("/")) return false;
+          const queryParts = query.split("/").filter(Boolean);
+          const pathParts = filePath.toLowerCase().split("/");
+          let pi = 0;
+          for (const qp of queryParts) {
+            while (pi < pathParts.length && !pathParts[pi].includes(qp)) pi++;
+            if (pi >= pathParts.length) return false;
+            pi++;
+          }
+          return true;
+        })
         .slice(0, 20)
     : [];
 
