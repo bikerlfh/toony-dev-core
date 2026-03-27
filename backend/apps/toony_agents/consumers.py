@@ -296,8 +296,9 @@ _VALID_EVENT_TYPES = {e.value for e in TaskEventType}
 
 @database_sync_to_async
 def _sync_file_tree(project_id, tree, branch):
-    from projects.models import Project, ProjectFileTree
     from django.utils import timezone as tz
+
+    from projects.models import Project, ProjectFileTree
 
     project = Project.objects.filter(id=project_id).first()
     if project is None:

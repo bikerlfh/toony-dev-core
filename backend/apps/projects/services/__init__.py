@@ -1,4 +1,3 @@
-from projects.services.file_tree_service import sync_project_file_tree
 from projects.services.artifact_service import (
     create_artifact,
     delete_artifact,
@@ -13,6 +12,7 @@ from projects.services.document_service import (
     create_issue_document,
     delete_issue_document,
 )
+from projects.services.file_tree_service import sync_project_file_tree
 from projects.services.issue_service import (
     create_comment,
     create_issue,

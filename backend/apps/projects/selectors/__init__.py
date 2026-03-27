@@ -1,4 +1,3 @@
-from projects.selectors.file_tree_selector import get_project_file_tree
 from projects.selectors.artifact_selector import (
     get_artifact_by_id,
     list_all_artifacts,
@@ -13,6 +12,7 @@ from projects.selectors.document_selector import (
     get_document_by_id,
     list_issue_documents,
 )
+from projects.selectors.file_tree_selector import get_project_file_tree
 from projects.selectors.issue_selector import (
     get_issue_by_id,
     get_issue_by_identifier,

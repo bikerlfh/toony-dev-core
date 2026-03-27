@@ -7,6 +7,7 @@ from projects.models.artifact import (
 from projects.models.comment import IssueComment
 from projects.models.cycle import Cycle, CycleStatus
 from projects.models.document import IssueDocument
+from projects.models.file_tree import ProjectFileTree
 from projects.models.issue import Issue, IssuePriority, IssueStatus
 from projects.models.milestone import Milestone, MilestoneStatus
 from projects.models.project import (
@@ -17,7 +18,6 @@ from projects.models.project import (
     ProjectSettings,
     ProjectStatus,
 )
-from projects.models.file_tree import ProjectFileTree
 from projects.models.resource import ProjectResource, ResourceType
 
 __all__ = [
