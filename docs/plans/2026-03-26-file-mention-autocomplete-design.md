@@ -1,7 +1,7 @@
 # File Mention Autocomplete in Textarea Fields
 
 **Date:** 2026-03-26
-**Status:** Approved
+**Status:** Implemented
 
 ## Overview
 
@@ -80,8 +80,7 @@ No sync on `task.failed`.
 
 ### Tree generation
 
-- Walk the cloned repo directory and collect relative paths.
-- Denylist (hardcoded for MVP): `.git`, `node_modules`, `__pycache__`, `.venv`, `dist`, `build`, `.next`, `.cache`, `coverage`.
+`collect_file_tree()` in `workspace.py` walks the cloned repo directory and returns a sorted list of relative paths. Denylist: `.git`, `node_modules`, `__pycache__`, `.venv`, `venv`, `dist`, `build`, `.next`, `.cache`, `coverage`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.tox`, `egg-info`, `.eggs`, `target`.
 
 ### Change detection
 
@@ -105,6 +104,7 @@ interface FileAutoCompleteProps {
     placeholder?: string;
     rows?: number;
     className?: string;
+    onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
 }
 ```
 
@@ -113,10 +113,21 @@ When `projectId` is `null`, behaves as a plain textarea.
 #### Behavior
 
 1. User types `@` → dropdown overlay appears below the text cursor.
-2. Typing after `@` filters the file list (fuzzy match on paths).
+2. Typing after `@` filters the file list using fuzzy path-segment matching.
 3. Keyboard navigation: `Arrow Up`/`Arrow Down` to move, `Enter`/`Tab` to select, `Escape` to dismiss.
 4. On selection: inserts `@path/to/file.tsx` into the textarea, closes dropdown.
 5. Dismissal: dropdown closes on `Escape`, clicking outside, erasing the `@`, or typing a space without selecting.
+
+#### Fuzzy path-segment filtering
+
+Filtering logic extracted to `lib/fuzzy-path-filter.ts` (with tests in `lib/fuzzy-path-filter.test.ts`). Two-pass strategy:
+
+1. **Substring match** (fast path): if the query is a substring of the path, it matches.
+2. **Segment match**: splits the query by `/` and checks that each segment appears in order within the path segments. This allows skipping intermediate directories — e.g., `frontend/artifacts` matches `frontend/app/(dashboard)/artifacts/page.tsx`.
+
+#### Dropdown sizing
+
+The dropdown uses `w-max max-w-lg` so it auto-sizes to fit the longest visible path, capped at 512px to prevent overflow.
 
 #### Cursor positioning
 
