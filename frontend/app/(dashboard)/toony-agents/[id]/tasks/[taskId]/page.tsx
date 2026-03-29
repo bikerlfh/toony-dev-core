@@ -355,6 +355,7 @@ export default function TaskViewPage() {
             answeredSequences={answeredSequencesSet}
             canReply={canReply}
             agentConnected={agentConnected}
+            projectId={task.project?.id ?? null}
           />
         </div>
       </div>

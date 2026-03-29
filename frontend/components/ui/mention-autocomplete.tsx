@@ -12,6 +12,9 @@ interface MentionAutoCompleteProps {
   rows?: number;
   className?: string;
   onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  autoResize?: boolean;
+  maxRows?: number;
+  wrapperClassName?: string;
 }
 
 interface SkillEntry {
@@ -24,7 +27,7 @@ interface MentionState {
   type: "@" | "/";
   startIndex: number;
   query: string;
-  position: { top: number; left: number };
+  position: { bottom: number; cursorTop: number; left: number };
 }
 
 export default function MentionAutoComplete({
@@ -35,6 +38,9 @@ export default function MentionAutoComplete({
   rows = 3,
   className = "",
   onKeyDown: externalOnKeyDown,
+  autoResize = false,
+  maxRows = 5,
+  wrapperClassName = "",
 }: MentionAutoCompleteProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
@@ -46,9 +52,22 @@ export default function MentionAutoComplete({
     type: "@",
     startIndex: 0,
     query: "",
-    position: { top: 0, left: 0 },
+    position: { bottom: 0, cursorTop: 0, left: 0 },
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (!autoResize || !textareaRef.current) return;
+    const ta = textareaRef.current;
+    ta.style.height = "auto";
+    const computed = window.getComputedStyle(ta);
+    const lineHeight = parseFloat(computed.lineHeight) || parseFloat(computed.fontSize) * 1.2;
+    const paddingY = parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom);
+    const borderY = parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
+    const maxHeight = lineHeight * maxRows + paddingY + borderY;
+    ta.style.height = `${Math.min(ta.scrollHeight, maxHeight)}px`;
+  }, [value, autoResize, maxRows]);
 
   // Fetch file tree and skills when projectId changes
   useEffect(() => {
@@ -138,11 +157,15 @@ export default function MentionAutoComplete({
     mirror.appendChild(marker);
 
     const markerRect = marker.getBoundingClientRect();
-    const textareaRect = textarea.getBoundingClientRect();
 
+    // Return fixed viewport coordinates
+    const lineHeight = parseFloat(computed.lineHeight) || parseFloat(computed.fontSize) * 1.2;
     return {
-      top: markerRect.top - textareaRect.top + textarea.scrollTop + 20,
-      left: markerRect.left - textareaRect.left,
+      // bottom of the cursor line (for dropdown below)
+      bottom: markerRect.top + lineHeight,
+      // top of the cursor line (for dropdown above)
+      cursorTop: markerRect.top,
+      left: markerRect.left,
     };
   }, []);
 
@@ -273,7 +296,7 @@ export default function MentionAutoComplete({
   }, [selectedIndex, mention.active]);
 
   return (
-    <div className="relative">
+    <div className={`relative ${wrapperClassName}`}>
       <textarea
         ref={textareaRef}
         value={value}
@@ -290,11 +313,18 @@ export default function MentionAutoComplete({
         className="pointer-events-none invisible absolute top-0 left-0"
       />
       {/* Dropdown */}
-      {mention.active && filtered.length > 0 && (
+      {mention.active && filtered.length > 0 && (() => {
+        const dropdownMaxH = 192; // max-h-48 = 12rem = 192px
+        const spaceBelow = window.innerHeight - mention.position.bottom;
+        const openAbove = spaceBelow < dropdownMaxH && mention.position.cursorTop > spaceBelow;
+        return (
         <div
           ref={dropdownRef}
-          className="absolute z-50 max-h-48 w-max max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
-          style={{ top: mention.position.top, left: mention.position.left }}
+          className="fixed z-50 max-h-48 w-max max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
+          style={openAbove
+            ? { bottom: window.innerHeight - mention.position.cursorTop, left: mention.position.left }
+            : { top: mention.position.bottom, left: mention.position.left }
+          }
         >
           {mention.type === "@"
             ? (filtered as string[]).map((file, i) => (
@@ -367,7 +397,8 @@ export default function MentionAutoComplete({
                 </button>
               ))}
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

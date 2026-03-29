@@ -17,6 +17,7 @@ interface TaskLiveOutputProps {
   answeredSequences: Set<number>;
   canReply?: boolean;
   agentConnected?: boolean;
+  projectId: string | null;
 }
 
 const INACTIVE_STATUSES: AgentTaskStatus[] = [
@@ -34,6 +35,7 @@ export function TaskLiveOutput({
   answeredSequences,
   canReply,
   agentConnected = true,
+  projectId,
 }: TaskLiveOutputProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +113,7 @@ export function TaskLiveOutput({
       <TaskInputBox
         onSend={onMessage}
         disabled={inputDisabled}
+        projectId={projectId}
         placeholder={
           !agentConnected
             ? "Agent offline"
