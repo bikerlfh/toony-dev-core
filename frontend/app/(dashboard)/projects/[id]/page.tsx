@@ -35,7 +35,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { PriorityBadge } from "@/components/priority-badge";
 import { FilterBar } from "@/components/issues/filter-bar";
 import { KanbanBoard } from "@/components/issues/kanban-board";
-import { CreateIssueModal } from "@/components/issues/create-issue-modal";
+import { QuickCreateIssueModal } from "@/components/issues/quick-create-issue-modal";
 import { Select } from "@/components/ui/select";
 import { ProjectIconPicker } from "@/components/ui/project-icon-picker";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -1771,12 +1771,8 @@ function IssuesTab({ projectId, canManage }: { projectId: string; canManage: boo
 
       {/* Create modal */}
       {showCreate && (
-        <CreateIssueModal
+        <QuickCreateIssueModal
           projectId={projectId}
-          members={members}
-          milestones={milestones}
-          cycles={cycles}
-          labels={labels}
           onClose={() => setShowCreate(false)}
           onCreated={fetchIssues}
         />
