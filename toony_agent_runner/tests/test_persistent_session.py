@@ -434,11 +434,10 @@ class TestIdleTimeout:
             await asyncio.sleep(0.2)  # let cleanup run once
             shutdown.set()
 
-        with patch("toony_agent_runner.main.SESSION_CLEANUP_INTERVAL", 0.05):
-            await asyncio.gather(
-                _session_cleanup_loop(session_pool, shutdown),
-                stop_after_cleanup(),
-            )
+        await asyncio.gather(
+            _session_cleanup_loop(session_pool, shutdown, interval=0.05),
+            stop_after_cleanup(),
+        )
 
         assert "sess-old" not in session_pool
         assert mock_pc.close_called

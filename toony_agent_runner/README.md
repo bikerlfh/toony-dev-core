@@ -128,6 +128,7 @@ If this works, the runner will be able to authenticate.
 | `claude.approval_timeout` | `600` | Max seconds to wait for user approval response |
 | `claude.max_concurrent_tasks` | `1` | Max Claude tasks running simultaneously. Set higher for parallel execution |
 | `claude.session_idle_timeout` | `300` | Seconds before an idle persistent session is closed. After timeout, replies fall back to `--resume` |
+| `claude.session_cleanup_interval` | `600` | Seconds between idle session cleanup checks (default: 10 min) |
 | `claude.oauth_token` | `""` | OAuth token for MAX plan auth (or set `CLAUDE_CODE_OAUTH_TOKEN` env var) |
 | `claude.permission_mode` | `acceptEdits` | CLI permission mode (`acceptEdits`, `bypassPermissions`) |
 | `claude.allowed_tools` | (all) | List of tools Claude can use |
@@ -180,7 +181,7 @@ START
   │
   ├─ IDLE LOOP
   │    ├─ Send heartbeat every 30s
-  │    ├─ Clean up idle persistent sessions every 60s
+  │    ├─ Clean up idle persistent sessions every `session_cleanup_interval` seconds (default: 600)
   │    ├─ Wait for messages from backend
   │    │
   │    ├─ On "task.assign" (if capacity available):

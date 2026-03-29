@@ -17,6 +17,7 @@ claude:
   max_task_timeout: 7200
   max_concurrent_tasks: 15 # max Claude tasks running simultaneously (default: 1)
   session_idle_timeout: 300 # seconds before an idle persistent session is closed (default: 300)
+  session_cleanup_interval: 600 # seconds between idle session cleanup checks (default: 600)
   permission_mode: "bypassPermissions"
   approval_timeout: 600
   # allowed_tools:

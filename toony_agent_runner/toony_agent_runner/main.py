@@ -176,7 +176,7 @@ async def run(config: RunnerConfig, config_path: str) -> None:
     # Main message loop.
     heartbeat_task = asyncio.create_task(_heartbeat_loop(conn, shutdown_event))
     cleanup_task = asyncio.create_task(
-        _session_cleanup_loop(session_pool, shutdown_event),
+        _session_cleanup_loop(session_pool, shutdown_event, config.claude.session_cleanup_interval),
     )
 
     try:
@@ -516,9 +516,6 @@ async def run(config: RunnerConfig, config_path: str) -> None:
         logger.info("Shutdown complete")
 
 
-SESSION_CLEANUP_INTERVAL = 60  # seconds
-
-
 async def _heartbeat_loop(
     conn: BackendConnection, shutdown: asyncio.Event
 ) -> None:
@@ -551,12 +548,13 @@ def _reset_session_activity(
 async def _session_cleanup_loop(
     session_pool: dict[str, PersistentClaude],
     shutdown: asyncio.Event,
+    interval: int = 600,
 ) -> None:
     """Close idle persistent sessions periodically."""
     while not shutdown.is_set():
         try:
             await asyncio.wait_for(
-                shutdown.wait(), timeout=SESSION_CLEANUP_INTERVAL,
+                shutdown.wait(), timeout=interval,
             )
             return
         except asyncio.TimeoutError:
