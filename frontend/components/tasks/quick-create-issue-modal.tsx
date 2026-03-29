@@ -16,7 +16,7 @@ import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
 import { useAuth } from "@/contexts/auth-context";
 import MentionAutoComplete from "@/components/ui/mention-autocomplete";
-import { PillDropdown } from "./pill-dropdown";
+import { PillDropdown } from "@/components/issues/pill-dropdown";
 
 interface QuickCreateIssueModalProps {
   projects: ProjectList[];
