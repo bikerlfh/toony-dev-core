@@ -7,7 +7,7 @@ import { listProjects } from "@/lib/api/projects";
 import { useUserIssuesWebSocket } from "@/hooks/use-user-issues-websocket";
 import { TasksKanbanBoard } from "@/components/tasks/tasks-kanban-board";
 import { IssueSidePanel } from "@/components/tasks/issue-side-panel";
-import { QuickCreateIssueModal } from "@/components/tasks/quick-create-issue-modal";
+import { QuickCreateIssueModal } from "@/components/issues/quick-create-issue-modal";
 import { Select } from "@/components/ui/select";
 
 interface Filters {
