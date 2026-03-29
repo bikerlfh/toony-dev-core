@@ -221,7 +221,7 @@ export function QuickCreateIssueModal({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex flex-1 flex-col overflow-y-auto px-5 py-4">
           {/* Title */}
           <input
             type="text"
@@ -239,7 +239,8 @@ export function QuickCreateIssueModal({
             onChange={setDescription}
             placeholder="Add description..."
             rows={expanded ? 16 : 6}
-            className={`mt-3 w-full resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none ${expanded ? "flex-1" : ""}`}
+            wrapperClassName="mt-3 flex flex-1 flex-col"
+            className="w-full flex-1 resize-none border-0 bg-transparent text-sm text-slate-300 placeholder-slate-600 outline-none"
           />
         </div>
 
