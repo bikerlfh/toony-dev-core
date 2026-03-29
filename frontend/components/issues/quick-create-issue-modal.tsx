@@ -16,10 +16,11 @@ import { listCycles } from "@/lib/api/cycles";
 import { listLabels } from "@/lib/api/workspace";
 import { useAuth } from "@/contexts/auth-context";
 import MentionAutoComplete from "@/components/ui/mention-autocomplete";
-import { PillDropdown } from "@/components/issues/pill-dropdown";
+import { PillDropdown } from "./pill-dropdown";
 
 interface QuickCreateIssueModalProps {
-  projects: ProjectList[];
+  projects?: ProjectList[];
+  projectId?: string;
   onClose: () => void;
   onCreated: () => void;
 }
@@ -34,6 +35,7 @@ const PRIORITY_OPTIONS = [
 
 export function QuickCreateIssueModal({
   projects,
+  projectId: fixedProjectId,
   onClose,
   onCreated,
 }: QuickCreateIssueModalProps) {
@@ -42,7 +44,7 @@ export function QuickCreateIssueModal({
   // --- Form state ---
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(fixedProjectId ?? null);
   const [priority, setPriority] = useState<string | null>(null);
   const [assigneeId, setAssigneeId] = useState<string | null>(null);
   const [labelIds, setLabelIds] = useState<string[]>([]);
@@ -67,7 +69,7 @@ export function QuickCreateIssueModal({
   const hasFormData =
     title.trim() !== "" ||
     description.trim() !== "" ||
-    projectId !== null ||
+    (!fixedProjectId && projectId !== null) ||
     priority !== null ||
     assigneeId !== null ||
     labelIds.length > 0 ||
@@ -105,6 +107,13 @@ export function QuickCreateIssueModal({
     setCycles(cyclesRes.results);
     setLabels(labelsRes.results);
   }, []);
+
+  // --- Auto-fetch when projectId is fixed (projects page context) ---
+  useEffect(() => {
+    if (fixedProjectId) {
+      fetchProjectData(fixedProjectId);
+    }
+  }, [fixedProjectId, fetchProjectData]);
 
   // --- Handle project change ---
   const handleProjectChange = useCallback(
@@ -160,7 +169,7 @@ export function QuickCreateIssueModal({
     milestoneId, cycleId, labelIds, dueDate, onCreated,
   ]);
 
-  const selectedProject = projects.find((p) => p.id === projectId);
+  const selectedProject = projects?.find((p) => p.id === projectId);
   const canSubmit = title.trim().length > 0 && !!projectId && !isSubmitting;
 
   return (
@@ -168,15 +177,17 @@ export function QuickCreateIssueModal({
       <div className={`flex w-full flex-col rounded-xl border border-slate-800/60 bg-slate-900 shadow-2xl transition-all duration-200 ${expanded ? "max-w-5xl h-[85vh]" : "max-w-3xl h-[60vh]"}`}>
         {/* Header */}
         <div className="flex items-center gap-2 border-b border-slate-800/60 px-5 py-3">
-          {selectedProject ? (
-            <span className="flex items-center gap-1.5 rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-slate-300">
-              {selectedProject.icon && (
-                <span className="text-xs leading-none">{selectedProject.icon}</span>
-              )}
-              {selectedProject.name}
-            </span>
-          ) : (
-            <span className="text-xs text-slate-500">Select project</span>
+          {!fixedProjectId && (
+            selectedProject ? (
+              <span className="flex items-center gap-1.5 rounded-md bg-slate-800 px-2 py-1 text-xs font-medium text-slate-300">
+                {selectedProject.icon && (
+                  <span className="text-xs leading-none">{selectedProject.icon}</span>
+                )}
+                {selectedProject.name}
+              </span>
+            ) : (
+              <span className="text-xs text-slate-500">Select project</span>
+            )
           )}
           <span className="text-xs text-slate-600">›</span>
           <span className="text-sm font-medium text-slate-200">New issue</span>
@@ -249,17 +260,19 @@ export function QuickCreateIssueModal({
             Backlog
           </span>
 
-          {/* Project */}
-          <PillDropdown
-            label="Project"
-            options={projects.map((p) => ({
-              value: p.id,
-              label: p.name,
-              icon: p.icon ? <span>{p.icon}</span> : undefined,
-            }))}
-            value={projectId}
-            onChange={handleProjectChange}
-          />
+          {/* Project — only shown when no fixed project */}
+          {!fixedProjectId && projects && (
+            <PillDropdown
+              label="Project"
+              options={projects.map((p) => ({
+                value: p.id,
+                label: p.name,
+                icon: p.icon ? <span>{p.icon}</span> : undefined,
+              }))}
+              value={projectId}
+              onChange={handleProjectChange}
+            />
+          )}
 
           {/* Priority */}
           <PillDropdown
